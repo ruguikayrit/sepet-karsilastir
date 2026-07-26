@@ -20,22 +20,14 @@ class ProductType {
   final String unit;
 
   Product withBrand(String? brand) {
-    final brandKey = _brandKey(brand);
     return Product(
-      id: '${id}__$brandKey',
+      id: '${id}__${Product.brandKeyOf(brand)}',
       typeId: id,
       name: name,
       category: category,
       unit: unit,
       brand: brand,
     );
-  }
-
-  /// Türkçe karakterleri katlayarak kararlı marka anahtarı üretir.
-  static String _brandKey(String? brand) {
-    if (brand == null || brand.trim().isEmpty) return 'markasiz';
-    final key = slugifyTurkish(brand);
-    return key.isEmpty ? 'markasiz' : key;
   }
 }
 

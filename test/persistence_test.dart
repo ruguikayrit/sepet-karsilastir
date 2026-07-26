@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sepet_karsilastir/data/market_price_snapshot.dart';
 import 'package:sepet_karsilastir/data/mock_catalog.dart';
 import 'package:sepet_karsilastir/models/list_item.dart';
 import 'package:sepet_karsilastir/services/mock_price_service.dart';
@@ -76,6 +77,27 @@ void main() {
     );
     expect(restored.history, hasLength(1));
     expect(restored.history.first.items, hasLength(1));
+  });
+
+  test('adı düzeltilen ürün tipi eski kayıttan taşınır', () {
+    final store = InMemoryStore({
+      'basket.items.v1': '['
+          '{"product":{"id":"tuz-750__billur","typeId":"tuz-750",'
+          '"name":"Sofra Tuzu 500g","category":"Temel Gıda","unit":"adet",'
+          '"brand":"Billur"},"quantity":2}]',
+    });
+
+    final restored = BasketRepository(store).loadBasket();
+    expect(restored, hasLength(1));
+
+    final product = restored.single.product;
+    expect(product.typeId, 'tuz-500');
+    // Kimlik yeniden üretilmezse aynı ürün sepette iki satır olur.
+    expect(
+      product.id,
+      productTypes.firstWhere((t) => t.id == 'tuz-500').withBrand('Billur').id,
+    );
+    expect(marketPriceSnapshot[product.typeId], isNotNull);
   });
 
   test('bozuk kayıtlar sessizce atlanır', () async {
