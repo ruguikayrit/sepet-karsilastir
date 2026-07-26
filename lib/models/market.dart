@@ -143,4 +143,13 @@ class Market {
 
   static List<Market> bySegment(MarketSegment segment) =>
       all.where((m) => m.segment == segment).toList();
+
+  /// Kalıcı kayıtlardan okurken: tanınmayan / kaldırılmış market adı `null`.
+  static MarketId? idFromName(String? name) {
+    if (name == null) return null;
+    for (final id in MarketId.values) {
+      if (id.name == name) return id;
+    }
+    return null;
+  }
 }

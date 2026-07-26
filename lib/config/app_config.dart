@@ -32,6 +32,9 @@ class AppConfig {
 
   static const requestTimeout = Duration(seconds: 12);
 
+  /// Aynı sepet için market tekliflerinin yeniden kullanılma süresi.
+  static const quoteCacheTtl = Duration(seconds: 45);
+
   /// Tek market başarısız olsa bile diğerlerini göster.
   static const allowPartialMarketFailures = true;
 }

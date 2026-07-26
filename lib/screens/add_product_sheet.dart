@@ -7,10 +7,11 @@ import '../state/basket_controller.dart';
 import '../theme/app_theme.dart';
 
 Future<void> showAddProductSheet(BuildContext context) {
+  final palette = context.palette;
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: AppColors.surface,
+    backgroundColor: palette.surface,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
     ),
@@ -107,26 +108,27 @@ class _AddProductSheetState extends State<AddProductSheet> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(label),
-        behavior: SnackBarBehavior.floating,
         duration: const Duration(milliseconds: 1100),
       ),
     );
   }
 
   Future<List<String>?> _pickBrands(ProductType type) {
+    final palette = context.palette;
     final brands = brandsForCategory(type.category);
     final chosen = <String>{};
 
     return showModalBottomSheet<List<String>>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: palette.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
       builder: (ctx) {
         return StatefulBuilder(
           builder: (ctx, setSheetState) {
+            final sheetPalette = ctx.palette;
             return SafeArea(
               child: ConstrainedBox(
                 constraints: BoxConstraints(
@@ -142,7 +144,7 @@ class _AddProductSheetState extends State<AddProductSheet> {
                         width: 40,
                         height: 4,
                         decoration: BoxDecoration(
-                          color: AppColors.border,
+                          color: sheetPalette.border,
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
@@ -157,12 +159,12 @@ class _AddProductSheetState extends State<AddProductSheet> {
                         ),
                       ),
                     ),
-                    const Padding(
-                      padding: EdgeInsets.fromLTRB(20, 0, 20, 10),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
                       child: Text(
                         'Bir veya birden fazla marka seç; her biri sepete ayrı satır olarak eklenir.',
                         style: TextStyle(
-                          color: AppColors.inkMuted,
+                          color: sheetPalette.inkMuted,
                           fontWeight: FontWeight.w600,
                           fontSize: 13,
                           height: 1.35,
@@ -194,13 +196,13 @@ class _AddProductSheetState extends State<AddProductSheet> {
                               ),
                               decoration: BoxDecoration(
                                 color: selected
-                                    ? AppColors.greenSoft
-                                    : AppColors.cream,
+                                    ? sheetPalette.greenSoft
+                                    : sheetPalette.background,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
                                   color: selected
-                                      ? AppColors.green
-                                      : AppColors.border,
+                                      ? sheetPalette.green
+                                      : sheetPalette.border,
                                 ),
                               ),
                               child: Row(
@@ -218,8 +220,8 @@ class _AddProductSheetState extends State<AddProductSheet> {
                                         ? Icons.check_circle_rounded
                                         : Icons.circle_outlined,
                                     color: selected
-                                        ? AppColors.green
-                                        : AppColors.border,
+                                        ? sheetPalette.green
+                                        : sheetPalette.border,
                                     size: 22,
                                   ),
                                 ],
@@ -258,6 +260,7 @@ class _AddProductSheetState extends State<AddProductSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     final height = MediaQuery.sizeOf(context).height * 0.92;
     final basket = context.watch<BasketController>();
     final brands = _visibleBrands;
@@ -273,7 +276,7 @@ class _AddProductSheetState extends State<AddProductSheet> {
               width: 42,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.border,
+                color: palette.border,
                 borderRadius: BorderRadius.circular(4),
               ),
             ),
@@ -298,13 +301,13 @@ class _AddProductSheetState extends State<AddProductSheet> {
                       vertical: 5,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.greenSoft,
+                      color: palette.greenSoft,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       'Sepette ${basket.totalQuantity}',
-                      style: const TextStyle(
-                        color: AppColors.greenDark,
+                      style: TextStyle(
+                        color: palette.onGreenSoft,
                         fontWeight: FontWeight.w800,
                         fontSize: 12,
                       ),
@@ -313,7 +316,7 @@ class _AddProductSheetState extends State<AddProductSheet> {
                 IconButton(
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.close_rounded),
-                  color: AppColors.inkMuted,
+                  color: palette.inkMuted,
                 ),
               ],
             ),
@@ -344,10 +347,10 @@ class _AddProductSheetState extends State<AddProductSheet> {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.filter_alt_outlined,
                   size: 18,
-                  color: AppColors.inkMuted,
+                  color: palette.inkMuted,
                 ),
                 const SizedBox(width: 6),
                 Text(
@@ -364,13 +367,13 @@ class _AddProductSheetState extends State<AddProductSheet> {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.greenSoft,
+                      color: palette.greenSoft,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       '${_selectedBrands.length}',
-                      style: const TextStyle(
-                        color: AppColors.greenDark,
+                      style: TextStyle(
+                        color: palette.onGreenSoft,
                         fontWeight: FontWeight.w800,
                         fontSize: 12,
                       ),
@@ -380,10 +383,10 @@ class _AddProductSheetState extends State<AddProductSheet> {
                 if (_selectedBrands.isNotEmpty)
                   GestureDetector(
                     onTap: () => setState(_selectedBrands.clear),
-                    child: const Text(
+                    child: Text(
                       'Temizle',
                       style: TextStyle(
-                        color: AppColors.orange,
+                        color: palette.orange,
                         fontWeight: FontWeight.w700,
                         fontSize: 13,
                       ),
@@ -408,10 +411,10 @@ class _AddProductSheetState extends State<AddProductSheet> {
                   selected: selected,
                   showCheckmark: false,
                   avatar: selected
-                      ? const Icon(
+                      ? Icon(
                           Icons.check_rounded,
                           size: 16,
-                          color: AppColors.greenDark,
+                          color: palette.onGreenSoft,
                         )
                       : null,
                   onSelected: (_) {
@@ -422,15 +425,15 @@ class _AddProductSheetState extends State<AddProductSheet> {
                     });
                   },
                   visualDensity: VisualDensity.compact,
-                  selectedColor: AppColors.greenSoft,
-                  backgroundColor: AppColors.cream,
+                  selectedColor: palette.greenSoft,
+                  backgroundColor: palette.background,
                   side: BorderSide(
-                    color: selected ? AppColors.green : AppColors.border,
+                    color: selected ? palette.green : palette.border,
                   ),
                   labelStyle: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 13,
-                    color: selected ? AppColors.greenDark : AppColors.ink,
+                    color: selected ? palette.onGreenSoft : palette.ink,
                   ),
                 );
               },
@@ -443,8 +446,8 @@ class _AddProductSheetState extends State<AddProductSheet> {
               _selectedBrands.isEmpty
                   ? 'Filtre seçmeden eklersen ürün başına marka sorulur.'
                   : 'Seçili markaların her biri ürüne ayrı satır olarak eklenir.',
-              style: const TextStyle(
-                color: AppColors.inkMuted,
+              style: TextStyle(
+                color: palette.inkMuted,
                 fontWeight: FontWeight.w600,
                 fontSize: 12,
               ),
@@ -495,14 +498,15 @@ class _ProductRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     final hasFilter = applicableBrands.isNotEmpty;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: palette.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: palette.border),
       ),
       child: Row(
         children: [
@@ -510,12 +514,12 @@ class _ProductRow extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: AppColors.greenSoft,
+              color: palette.greenSoft,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
               categoryIcon(type.category),
-              color: AppColors.greenDark,
+              color: palette.onGreenSoft,
               size: 22,
             ),
           ),
@@ -545,13 +549,13 @@ class _ProductRow extends StatelessWidget {
                           vertical: 1,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.greenSoft,
+                          color: palette.greenSoft,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           '$inBasketCount',
-                          style: const TextStyle(
-                            color: AppColors.greenDark,
+                          style: TextStyle(
+                            color: palette.onGreenSoft,
                             fontWeight: FontWeight.w800,
                             fontSize: 11,
                           ),
@@ -569,7 +573,7 @@ class _ProductRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color:
-                        hasFilter ? AppColors.greenDark : AppColors.inkMuted,
+                        hasFilter ? palette.onGreenSoft : palette.inkMuted,
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
                   ),
@@ -585,8 +589,9 @@ class _ProductRow extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 14),
               visualDensity: VisualDensity.compact,
               backgroundColor:
-                  hasFilter ? AppColors.green : AppColors.orangeSoft,
-              foregroundColor: hasFilter ? Colors.white : AppColors.orange,
+                  hasFilter ? palette.green : palette.orangeSoft,
+              foregroundColor:
+                  hasFilter ? palette.onAccent : palette.orange,
               textStyle: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w800,
@@ -607,6 +612,8 @@ class _NoResults extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -615,13 +622,13 @@ class _NoResults extends StatelessWidget {
             width: 72,
             height: 72,
             decoration: BoxDecoration(
-              color: AppColors.cream,
+              color: palette.background,
               borderRadius: BorderRadius.circular(22),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.search_off_rounded,
               size: 34,
-              color: AppColors.inkMuted,
+              color: palette.inkMuted,
             ),
           ),
           const SizedBox(height: 14),
@@ -630,10 +637,10 @@ class _NoResults extends StatelessWidget {
             style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Farklı bir arama dene',
             style: TextStyle(
-              color: AppColors.inkMuted,
+              color: palette.inkMuted,
               fontWeight: FontWeight.w600,
             ),
           ),

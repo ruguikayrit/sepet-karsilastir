@@ -14,6 +14,7 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     final basket = context.watch<BasketController>();
     final result = basket.lastResult;
     final winner = result?.cheapestComplete;
@@ -30,12 +31,12 @@ class HomeScreen extends StatelessWidget {
                   width: 46,
                   height: 46,
                   decoration: BoxDecoration(
-                    color: AppColors.green,
+                    color: palette.green,
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.shopping_basket_rounded,
-                    color: Colors.white,
+                    color: palette.onAccent,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -45,15 +46,15 @@ class HomeScreen extends StatelessWidget {
                     children: [
                       Text(
                         'Sepet',
-                        style:
-                            Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                ),
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineSmall
+                            ?.copyWith(fontWeight: FontWeight.w800),
                       ),
-                      const Text(
+                      Text(
                         'Bugün ne kadar kazanabilirsin?',
                         style: TextStyle(
-                          color: AppColors.inkMuted,
+                          color: palette.inkMuted,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -63,32 +64,37 @@ class HomeScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 18),
-            if (winner != null && savings != null && savings > 0)
-              _SavingsHero(
-                marketName: winner.market.name,
-                total: winner.total,
-                savings: savings,
-                onTap: () => onOpenTab(2),
-              )
-            else if (!basket.isEmpty)
-              _ActionHero(
-                title: 'Sepetin hazır — karşılaştır',
-                body:
-                    '${basket.totalQuantity} ürün · ${basket.uniqueBrandCount} marka. '
-                    '${Market.all.length} marketten en düşük toplamı şimdi gör.',
-                cta: 'Sonucu gör',
-                onTap: () => onOpenTab(2),
-              )
-            else
-              _ActionHero(
-                title: 'Markanı seç, sepetini kur',
-                body:
-                    'Her ürün için bir veya birden fazla marka seç. '
-                    'Sonra indirim, ulusal ve premium ${Market.all.length} marketin '
-                    'fiyatlarını tek ekranda kıyasla.',
-                cta: 'Sepete ürün ekle',
-                onTap: () => onOpenTab(1),
-              ),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 280),
+              child: winner != null && savings != null && savings > 0
+                  ? _SavingsHero(
+                      key: const ValueKey('savings'),
+                      marketName: winner.market.name,
+                      total: winner.total,
+                      savings: savings,
+                      onTap: () => onOpenTab(2),
+                    )
+                  : !basket.isEmpty
+                      ? _ActionHero(
+                          key: const ValueKey('ready'),
+                          title: 'Sepetin hazır — karşılaştır',
+                          body:
+                              '${basket.totalQuantity} ürün · ${basket.uniqueBrandCount} marka. '
+                              '${Market.all.length} marketten en düşük toplamı şimdi gör.',
+                          cta: 'Sonucu gör',
+                          onTap: () => onOpenTab(2),
+                        )
+                      : _ActionHero(
+                          key: const ValueKey('empty'),
+                          title: 'Markanı seç, sepetini kur',
+                          body:
+                              'Her ürün için bir veya birden fazla marka seç. '
+                              'Sonra indirim, ulusal ve premium ${Market.all.length} marketin '
+                              'fiyatlarını tek ekranda kıyasla.',
+                          cta: 'Sepete ürün ekle',
+                          onTap: () => onOpenTab(1),
+                        ),
+            ),
             const SizedBox(height: 16),
             Row(
               children: [
@@ -149,9 +155,9 @@ class HomeScreen extends StatelessWidget {
                           vertical: 12,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.surface,
+                          color: palette.surface,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.border),
+                          border: Border.all(color: palette.border),
                         ),
                         child: Row(
                           children: [
@@ -167,8 +173,8 @@ class HomeScreen extends StatelessWidget {
                                   ),
                                   Text(
                                     item.product.brand ?? 'Markasız',
-                                    style: const TextStyle(
-                                      color: AppColors.inkMuted,
+                                    style: TextStyle(
+                                      color: palette.inkMuted,
                                       fontWeight: FontWeight.w600,
                                       fontSize: 13,
                                     ),
@@ -178,9 +184,9 @@ class HomeScreen extends StatelessWidget {
                             ),
                             Text(
                               '×${item.quantity}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.w800,
-                                color: AppColors.greenDark,
+                                color: palette.onGreenSoft,
                               ),
                             ),
                           ],
@@ -191,8 +197,8 @@ class HomeScreen extends StatelessWidget {
               if (basket.items.length > 4)
                 Text(
                   '+${basket.items.length - 4} ürün daha',
-                  style: const TextStyle(
-                    color: AppColors.inkMuted,
+                  style: TextStyle(
+                    color: palette.inkMuted,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -246,8 +252,8 @@ class HomeScreen extends StatelessWidget {
                   children: [
                     Text(
                       segment.label,
-                      style: const TextStyle(
-                        color: AppColors.inkMuted,
+                      style: TextStyle(
+                        color: palette.inkMuted,
                         fontWeight: FontWeight.w700,
                         fontSize: 12,
                       ),
@@ -256,9 +262,8 @@ class HomeScreen extends StatelessWidget {
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: markets
-                          .map((m) => MarketBadge(market: m))
-                          .toList(),
+                      children:
+                          markets.map((m) => MarketBadge(market: m)).toList(),
                     ),
                   ],
                 ),
@@ -273,6 +278,7 @@ class HomeScreen extends StatelessWidget {
 
 class _SavingsHero extends StatelessWidget {
   const _SavingsHero({
+    super.key,
     required this.marketName,
     required this.total,
     required this.savings,
@@ -286,6 +292,8 @@ class _SavingsHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -294,28 +302,24 @@ class _SavingsHero extends StatelessWidget {
         child: Ink(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [AppColors.green, AppColors.greenDark],
-            ),
+            gradient: palette.accentGradient,
             borderRadius: BorderRadius.circular(20),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Son karşılaştırma',
                 style: TextStyle(
-                  color: Colors.white70,
+                  color: palette.onAccent.withValues(alpha: 0.72),
                   fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 '$marketName ile ${formatTry(savings)} tasarruf',
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: palette.onAccent,
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
                   height: 1.2,
@@ -324,8 +328,8 @@ class _SavingsHero extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 'En karlı sepet toplamı ${formatTry(total)}',
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: palette.onAccent,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -339,6 +343,7 @@ class _SavingsHero extends StatelessWidget {
 
 class _ActionHero extends StatelessWidget {
   const _ActionHero({
+    super.key,
     required this.title,
     required this.body,
     required this.cta,
@@ -352,14 +357,12 @@ class _ActionHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.green, AppColors.greenDark],
-        ),
+        gradient: palette.accentGradient,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -367,8 +370,8 @@ class _ActionHero extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: palette.onAccent,
               fontSize: 22,
               fontWeight: FontWeight.w800,
             ),
@@ -377,7 +380,7 @@ class _ActionHero extends StatelessWidget {
           Text(
             body,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.92),
+              color: palette.onAccent.withValues(alpha: 0.92),
               height: 1.4,
               fontWeight: FontWeight.w600,
             ),
@@ -386,8 +389,8 @@ class _ActionHero extends StatelessWidget {
           FilledButton(
             onPressed: onTap,
             style: FilledButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: AppColors.greenDark,
+              backgroundColor: palette.onAccent,
+              foregroundColor: palette.greenDeep,
               minimumSize: const Size(160, 46),
             ),
             child: Text(cta),
@@ -413,8 +416,10 @@ class _MetricTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+
     return Material(
-      color: AppColors.surface,
+      color: palette.surface,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
@@ -423,15 +428,15 @@ class _MetricTile extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: palette.border),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 label,
-                style: const TextStyle(
-                  color: AppColors.inkMuted,
+                style: TextStyle(
+                  color: palette.inkMuted,
                   fontWeight: FontWeight.w700,
                   fontSize: 12,
                 ),
@@ -452,8 +457,8 @@ class _MetricTile extends StatelessWidget {
                 hint,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: AppColors.inkMuted,
+                style: TextStyle(
+                  color: palette.inkMuted,
                   fontWeight: FontWeight.w600,
                   fontSize: 11,
                 ),
@@ -479,12 +484,14 @@ class _InsightCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: palette.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: palette.border),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -493,10 +500,10 @@ class _InsightCard extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AppColors.orangeSoft,
+              color: palette.orangeSoft,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: AppColors.orange, size: 22),
+            child: Icon(icon, color: palette.orange, size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -510,8 +517,8 @@ class _InsightCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   body,
-                  style: const TextStyle(
-                    color: AppColors.inkMuted,
+                  style: TextStyle(
+                    color: palette.inkMuted,
                     fontWeight: FontWeight.w600,
                     height: 1.35,
                     fontSize: 13,

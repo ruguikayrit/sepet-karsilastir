@@ -1,3 +1,4 @@
+import '../../config/app_config.dart';
 import '../../models/fetch_status.dart';
 import '../../models/list_item.dart';
 import '../../models/market.dart';
@@ -5,6 +6,7 @@ import '../../models/market_quote.dart';
 import '../http/api_client.dart';
 import '../mapping/product_sku_map.dart';
 import 'market_price_client.dart';
+import 'quote_cache.dart';
 
 /// Backend üzerinden tek market fiyatı.
 ///
@@ -45,12 +47,15 @@ class BackendMarketPriceClient implements MarketPriceClient {
     required this.marketId,
     required ApiClient apiClient,
     String? slug,
+    QuoteCache? cache,
   })  : _api = apiClient,
+        _cache = cache,
         slug = slug ?? marketId.name;
 
   @override
   final MarketId marketId;
   final ApiClient _api;
+  final QuoteCache? _cache;
   final String slug;
 
   @override
@@ -60,6 +65,17 @@ class BackendMarketPriceClient implements MarketPriceClient {
     String? region,
     String? storeId,
   }) async {
+    final cacheKey = _cache?.keyFor(
+      marketId: marketId,
+      items: items,
+      region: region,
+      storeId: storeId,
+    );
+    if (cacheKey != null) {
+      final cached = _cache!.read(cacheKey);
+      if (cached != null) return cached;
+    }
+
     try {
       final payload = <String, dynamic>{
         'region': region,
@@ -81,6 +97,7 @@ class BackendMarketPriceClient implements MarketPriceClient {
         ...json,
         'marketId': json['marketId'] ?? marketId.name,
       });
+      if (cacheKey != null) _cache!.write(cacheKey, batch);
       return batch;
     } on ApiException catch (e) {
       return MarketQuoteBatch.failed(
@@ -116,13 +133,15 @@ class MarketClients {
     MarketId.getir: 'getir',
   };
 
-  static List<MarketPriceClient> all(ApiClient api) {
+  static List<MarketPriceClient> all(ApiClient api, {QuoteCache? cache}) {
+    final sharedCache = cache ?? QuoteCache(ttl: AppConfig.quoteCacheTtl);
     return Market.all
         .map(
           (market) => BackendMarketPriceClient(
             marketId: market.id,
             apiClient: api,
             slug: slugs[market.id] ?? market.id.name,
+            cache: sharedCache,
           ),
         )
         .toList();

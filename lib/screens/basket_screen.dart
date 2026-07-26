@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/market.dart';
 import '../state/basket_controller.dart';
 import '../theme/app_theme.dart';
+import '../widgets/name_prompt_dialog.dart';
 import '../widgets/quantity_stepper.dart';
 import 'add_product_sheet.dart';
 
@@ -14,6 +15,7 @@ class BasketScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     final basket = context.watch<BasketController>();
 
     return Scaffold(
@@ -40,19 +42,24 @@ class BasketScreen extends StatelessWidget {
                           basket.isEmpty
                               ? 'Ürün ekleyerek listeyi oluştur'
                               : '${basket.totalQuantity} ürün listede',
-                          style: const TextStyle(
-                            color: AppColors.inkMuted,
+                          style: TextStyle(
+                            color: palette.inkMuted,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  if (!basket.isEmpty)
+                  if (!basket.isEmpty) ...[
+                    TextButton(
+                      onPressed: () => _saveBasket(context),
+                      child: const Text('Kaydet'),
+                    ),
                     TextButton(
                       onPressed: basket.clear,
                       child: const Text('Temizle'),
                     ),
+                  ],
                 ],
               ),
             ),
@@ -61,21 +68,21 @@ class BasketScreen extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: AppColors.orangeSoft,
+                  color: palette.orangeSoft,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.bolt_rounded, color: AppColors.orange),
+                    Icon(Icons.bolt_rounded, color: palette.orange),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         basket.isEmpty
                             ? 'Ürün ekle, ${Market.all.length} marketten en düşük toplamı anında gör.'
-                            : 'Hazır olduğunda Karşılaştır sekmesine geç.',
-                        style: const TextStyle(
+                            : 'Hazır olduğunda Karşılaştır sekmesine geç veya sepetini kaydet.',
+                        style: TextStyle(
                           fontWeight: FontWeight.w700,
-                          color: AppColors.ink,
+                          color: palette.ink,
                           height: 1.3,
                         ),
                       ),
@@ -85,81 +92,103 @@ class BasketScreen extends StatelessWidget {
               ),
             ),
             Expanded(
-              child: basket.isEmpty
-                  ? const _EmptyState()
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
-                      itemCount: basket.items.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 8),
-                      itemBuilder: (context, index) {
-                        final item = basket.items[index];
-                        return Container(
-                          padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 44,
-                                height: 44,
-                                decoration: BoxDecoration(
-                                  color: AppColors.greenSoft,
-                                  borderRadius: BorderRadius.circular(12),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 220),
+                child: basket.isEmpty
+                    ? const _EmptyState(key: ValueKey('empty'))
+                    : ListView.separated(
+                        key: const ValueKey('list'),
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
+                        itemCount: basket.items.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        itemBuilder: (context, index) {
+                          final item = basket.items[index];
+                          return TweenAnimationBuilder<double>(
+                            tween: Tween(begin: 0, end: 1),
+                            duration: Duration(
+                              milliseconds: 220 + (index * 30).clamp(0, 180),
+                            ),
+                            curve: Curves.easeOutCubic,
+                            builder: (context, value, child) {
+                              return Opacity(
+                                opacity: value,
+                                child: Transform.translate(
+                                  offset: Offset(0, 12 * (1 - value)),
+                                  child: child,
                                 ),
-                                child: const Icon(
-                                  Icons.inventory_2_outlined,
-                                  color: AppColors.greenDark,
-                                ),
+                              );
+                            },
+                            child: Container(
+                              padding:
+                                  const EdgeInsets.fromLTRB(14, 12, 10, 12),
+                              decoration: BoxDecoration(
+                                color: palette.surface,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: palette.border),
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      item.product.displayName,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 15,
-                                      ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 44,
+                                    height: 44,
+                                    decoration: BoxDecoration(
+                                      color: palette.greenSoft,
+                                      borderRadius: BorderRadius.circular(12),
                                     ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      item.product.brand == null
-                                          ? item.product.category
-                                          : '${item.product.brand} · ${item.product.category}',
-                                      style: const TextStyle(
-                                        color: AppColors.inkMuted,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                      ),
+                                    child: Icon(
+                                      Icons.inventory_2_outlined,
+                                      color: palette.onGreenSoft,
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          item.product.displayName,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 15,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          item.product.brand == null
+                                              ? item.product.category
+                                              : '${item.product.brand} · ${item.product.category}',
+                                          style: TextStyle(
+                                            color: palette.inkMuted,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  QuantityStepper(
+                                    value: item.quantity,
+                                    onChanged: (q) => basket.setQuantity(
+                                      item.product.id,
+                                      q,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    onPressed: () => basket
+                                        .removeProduct(item.product.id),
+                                    icon: Icon(
+                                      Icons.close_rounded,
+                                      color: palette.inkMuted,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              QuantityStepper(
-                                value: item.quantity,
-                                onChanged: (q) => basket.setQuantity(
-                                  item.product.id,
-                                  q,
-                                ),
-                              ),
-                              IconButton(
-                                onPressed: () =>
-                                    basket.removeProduct(item.product.id),
-                                icon: const Icon(
-                                  Icons.close_rounded,
-                                  color: AppColors.inkMuted,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
             ),
           ],
         ),
@@ -188,7 +217,6 @@ class BasketScreen extends StatelessWidget {
                             content: Text(
                               controller.error ?? 'Fiyatlar alınamadı.',
                             ),
-                            behavior: SnackBarBehavior.floating,
                           ),
                         );
                         return;
@@ -196,12 +224,12 @@ class BasketScreen extends StatelessWidget {
                       onOpenCompareTab();
                     },
               child: basket.comparing
-                  ? const SizedBox(
+                  ? SizedBox(
                       height: 22,
                       width: 22,
                       child: CircularProgressIndicator(
                         strokeWidth: 2.4,
-                        color: Colors.white,
+                        color: palette.onAccent,
                       ),
                     )
                   : Text(
@@ -215,13 +243,31 @@ class BasketScreen extends StatelessWidget {
       ),
     );
   }
+
+  Future<void> _saveBasket(BuildContext context) async {
+    final controller = context.read<BasketController>();
+    final messenger = ScaffoldMessenger.of(context);
+    final name = await showNamePromptDialog(
+      context,
+      title: 'Sepeti kaydet',
+      confirmLabel: 'Kaydet',
+    );
+    if (name == null) return;
+    final saved = controller.saveCurrentBasket(name);
+    if (saved == null) return;
+    messenger.showSnackBar(
+      SnackBar(content: Text('“${saved.name}” kaydedildi')),
+    );
+  }
 }
 
 class _EmptyState extends StatelessWidget {
-  const _EmptyState();
+  const _EmptyState({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -232,13 +278,13 @@ class _EmptyState extends StatelessWidget {
               width: 88,
               height: 88,
               decoration: BoxDecoration(
-                color: AppColors.greenSoft,
+                color: palette.greenSoft,
                 borderRadius: BorderRadius.circular(28),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.playlist_add_rounded,
                 size: 44,
-                color: AppColors.green,
+                color: palette.green,
               ),
             ),
             const SizedBox(height: 18),
@@ -252,8 +298,8 @@ class _EmptyState extends StatelessWidget {
             Text(
               'Alışveriş listeni oluştur.\nMigros, BİM, A101, Şok, Macrocenter ve\n${Market.all.length} markette fiyatları karşılaştır.',
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: AppColors.inkMuted,
+              style: TextStyle(
+                color: palette.inkMuted,
                 height: 1.45,
                 fontWeight: FontWeight.w600,
               ),

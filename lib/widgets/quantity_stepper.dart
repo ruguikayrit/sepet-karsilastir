@@ -16,7 +16,7 @@ class QuantityStepper extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.greenSoft,
+        color: context.palette.greenSoft,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -28,11 +28,19 @@ class QuantityStepper extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: Text(
-              '$value',
-              style: const TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 15,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 160),
+              transitionBuilder: (child, animation) => ScaleTransition(
+                scale: animation,
+                child: FadeTransition(opacity: animation, child: child),
+              ),
+              child: Text(
+                '$value',
+                key: ValueKey(value),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
+                ),
               ),
             ),
           ),
@@ -59,7 +67,7 @@ class _Btn extends StatelessWidget {
       borderRadius: BorderRadius.circular(12),
       child: Padding(
         padding: const EdgeInsets.all(8),
-        child: Icon(icon, size: 18, color: AppColors.greenDark),
+        child: Icon(icon, size: 18, color: context.palette.onGreenSoft),
       ),
     );
   }

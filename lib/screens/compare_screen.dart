@@ -5,6 +5,7 @@ import '../models/comparison_result.dart';
 import '../models/market.dart';
 import '../state/basket_controller.dart';
 import '../theme/app_theme.dart';
+import '../utils/dates.dart';
 import '../utils/money.dart';
 import '../widgets/market_badge.dart';
 
@@ -30,20 +31,29 @@ class CompareScreen extends StatelessWidget {
             ),
         ],
       ),
-      body: basket.comparing && result == null
-          ? const _LoadingView()
-          : result == null
-              ? const _EmptyCompare()
-              : _ResultBody(result: result, refreshing: basket.comparing),
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 250),
+        child: basket.comparing && result == null
+            ? const _LoadingView(key: ValueKey('loading'))
+            : result == null
+                ? const _EmptyCompare(key: ValueKey('empty'))
+                : _ResultBody(
+                    key: const ValueKey('result'),
+                    result: result,
+                    refreshing: basket.comparing,
+                  ),
+      ),
     );
   }
 }
 
 class _EmptyCompare extends StatelessWidget {
-  const _EmptyCompare();
+  const _EmptyCompare({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -54,13 +64,13 @@ class _EmptyCompare extends StatelessWidget {
               width: 88,
               height: 88,
               decoration: BoxDecoration(
-                color: AppColors.greenSoft,
+                color: palette.greenSoft,
                 borderRadius: BorderRadius.circular(28),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.compare_arrows_rounded,
                 size: 44,
-                color: AppColors.green,
+                color: palette.green,
               ),
             ),
             const SizedBox(height: 18),
@@ -71,11 +81,11 @@ class _EmptyCompare extends StatelessWidget {
                   ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Sepete ürün ekleyip “Marketleri karşılaştır”\nbutonuna basarak sonucu burada gör.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: AppColors.inkMuted,
+                color: palette.inkMuted,
                 height: 1.45,
                 fontWeight: FontWeight.w600,
               ),
@@ -88,10 +98,12 @@ class _EmptyCompare extends StatelessWidget {
 }
 
 class _LoadingView extends StatelessWidget {
-  const _LoadingView();
+  const _LoadingView({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -112,7 +124,7 @@ class _LoadingView extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             '${Market.all.length} market taranıyor',
-            style: const TextStyle(color: AppColors.inkMuted),
+            style: TextStyle(color: palette.inkMuted),
           ),
         ],
       ),
@@ -121,13 +133,18 @@ class _LoadingView extends StatelessWidget {
 }
 
 class _ResultBody extends StatelessWidget {
-  const _ResultBody({required this.result, required this.refreshing});
+  const _ResultBody({
+    super.key,
+    required this.result,
+    required this.refreshing,
+  });
 
   final ComparisonResult result;
   final bool refreshing;
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     final ranked = result.ranked;
     final winner = result.cheapestComplete;
     final savings = result.savingsVsMostExpensive;
@@ -147,16 +164,16 @@ class _ResultBody extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Güncellendi: ${_timeLabel(result.comparedAt)}'
+              'Güncellendi: ${formatClock(result.comparedAt)}'
               ' · ${result.source == PriceSource.live ? 'Canlı' : 'Demo'}',
-              style: const TextStyle(color: AppColors.inkMuted, fontSize: 13),
+              style: TextStyle(color: palette.inkMuted, fontSize: 13),
             ),
             if (result.failedMarketCount > 0) ...[
               const SizedBox(height: 8),
               Text(
                 '${result.failedMarketCount} market yanıt vermedi',
-                style: const TextStyle(
-                  color: AppColors.danger,
+                style: TextStyle(
+                  color: palette.danger,
                   fontWeight: FontWeight.w700,
                   fontSize: 13,
                 ),
@@ -189,9 +206,7 @@ class _ResultBody extends StatelessWidget {
                   ),
             ),
             const SizedBox(height: 10),
-            ...ranked.map(
-              (b) => _MarketBreakdown(basket: b),
-            ),
+            ...ranked.map((b) => _MarketBreakdown(basket: b)),
           ],
         ),
         if (refreshing)
@@ -204,12 +219,6 @@ class _ResultBody extends StatelessWidget {
       ],
     );
   }
-
-  String _timeLabel(DateTime dt) {
-    final h = dt.hour.toString().padLeft(2, '0');
-    final m = dt.minute.toString().padLeft(2, '0');
-    return '$h:$m';
-  }
 }
 
 class _WinnerCard extends StatelessWidget {
@@ -220,19 +229,17 @@ class _WinnerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.green, AppColors.greenDark],
-        ),
+        gradient: palette.accentGradient,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.green.withValues(alpha: 0.28),
+            color: palette.green.withValues(alpha: 0.28),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -247,13 +254,13 @@ class _WinnerCard extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.18),
+                  color: palette.onAccent.withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Text(
+                child: Text(
                   'EN KARLI',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: palette.onAccent,
                     fontWeight: FontWeight.w800,
                     fontSize: 12,
                     letterSpacing: 0.6,
@@ -267,8 +274,8 @@ class _WinnerCard extends StatelessWidget {
           const SizedBox(height: 14),
           Text(
             winner.market.name,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: palette.onAccent,
               fontSize: 26,
               fontWeight: FontWeight.w800,
               height: 1.1,
@@ -277,8 +284,8 @@ class _WinnerCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             formatTry(winner.total),
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: palette.onAccent,
               fontSize: 34,
               fontWeight: FontWeight.w800,
               height: 1.05,
@@ -289,7 +296,7 @@ class _WinnerCard extends StatelessWidget {
             Text(
               'En pahalı markete göre ${formatTry(savings!)} tasarruf',
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.9),
+                color: palette.onAccent.withValues(alpha: 0.9),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -315,21 +322,25 @@ class _MarketRankTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isBest ? AppColors.greenSoft : AppColors.surface,
+        color: isBest ? palette.greenSoft : palette.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isBest ? AppColors.green.withValues(alpha: 0.35) : AppColors.border,
+          color: isBest
+              ? palette.green.withValues(alpha: 0.35)
+              : palette.border,
         ),
       ),
       child: Row(
         children: [
           CircleAvatar(
             radius: 16,
-            backgroundColor: isBest ? AppColors.green : AppColors.cream,
-            foregroundColor: isBest ? Colors.white : AppColors.inkMuted,
+            backgroundColor: isBest ? palette.green : palette.background,
+            foregroundColor: isBest ? palette.onAccent : palette.inkMuted,
             child: Text(
               '$rank',
               style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
@@ -342,7 +353,10 @@ class _MarketRankTile extends StatelessWidget {
               children: [
                 Text(
                   basket.market.name,
-                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -353,8 +367,8 @@ class _MarketRankTile extends StatelessWidget {
                           : '${basket.market.segment.label} · ${basket.missingCount} ürün yok',
                   style: TextStyle(
                     color: basket.fetchFailed || !basket.isComplete
-                        ? AppColors.danger
-                        : AppColors.inkMuted,
+                        ? palette.danger
+                        : palette.inkMuted,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
@@ -370,14 +384,14 @@ class _MarketRankTile extends StatelessWidget {
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 17,
-                  color: isBest ? AppColors.best : AppColors.ink,
+                  color: isBest ? palette.best : palette.ink,
                 ),
               ),
               if (!basket.fetchFailed && delta != null && delta! > 0)
                 Text(
                   '+${formatTry(delta!)}',
-                  style: const TextStyle(
-                    color: AppColors.inkMuted,
+                  style: TextStyle(
+                    color: palette.inkMuted,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -397,12 +411,14 @@ class _MarketBreakdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: palette.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: palette.border),
       ),
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
@@ -434,9 +450,7 @@ class _MarketBreakdown extends StatelessWidget {
                     child: Text(
                       '${line.product.displayName} ×${line.quantity}',
                       style: TextStyle(
-                        color: line.available
-                            ? AppColors.ink
-                            : AppColors.inkMuted,
+                        color: line.available ? palette.ink : palette.inkMuted,
                         decoration: line.available
                             ? null
                             : TextDecoration.lineThrough,
@@ -447,9 +461,7 @@ class _MarketBreakdown extends StatelessWidget {
                     line.available ? formatTry(line.lineTotal) : 'Yok',
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
-                      color: line.available
-                          ? AppColors.ink
-                          : AppColors.danger,
+                      color: line.available ? palette.ink : palette.danger,
                     ),
                   ),
                 ],

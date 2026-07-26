@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../config/app_config.dart';
+import '../models/market.dart';
+import '../state/settings_controller.dart';
 import '../theme/app_theme.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -8,6 +11,9 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+    final settings = context.watch<SettingsController>();
+
     return Scaffold(
       body: SafeArea(
         child: ListView(
@@ -20,14 +26,38 @@ class SettingsScreen extends StatelessWidget {
                   ),
             ),
             const SizedBox(height: 6),
-            const Text(
-              'Uygulama ve fiyat kaynağı tercihleri',
+            Text(
+              'Görünüm ve fiyat kaynağı tercihleri',
               style: TextStyle(
-                color: AppColors.inkMuted,
+                color: palette.inkMuted,
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 20),
+            _SectionCard(
+              title: 'Görünüm',
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: SegmentedButton<ThemeMode>(
+                    segments: ThemeMode.values
+                        .map(
+                          (mode) => ButtonSegment(
+                            value: mode,
+                            label: Text(mode.label),
+                            icon: Icon(mode.icon, size: 18),
+                          ),
+                        )
+                        .toList(),
+                    selected: {settings.themeMode},
+                    showSelectedIcon: false,
+                    onSelectionChanged: (selection) =>
+                        settings.setThemeMode(selection.first),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
             _SectionCard(
               title: 'Fiyat kaynağı',
               children: [
@@ -42,6 +72,10 @@ class SettingsScreen extends StatelessWidget {
                 _InfoRow(
                   label: 'Bölge',
                   value: AppConfig.defaultRegion,
+                ),
+                _InfoRow(
+                  label: 'Market',
+                  value: '${Market.all.length} zincir',
                 ),
               ],
             ),
@@ -61,16 +95,20 @@ class SettingsScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: AppColors.greenSoft,
+                color: palette.greenSoft,
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: const Text(
-                'Canlı fiyat için --dart-define=USE_LIVE_PRICES=true '
-                've API_BASE_URL ile çalıştırın.',
+              child: Text(
+                AppConfig.useLivePrices
+                    ? 'Canlı fiyat modu açık. Backend yanıt vermezse kısmi '
+                        'sonuçlar gösterilir.'
+                    : 'Şu an demo fiyatlar kullanılıyor. Canlı fiyat için '
+                        '--dart-define=USE_LIVE_PRICES=true ve API_BASE_URL '
+                        'ile çalıştırın.',
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   height: 1.4,
-                  color: AppColors.greenDark,
+                  color: palette.onGreenSoft,
                 ),
               ),
             ),
@@ -89,13 +127,15 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: palette.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: palette.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -120,6 +160,8 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -129,8 +171,8 @@ class _InfoRow extends StatelessWidget {
             width: 78,
             child: Text(
               label,
-              style: const TextStyle(
-                color: AppColors.inkMuted,
+              style: TextStyle(
+                color: palette.inkMuted,
                 fontWeight: FontWeight.w700,
               ),
             ),
