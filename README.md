@@ -100,7 +100,10 @@ Tek market düşse bile diğerleri gösterilir. Aynı sepet teklifleri ~45 sn
 - Fiyatı okunamayan satır "Fiyat yok" kalır; tahmin üretilmez ve toplama
   eklenmez
 - Listeyi eksiksiz karşılamayan market "en ucuz" sayılmaz
-- Marka seçimli sepet (aynı ürün tipi + farklı marka = ayrı satır)
+- Marka seçimli sepet (aynı ürün tipi + farklı marka = ayrı satır); marka
+  listesinde her markanın kaç markette fiyatlandığı yazar
+- "Markasız" satırda her market o gramajdaki kendi ürününü gösterir; hangi ürün
+  olduğu satırın altında görünür
 - Sepet kalıcılığı, kayıtlı listeler ve karşılaştırma geçmişi
 - Açık / koyu / sistem teması
 
@@ -114,6 +117,11 @@ Bir kayıt yalnızca üçü birlikte doğrulandığında oluşur — ad, adres, 
 marka, çeşit, gramaj katalogdaki satırla birebir aynı olmak zorundadır. Kaydı
 olmayan satır uygulamada fiyatsız görünür.
 
+Son adım ürünün kendi sayfasında geçer: araç adresi açar, ürün adını sayfadan
+okur, tutarın o sayfada yazdığını görür ve adın hâlâ katalog satırının çeşidini
+ve gramajını taşıdığını denetler. Geçemeyen kayıt deftere girmez — böylece
+"satıra dokun, aynı fiyatı gör" sözü her çekimde sınanmış olur.
+
 | Market | Durum |
 | --- | --- |
 | [Şok](https://www.sokmarket.com.tr) | ürün sayfası + fiyat okunuyor |
@@ -125,9 +133,15 @@ olmayan satır uygulamada fiyatsız görünür.
 | A101, CarrefourSA, Metro, Getir | site otomatik erişimi engelliyor |
 | File, Onur | sitesinde ürün fiyatı yayınlanmıyor |
 
-Fiyat yayınlamayan zincirler karşılaştırmaya girmez; uygulama sebebini ekranda
-yazar. Nedenler `lib/models/market.dart` içindeki `noPriceReason` alanında ve
+Karşılaştırma, o günün defterinde fiyatı olan marketleri kapsar. Fiyat
+yayınlamayan zincir de, o gün sitesi yanıt vermeyen market de listeye girmez;
+uygulama ikisini de sebebiyle birlikte ekranda yazar. Nedenler
+`lib/models/market.dart` içindeki `noPriceReason` alanında ve
 `tools/price_sync/markets.py` içindeki `UNSUPPORTED` listesinde tutulur.
+
+Migros'un arama servisi yalnızca bazı ağlardan yanıt veriyor: GitHub
+runner'ından çalışıyor, geliştirme makinelerinin çoğundan 403 dönüyor. Bu yüzden
+günlük iş CI'da koşar.
 
 ### Fiyatları yenile
 
@@ -135,6 +149,10 @@ yazar. Nedenler `lib/models/market.dart` içindeki `noPriceReason` alanında ve
 python3 tools/price_sync/sync.py              # bütün marketler
 python3 tools/price_sync/sync.py --markets sok
 python3 tools/price_sync/sync.py --offline    # ağa çıkmadan yeniden eşleştir
+python3 tools/price_sync/sync.py --no-verify  # sayfa doğrulamasını atla (hızlı)
+
+# Tek marketi yenile, ötekilerin kayıtlarını aynı günün defterinden devral
+python3 tools/price_sync/sync.py --markets sok --merge-from lib/data/price_book.dart
 ```
 
 Yeni defter eskisinin %70'inden azını taşıyorsa araç yazmayı reddeder: bir

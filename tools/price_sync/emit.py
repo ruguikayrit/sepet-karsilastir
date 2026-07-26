@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from datetime import date
 from pathlib import Path
 
@@ -55,6 +56,65 @@ const priceBookMarkets = <MarketId>[
 /// `ürün tipi__marka` -> market -> o marketteki ürün ve fiyatı.
 const priceBook = <String, Map<MarketId, MarketOffer>>{{
 '''
+
+
+_ENTRY = re.compile(r"^  '((?:[^'\\]|\\.)*)': \{$")
+_OFFER = re.compile(
+    r"^    MarketId\.(\w+): MarketOffer\($"
+)
+_FIELD = re.compile(r"^      (\w+): (.*),$")
+_FETCHED_AT = re.compile(r"^const priceBookFetchedAt = '([^']*)';$", re.M)
+
+
+def _unquote(value: str) -> str:
+    if value.startswith("'") and value.endswith("'"):
+        inner = value[1:-1]
+        return re.sub(r'\\(.)', r'\1', inner)
+    return value
+
+
+def read_dart(path: Path) -> tuple[str, dict[str, dict[str, Offer]]]:
+    """Üretilmiş fiyat defterini geri okur.
+
+    Tek bir marketi yenilerken ötekilerin kayıtlarını korumak için gerekiyor
+    (`--merge-from`). Dosya bu araç tarafından üretildiği için biçimi sabit.
+    """
+    source = path.read_text(encoding='utf-8')
+    fetched_at_match = _FETCHED_AT.search(source)
+    fetched_at = fetched_at_match.group(1) if fetched_at_match else ''
+
+    book: dict[str, dict[str, Offer]] = {}
+    product: str | None = None
+    market: str | None = None
+    fields: dict[str, str] = {}
+
+    def flush() -> None:
+        if product is None or market is None or not fields:
+            return
+        book.setdefault(product, {})[market] = Offer(
+            market=market,
+            name=_unquote(fields['product']),
+            url=_unquote(fields['url']),
+            price=float(fields['price']),
+            in_stock=fields.get('inStock', 'true') == 'true',
+        )
+
+    for line in source.splitlines():
+        entry = _ENTRY.match(line)
+        if entry:
+            flush()
+            product, market, fields = _unquote(f"'{entry.group(1)}'"), None, {}
+            continue
+        offer = _OFFER.match(line)
+        if offer:
+            flush()
+            market, fields = offer.group(1), {}
+            continue
+        field = _FIELD.match(line)
+        if field and market:
+            fields[field.group(1)] = field.group(2)
+    flush()
+    return fetched_at, book
 
 
 def dart_string(value: str) -> str:

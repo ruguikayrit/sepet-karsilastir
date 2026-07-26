@@ -29,6 +29,7 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, replace
+from datetime import date
 from pathlib import Path
 
 if __package__ in (None, ''):  # doğrudan `python3 tools/price_sync/sync.py`
@@ -36,7 +37,7 @@ if __package__ in (None, ''):  # doğrudan `python3 tools/price_sync/sync.py`
     from price_sync.catalog import (  # noqa: E402
         GENERIC_BRAND, REPO, load_catalog, product_id, slug,
     )
-    from price_sync.emit import write_dart  # noqa: E402
+    from price_sync.emit import read_dart, write_dart  # noqa: E402
     from price_sync.markets import (  # noqa: E402
         ADAPTERS, FetchError, price_on_page,
     )
@@ -47,7 +48,7 @@ if __package__ in (None, ''):  # doğrudan `python3 tools/price_sync/sync.py`
     from price_sync.rules import RULES  # noqa: E402
 else:
     from .catalog import GENERIC_BRAND, REPO, load_catalog, product_id, slug
-    from .emit import write_dart
+    from .emit import read_dart, write_dart
     from .markets import ADAPTERS, FetchError, price_on_page
     from .matching import (
         Offer, brand_of, brand_position, choose_shared_variant, matches_rule,
@@ -332,6 +333,36 @@ def confirm_book(book: dict[str, dict[str, Offer]], catalog, jobs: int,
     return confirmed
 
 
+def merge(book: dict[str, dict[str, Offer]], source: Path, *,
+          fetched: list[str],
+          fetched_at: str) -> dict[str, dict[str, Offer]] | None:
+    """Bu çekimde sorulmayan marketlerin kayıtlarını eski defterden devralır.
+
+    Tek bir marketi yenilemek için var: ötekiler yeniden çekilmez ama deftere
+    girmeye devam eder. Devralınan kayıtlar aynı günün çekiminden olmalı — bir
+    marketin fiyatını dün, ötekini bugün göstermek karşılaştırmayı bozar.
+    """
+    if not source.exists():
+        print(f'devralınacak defter yok: {source}', file=sys.stderr)
+        return None
+
+    source_date, previous = read_dart(source)
+    if source_date != fetched_at:
+        print(f'{source} {source_date} tarihli, bu çekim {fetched_at}; farklı '
+              'günlerin fiyatları karıştırılmaz', file=sys.stderr)
+        return None
+
+    carried = 0
+    for product, per_market in previous.items():
+        for market, offer in per_market.items():
+            if market in fetched:
+                continue
+            book.setdefault(product, {}).setdefault(market, offer)
+            carried += 1
+    print(f'  {source} defterinden {carried} kayıt devralındı')
+    return book
+
+
 def previous_offer_count(path: Path) -> int:
     """Yerinde duran defterin taşıdığı fiyat sayısı (yoksa 0)."""
     if not path.exists():
@@ -361,6 +392,9 @@ def main() -> int:
                         help='defter belirgin küçülse de yaz')
     parser.add_argument('--no-verify', action='store_true',
                         help='kayıtları ürün sayfasında doğrulamaz (hızlı)')
+    parser.add_argument('--merge-from', type=Path, default=None,
+                        help='çekilmeyen marketlerin kayıtlarını bu defterden '
+                             'devralır (aynı gün çekilmiş olmalı)')
     args = parser.parse_args()
 
     markets = [m.strip() for m in args.markets.split(',') if m.strip()]
@@ -394,9 +428,17 @@ def main() -> int:
               file=sys.stderr)
         return 1
 
+    fetched_at = args.fetched_at or date.today().isoformat()
+    if args.merge_from:
+        merged = merge(book, args.merge_from, fetched=markets,
+                       fetched_at=fetched_at)
+        if merged is None:
+            return 1
+        book = merged
+
     # Fiyat veremeyen market deftere yazılmaz: uygulamada boş bir sütun olarak
     # görünmesin.
-    active = [m for m in markets
+    active = [m for m in ADAPTERS
               if any(m in entry for entry in book.values())]
     offers = sum(len(entry) for entry in book.values())
 
@@ -415,7 +457,7 @@ def main() -> int:
         book,
         markets=active,
         labels={m: ADAPTERS[m].label for m in active},
-        fetched_at=args.fetched_at,
+        fetched_at=fetched_at,
     )
     print(f'{args.out}: {len(book)} satır, {offers} market fiyatı')
     return 0
