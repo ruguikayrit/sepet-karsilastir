@@ -455,8 +455,9 @@ class _MarketRankTile extends StatelessWidget {
         color: isBest ? palette.greenSoft : palette.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color:
-              isBest ? palette.green.withValues(alpha: 0.35) : palette.border,
+          color: isBest
+              ? palette.green.withValues(alpha: 0.35)
+              : palette.border,
         ),
       ),
       child: Row(
@@ -669,8 +670,9 @@ class _ProductPriceRow extends StatelessWidget {
                     decoration: line.available
                         ? (hasLink ? TextDecoration.underline : null)
                         : TextDecoration.lineThrough,
-                    decorationColor:
-                        hasLink ? palette.ink.withValues(alpha: 0.35) : null,
+                    decorationColor: hasLink
+                        ? palette.ink.withValues(alpha: 0.35)
+                        : null,
                   ),
                 ),
               ),

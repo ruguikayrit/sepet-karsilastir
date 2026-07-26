@@ -19,18 +19,14 @@ class FoodBrand {
 const foodBrands = <FoodBrand>[
   // Süt & Kahvaltı
   FoodBrand(id: 'icim', name: 'İçim', categories: ['Süt & Kahvaltı']),
-  FoodBrand(
-      id: 'pinar', name: 'Pınar', categories: ['Süt & Kahvaltı', 'Et & Tavuk']),
+  FoodBrand(id: 'pinar', name: 'Pınar', categories: ['Süt & Kahvaltı', 'Et & Tavuk']),
   FoodBrand(id: 'sutas', name: 'Sütaş', categories: ['Süt & Kahvaltı']),
   FoodBrand(id: 'sek', name: 'Sek', categories: ['Süt & Kahvaltı']),
   FoodBrand(id: 'eker', name: 'Eker', categories: ['Süt & Kahvaltı']),
   FoodBrand(id: 'danone', name: 'Danone', categories: ['Süt & Kahvaltı']),
   FoodBrand(id: 'dost', name: 'Dost', categories: ['Süt & Kahvaltı']),
   FoodBrand(id: 'bahcivan', name: 'Bahçıvan', categories: ['Süt & Kahvaltı']),
-  FoodBrand(
-      id: 'tahsildaroglu',
-      name: 'Tahsildaroğlu',
-      categories: ['Süt & Kahvaltı']),
+  FoodBrand(id: 'tahsildaroglu', name: 'Tahsildaroğlu', categories: ['Süt & Kahvaltı']),
   FoodBrand(id: 'muratbey', name: 'Muratbey', categories: ['Süt & Kahvaltı']),
   FoodBrand(id: 'pak', name: 'Pak', categories: ['Süt & Kahvaltı']),
   FoodBrand(id: 'mis', name: 'Mis', categories: ['Süt & Kahvaltı', 'İçecek']),
@@ -52,8 +48,7 @@ const foodBrands = <FoodBrand>[
   FoodBrand(id: 'ankara', name: 'Ankara', categories: ['Temel Gıda']),
   FoodBrand(id: 'barilla', name: 'Barilla', categories: ['Temel Gıda']),
   FoodBrand(id: 'filiz', name: 'Filiz', categories: ['Temel Gıda']),
-  FoodBrand(
-      id: 'nuhun-ankara', name: "Nuh'un Ankara", categories: ['Temel Gıda']),
+  FoodBrand(id: 'nuhun-ankara', name: "Nuh'un Ankara", categories: ['Temel Gıda']),
   FoodBrand(id: 'pastavilla', name: 'Pastavilla', categories: ['Temel Gıda']),
   FoodBrand(
     id: 'anadolu-mutfagi',
@@ -94,8 +89,7 @@ const foodBrands = <FoodBrand>[
   FoodBrand(id: 'hayat', name: 'Hayat', categories: ['İçecek']),
   FoodBrand(id: 'saka', name: 'Saka', categories: ['İçecek']),
   FoodBrand(id: 'kardelen', name: 'Kardelen', categories: ['İçecek']),
-  FoodBrand(
-      id: 'nestle-water', name: 'Nestlé Pure Life', categories: ['İçecek']),
+  FoodBrand(id: 'nestle-water', name: 'Nestlé Pure Life', categories: ['İçecek']),
   FoodBrand(id: 'coca-cola', name: 'Coca-Cola', categories: ['İçecek']),
   FoodBrand(id: 'fanta', name: 'Fanta', categories: ['İçecek']),
   FoodBrand(id: 'uludag', name: 'Uludağ', categories: ['İçecek']),

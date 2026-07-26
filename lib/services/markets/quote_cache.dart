@@ -19,7 +19,9 @@ class QuoteCache {
     String? region,
     String? storeId,
   }) {
-    final parts = items.map((i) => '${i.product.id}:${i.quantity}').toList()
+    final parts = items
+        .map((i) => '${i.product.id}:${i.quantity}')
+        .toList()
       ..sort();
     return '${marketId.name}|${region ?? ''}|${storeId ?? ''}|${parts.join(',')}';
   }

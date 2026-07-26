@@ -27,8 +27,7 @@ Set<String> normalizedQuantities(String text) {
       _ => ('ml', 1),
     };
     final value = amount * factor;
-    found
-        .add('$base:${value == value.roundToDouble() ? value.round() : value}');
+    found.add('$base:${value == value.roundToDouble() ? value.round() : value}');
   }
   return found;
 }

@@ -15,8 +15,7 @@ void main() {
   test('katalog resmi market fiyat snapshot’ı ile genişletildi', () {
     expect(productTypes.length, greaterThanOrEqualTo(70));
     expect(marketPriceSnapshot.length, productTypes.length);
-    expect(
-        marketPriceSnapshotSources, contains('https://www.sokmarket.com.tr'));
+    expect(marketPriceSnapshotSources, contains('https://www.sokmarket.com.tr'));
     expect(marketPriceSnapshotSources, contains('https://happycenter.com.tr'));
 
     for (final type in productTypes) {
@@ -189,8 +188,7 @@ void main() {
 
   test('yeni kategoriler için marka önerisi var', () {
     expect(brandsForCategory('Konserve'), isNotEmpty);
-    expect(
-        brandsForCategory('Dondurma').map((b) => b.name), contains('Algida'));
+    expect(brandsForCategory('Dondurma').map((b) => b.name), contains('Algida'));
     expect(brandsForCategory('Bebek').map((b) => b.name), contains('Sleepy'));
   });
 
@@ -212,8 +210,8 @@ void main() {
   test('doğrulanmış market satırı gerçek fiyatı gösterir', () async {
     final entry = marketProductSnapshot.entries
         .firstWhere((e) => e.value.sok != null && e.value.sok!.inStock);
-    final type =
-        productTypes.firstWhere((t) => t.id == entry.key.split('__').first);
+    final type = productTypes
+        .firstWhere((t) => t.id == entry.key.split('__').first);
     final brand = foodBrands
         .firstWhere((b) => type.withBrand(b.name).id == entry.key)
         .name;
@@ -251,8 +249,9 @@ void main() {
   });
 
   test('bilinen Şok markası doğrudan ürün sayfasına gider', () {
-    final cheese =
-        productTypes.firstWhere((t) => t.id == 'kasar-500').withBrand('Sütaş');
+    final cheese = productTypes
+        .firstWhere((t) => t.id == 'kasar-500')
+        .withBrand('Sütaş');
     final link = ProductSourceUrl.resolve(
       marketId: MarketId.sok,
       product: cheese,

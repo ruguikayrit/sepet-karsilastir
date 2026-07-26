@@ -42,8 +42,8 @@ void main() {
       containsAll([MarketId.macrocenter, MarketId.bim, MarketId.tarimKredi]),
     );
 
-    final macro =
-        result.baskets.firstWhere((b) => b.market.id == MarketId.macrocenter);
+    final macro = result.baskets
+        .firstWhere((b) => b.market.id == MarketId.macrocenter);
     final bim = result.baskets.firstWhere((b) => b.market.id == MarketId.bim);
     expect(macro.total, greaterThan(bim.total));
   });

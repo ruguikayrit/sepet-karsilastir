@@ -175,8 +175,8 @@ class BasketScreen extends StatelessWidget {
                                     ),
                                   ),
                                   IconButton(
-                                    onPressed: () =>
-                                        basket.removeProduct(item.product.id),
+                                    onPressed: () => basket
+                                        .removeProduct(item.product.id),
                                     icon: Icon(
                                       Icons.close_rounded,
                                       color: palette.inkMuted,

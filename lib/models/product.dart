@@ -56,8 +56,9 @@ class Product {
   final String unit;
   final String? brand;
 
-  String get displayName =>
-      brand == null || brand!.isEmpty ? name : '$brand $name';
+  String get displayName => brand == null || brand!.isEmpty
+      ? name
+      : '$brand $name';
 
   Map<String, dynamic> toJson() => {
         'id': id,

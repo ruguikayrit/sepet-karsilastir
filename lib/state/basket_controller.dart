@@ -241,5 +241,6 @@ class BasketController extends ChangeNotifier {
   void _persistBasket() => _repository.saveBasket(_items);
 
   int _idCounter = 0;
-  String _newId() => '${DateTime.now().microsecondsSinceEpoch}-${_idCounter++}';
+  String _newId() =>
+      '${DateTime.now().microsecondsSinceEpoch}-${_idCounter++}';
 }

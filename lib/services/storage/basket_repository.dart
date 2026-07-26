@@ -23,7 +23,8 @@ class BasketRepository {
 
   final KeyValueStore _store;
 
-  List<ListItem> loadBasket() => _decodeList(_basketKey, ListItem.fromJson);
+  List<ListItem> loadBasket() =>
+      _decodeList(_basketKey, ListItem.fromJson);
 
   Future<void> saveBasket(List<ListItem> items) =>
       _encodeList(_basketKey, items.map((e) => e.toJson()).toList());

@@ -184,8 +184,10 @@ class _SavedListCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    final preview =
-        list.items.take(3).map((i) => i.product.displayName).join(' · ');
+    final preview = list.items
+        .take(3)
+        .map((i) => i.product.displayName)
+        .join(' · ');
 
     return Material(
       color: palette.surface,

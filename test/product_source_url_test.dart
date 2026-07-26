@@ -179,8 +179,7 @@ void main() {
       product: product,
     );
     expect(link.kind, ProductLinkKind.search);
-    expect(
-        link.url, isNot(contains(marketPriceSnapshot['kasar-500']!.sokPath!)));
+    expect(link.url, isNot(contains(marketPriceSnapshot['kasar-500']!.sokPath!)));
     expect(Uri.parse(link.url).queryParameters['q'], contains('Bahçıvan'));
   });
 
