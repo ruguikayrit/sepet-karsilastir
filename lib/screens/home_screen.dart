@@ -244,7 +244,11 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             ...MarketSegment.values.map((segment) {
-              final markets = Market.bySegment(segment);
+              // Yalnızca fiyatını yayınlayanlar: rozetler karşılaştırmaya
+              // giren marketleri göstermeli.
+              final markets = Market.bySegment(segment)
+                  .where((m) => m.publishesPrices)
+                  .toList();
               if (markets.isEmpty) return const SizedBox.shrink();
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12),
