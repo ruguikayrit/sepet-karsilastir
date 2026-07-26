@@ -15,7 +15,8 @@ REPO = Path(__file__).resolve().parents[2]
 CATALOG_DART = REPO / 'lib' / 'data' / 'mock_catalog.dart'
 BRANDS_DART = REPO / 'lib' / 'data' / 'brands.dart'
 
-GENERIC_BRAND = 'Market markası'
+#: Katalogda marka yerine "marka seçme" anlamına gelen seçenek.
+GENERIC_BRAND = 'Markasız'
 
 
 def fold(text: str) -> str:

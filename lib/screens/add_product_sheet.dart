@@ -101,7 +101,11 @@ class _AddProductSheetState extends State<AddProductSheet> {
     }
 
     for (final brand in brands) {
-      basket.addProduct(type.withBrand(brand));
+      // "Markasız" bir marka değil: satır markasız kalır, her market kendi
+      // uygun ürününü gösterir.
+      basket.addProduct(
+        type.withBrand(brand == genericBrand ? null : brand),
+      );
     }
 
     if (!mounted) return;

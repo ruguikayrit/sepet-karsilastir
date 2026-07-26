@@ -53,7 +53,10 @@ class ProductSourceUrl {
     return '$brand ${product.name}';
   }
 
-  /// Markasız veya market markası satırı mı?
+  /// Marka belirtilmemiş satır mı?
+  ///
+  /// `market-markasi` artık katalogda yok; eski sepetlerden yüklenen satırlar
+  /// için tanınmaya devam ediyor.
   static bool isGenericBrand(String? brand) {
     if (brand == null || brand.trim().isEmpty) return true;
     final key = slugifyTurkish(brand);

@@ -10,6 +10,7 @@ Kapsam dışı kalan zincirler ve nedeni [UNSUPPORTED] içinde.
 from __future__ import annotations
 
 import gzip
+import html as html_lib
 import io
 import json
 import re
@@ -85,8 +86,32 @@ class MarketAdapter:
     host: str
     page_limit: int = 3
 
+    #: Sayfa başlığının sonuna eklenen site adı.
+    title_suffixes: tuple[str, ...] = ()
+
     def search(self, term: str, page: int) -> list[Offer]:
         raise NotImplementedError
+
+    def page(self, url: str) -> tuple[str, str]:
+        """Ürün sayfasının (başlık, aranabilir tüm içerik) hâli.
+
+        Doğrulama buradan yürür: kullanıcı bağlantıya dokunduğunda göreceği
+        ürün adı ve fiyat, sayfanın kendisinden okunur. İçerik etiketleriyle
+        birlikte taranıyor: bazı marketler fiyatı sayfaya gömülü JSON'dan
+        basıyor, görünür metinde durmuyor.
+        """
+        html = http_get(url, timeout=25, attempts=2)
+        return self.page_title(html), _flat(html)
+
+    def page_title(self, html: str) -> str:
+        """Sayfadaki ürün adı."""
+        return self._strip_suffix(_tag(html, 'h1') or _title_tag(html))
+
+    def _strip_suffix(self, title: str) -> str:
+        for suffix in self.title_suffixes:
+            if title.lower().endswith(suffix.lower()):
+                title = title[: -len(suffix)]
+        return title.strip(' -|·')
 
     def _offer(self, name: str, path: str, price: float, in_stock: bool,
                sold_by_weight: bool = False) -> Offer | None:
@@ -110,6 +135,7 @@ class SokAdapter(MarketAdapter):
     market = 'sok'
     label = 'Şok'
     host = 'https://www.sokmarket.com.tr'
+    title_suffixes = (' - Cepte Şok',)
 
     def search(self, term: str, page: int) -> list[Offer]:
         query = urllib.parse.quote(term)
@@ -186,6 +212,10 @@ class HakmarAdapter(MarketAdapter):
     host = 'https://www.hakmarexpress.com.tr'
     api = 'https://api.hakmarexpress.com.tr/api'
 
+    def page_title(self, html: str) -> str:
+        # Sayfadaki tek h1 "Tüm Kategoriler"; ürün adı og:title'da.
+        return self._strip_suffix(_meta_title(html) or _title_tag(html))
+
     def search(self, term: str, page: int) -> list[Offer]:
         query = urllib.parse.quote(term)
         raw = http_get(
@@ -240,12 +270,14 @@ class MigrosAdapter(MigrosPlatformAdapter):
     market = 'migros'
     label = 'Migros'
     host = 'https://www.migros.com.tr'
+    title_suffixes = (' | Migros', ' - Migros')
 
 
 class MacrocenterAdapter(MigrosPlatformAdapter):
     market = 'macrocenter'
     label = 'Macrocenter'
     host = 'https://www.macrocenter.com.tr'
+    title_suffixes = (' | Macroonline', ' | Macrocenter')
 
 
 ADAPTERS: dict[str, MarketAdapter] = {
@@ -258,6 +290,49 @@ ADAPTERS: dict[str, MarketAdapter] = {
         MacrocenterAdapter(),
     )
 }
+
+
+def price_on_page(text: str, price: float) -> bool:
+    """Bu tutar sayfada yazıyor mu?
+
+    Marketler binlik ayırıcıyı ve kuruşu farklı yazıyor ("1.600,00", "1600,00",
+    "554,9"); hepsini karşılayan bir kalıp kuruluyor.
+    """
+    lira, kurus = f'{price:.2f}'.split('.')
+    grouped = f'{int(lira):,}'.replace(',', '[.]?')
+    # Kuruş varsa sayfada da yazmalı; sıfırsa yazılıp yazılmaması serbest.
+    kurus_part = rf'[,.]{kurus[0]}(?:{kurus[1]})?' if kurus != '00' \
+        else r'(?:[,.]0{1,2})?'
+    return re.search(rf'(?<![0-9]){grouped}{kurus_part}(?![0-9])',
+                     text) is not None
+
+
+def _flat(html: str) -> str:
+    """Sayfanın tümü, tek satıra indirilmiş."""
+    return re.sub(r'\s+', ' ', html_lib.unescape(html))
+
+
+def _text(html: str) -> str:
+    without_script = re.sub(r'<(script|style)\b.*?</\1>', ' ', html,
+                            flags=re.S | re.I)
+    stripped = re.sub(r'<[^>]+>', ' ', without_script)
+    return re.sub(r'\s+', ' ', html_lib.unescape(stripped)).strip()
+
+
+def _tag(html: str, name: str) -> str:
+    match = re.search(rf'<{name}\b[^>]*>(.*?)</{name}>', html, re.S | re.I)
+    return _text(match.group(1)) if match else ''
+
+
+def _title_tag(html: str) -> str:
+    return _tag(html, 'title')
+
+
+def _meta_title(html: str) -> str:
+    match = re.search(
+        r'<meta[^>]+(?:property|name)=["\']og:title["\'][^>]+content=["\']'
+        r'([^"\']+)', html, re.I)
+    return html_lib.unescape(match.group(1)).strip() if match else ''
 
 
 def _walk_products(node: object) -> list[dict]:

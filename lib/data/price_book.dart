@@ -8,7 +8,7 @@
 /// olmayan satır uygulamada fiyatsız görünür; tahmin üretilmez.
 ///
 /// Kaynak: Şok, Happy Center, Hakmar Express, Macrocenter
-/// Çekim: 2026-07-26 · 370 ürün fiyatı, 208 satır
+/// Çekim: 2026-07-26 · 286 ürün fiyatı, 167 satır
 library;
 
 import '../models/market.dart';
@@ -85,28 +85,6 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
       price: 214.95,
     ),
   },
-  'aycicek-1l__market-markasi': {
-    MarketId.sok: MarketOffer(
-      product: 'Evin Ayçiçek Yağı 1 L',
-      url: 'https://www.sokmarket.com.tr/evin-aycicek-yagi-1-l-p-8747',
-      price: 122.0,
-    ),
-    MarketId.happyCenter: MarketOffer(
-      product: 'Yudum Ayçiçek Yağı 1 lt',
-      url: 'https://happycenter.com.tr/Yudum_Y_aycicek_Yagi_1_Lt',
-      price: 188.6,
-    ),
-    MarketId.hakmar: MarketOffer(
-      product: 'Yurda Ayçiçek Yağı 1 Lt',
-      url: 'https://www.hakmarexpress.com.tr/yurda-aycicek-yagi-1-lt-1013681-p',
-      price: 122.0,
-    ),
-    MarketId.macrocenter: MarketOffer(
-      product: 'Yudum Ayçiçek Yağı 1 L',
-      url: 'https://www.macrocenter.com.tr/yudum-aycicek-yagi-1-l-p-3eb841',
-      price: 214.95,
-    ),
-  },
   'aycicek-1l__yudum': {
     MarketId.happyCenter: MarketOffer(
       product: 'Yudum Ayçiçek Yağı 1 lt',
@@ -128,7 +106,7 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
   },
   'aycicek-5l__komili': {
     MarketId.happyCenter: MarketOffer(
-      product: 'Komili Ayçiçek Yağı  Kare Kubbeli Pet 5 lt.',
+      product: 'Komili Ayçiçek Yağı Kare Kubbeli Pet 5 lt.',
       url: 'https://happycenter.com.tr/komili-aycicek-yagi--kare-kubbeli-pet-5-lt-',
       price: 577.1,
     ),
@@ -140,24 +118,7 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
       price: 469.0,
     ),
     MarketId.happyCenter: MarketOffer(
-      product: 'Sırma Ayçiçek Yağı  Pet 5 Lt',
-      url: 'https://happycenter.com.tr/r-yudum-aycicek-yagi-1-lt-pet-4-al-3-ode',
-      price: 554.9,
-    ),
-    MarketId.hakmar: MarketOffer(
-      product: 'Kırlangıç Ayçiçek Yağı Pet 5 Lt',
-      url: 'https://www.hakmarexpress.com.tr/kirlangic-aycicek-yagi-pet-5-lt-1015500-p',
-      price: 495.0,
-    ),
-  },
-  'aycicek-5l__market-markasi': {
-    MarketId.sok: MarketOffer(
-      product: 'Evin Ayçiçek Yağı Pet 5 L',
-      url: 'https://www.sokmarket.com.tr/evin-aycicek-yagi-pet-5-l-p-6486',
-      price: 469.0,
-    ),
-    MarketId.happyCenter: MarketOffer(
-      product: 'Sırma Ayçiçek Yağı  Pet 5 Lt',
+      product: 'Sırma Ayçiçek Yağı Pet 5 Lt',
       url: 'https://happycenter.com.tr/r-yudum-aycicek-yagi-1-lt-pet-4-al-3-ode',
       price: 554.9,
     ),
@@ -169,19 +130,12 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
   },
   'aycicek-5l__yudum': {
     MarketId.happyCenter: MarketOffer(
-      product: 'Yudum Ayçiçek Yağı  Pet 5 Lt',
+      product: 'Yudum Ayçiçek Yağı Pet 5 Lt',
       url: 'https://happycenter.com.tr/Yudum_Aycicek_Yagi_5_Lt_Pet',
       price: 588.2,
     ),
   },
   'ayran-285__markasiz': {
-    MarketId.macrocenter: MarketOffer(
-      product: 'Sek Ayran 285 Ml',
-      url: 'https://www.macrocenter.com.tr/sek-ayran-285-ml-p-b04cf7',
-      price: 21.95,
-    ),
-  },
-  'ayran-285__market-markasi': {
     MarketId.macrocenter: MarketOffer(
       product: 'Sek Ayran 285 Ml',
       url: 'https://www.macrocenter.com.tr/sek-ayran-285-ml-p-b04cf7',
@@ -226,18 +180,6 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
       price: 129.95,
     ),
   },
-  'biber-1kg__market-markasi': {
-    MarketId.sok: MarketOffer(
-      product: 'Çarliston Biber Kg',
-      url: 'https://www.sokmarket.com.tr/carliston-biber-kg-p-34512',
-      price: 139.0,
-    ),
-    MarketId.macrocenter: MarketOffer(
-      product: 'Biber Çarliston Kg',
-      url: 'https://www.macrocenter.com.tr/biber-carliston-kg-p-1ac2646',
-      price: 129.95,
-    ),
-  },
   'bulasik-1500__bingo': {
     MarketId.sok: MarketOffer(
       product: 'Bingo Elde Bulaşık Deterjanı Limon 1500 Ml',
@@ -253,18 +195,6 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
     ),
   },
   'bulgur-1kg__markasiz': {
-    MarketId.happyCenter: MarketOffer(
-      product: 'Duru Köftelik Bulgur 1000 gr',
-      url: 'https://happycenter.com.tr/Duru_1000_Gr_Bkl_Bulgur_Koftelik_',
-      price: 77.6,
-    ),
-    MarketId.macrocenter: MarketOffer(
-      product: 'Duru Koftelik Bulgur 1000 G',
-      url: 'https://www.macrocenter.com.tr/duru-koftelik-bulgur-1000-g-p-10a182',
-      price: 70.95,
-    ),
-  },
-  'bulgur-1kg__market-markasi': {
     MarketId.happyCenter: MarketOffer(
       product: 'Duru Köftelik Bulgur 1000 gr',
       url: 'https://happycenter.com.tr/Duru_1000_Gr_Bkl_Bulgur_Koftelik_',
@@ -404,13 +334,6 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
       price: 188.95,
     ),
   },
-  'cikolata-100__market-markasi': {
-    MarketId.macrocenter: MarketOffer(
-      product: 'Schogetten Sütlü Çikolata 100 G',
-      url: 'https://www.macrocenter.com.tr/schogetten-sutlu-cikolata-100-g-p-6b6f28',
-      price: 188.95,
-    ),
-  },
   'cips-150__amigo': {
     MarketId.sok: MarketOffer(
       product: 'Amigo Düz Sade Patates Cipsi 150 g',
@@ -490,19 +413,7 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
       price: 45.0,
     ),
     MarketId.macrocenter: MarketOffer(
-      product: 'Domates Salkım  Kg',
-      url: 'https://www.macrocenter.com.tr/domates-salkim-kg-p-1ac9b3f',
-      price: 69.95,
-    ),
-  },
-  'domates-1kg__market-markasi': {
-    MarketId.sok: MarketOffer(
-      product: 'Salkım Domates Kg',
-      url: 'https://www.sokmarket.com.tr/salkim-domates-kg-p-32771',
-      price: 45.0,
-    ),
-    MarketId.macrocenter: MarketOffer(
-      product: 'Domates Salkım  Kg',
+      product: 'Domates Salkım Kg',
       url: 'https://www.macrocenter.com.tr/domates-salkim-kg-p-1ac9b3f',
       price: 69.95,
     ),
@@ -546,23 +457,6 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
       price: 72.95,
     ),
   },
-  'ekmek-beyaz__market-markasi': {
-    MarketId.sok: MarketOffer(
-      product: 'Odun Ekmek',
-      url: 'https://www.sokmarket.com.tr/odun-ekmek-p-5643',
-      price: 17.5,
-    ),
-    MarketId.happyCenter: MarketOffer(
-      product: 'Ekmek',
-      url: 'https://happycenter.com.tr/Barbaros_Hashasli',
-      price: 24.95,
-    ),
-    MarketId.macrocenter: MarketOffer(
-      product: 'Yöresel Ekmek 400 G',
-      url: 'https://www.macrocenter.com.tr/yoresel-ekmek-400-g-p-4d2d9c',
-      price: 72.95,
-    ),
-  },
   'ekmek-beyaz__uno': {
     MarketId.sok: MarketOffer(
       product: 'Uno Anadolu Kepekli Ekmek 400 g',
@@ -587,13 +481,6 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
       price: 61.05,
     ),
   },
-  'ekmek-tam-bugday__market-markasi': {
-    MarketId.happyCenter: MarketOffer(
-      product: 'Ihe Tam Buğday Ekmek 400 gr',
-      url: 'https://happycenter.com.tr/Ihe_400_Gr_Tam_Bugday_Ekmek',
-      price: 61.05,
-    ),
-  },
   'ekmek-tam-bugday__uno': {
     MarketId.happyCenter: MarketOffer(
       product: 'Uno Ekşi Mayalı Tam Buğday Ekmeği 450 Gr',
@@ -607,23 +494,6 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
     ),
   },
   'filtre-kahve__markasiz': {
-    MarketId.sok: MarketOffer(
-      product: 'Lezzcafe Filtre Kahve 250 g',
-      url: 'https://www.sokmarket.com.tr/lezzcafe-filtre-kahve-250-g-p-2970',
-      price: 189.0,
-    ),
-    MarketId.happyCenter: MarketOffer(
-      product: 'Kahve Dünyası Filtre Kahve 250 Gr',
-      url: 'https://happycenter.com.tr/kahve-dunyasi-filtre-kahve-250-gr',
-      price: 324.65,
-    ),
-    MarketId.macrocenter: MarketOffer(
-      product: 'Kahve Dünyası Filtre Kahve 250 G',
-      url: 'https://www.macrocenter.com.tr/kahve-dunyasi-filtre-kahve-250-g-p-31223e',
-      price: 279.95,
-    ),
-  },
-  'filtre-kahve__market-markasi': {
     MarketId.sok: MarketOffer(
       product: 'Lezzcafe Filtre Kahve 250 g',
       url: 'https://www.sokmarket.com.tr/lezzcafe-filtre-kahve-250-g-p-2970',
@@ -671,26 +541,7 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
       price: 188.0,
     ),
   },
-  'findik-ici__market-markasi': {
-    MarketId.sok: MarketOffer(
-      product: 'Amigo Fındık İçi 150 g',
-      url: 'https://www.sokmarket.com.tr/amigo-findik-ici-150-g-p-8465',
-      price: 188.0,
-    ),
-  },
   'havuc-1kg__markasiz': {
-    MarketId.sok: MarketOffer(
-      product: 'Havuç Kg',
-      url: 'https://www.sokmarket.com.tr/havuc-kg-p-36260',
-      price: 69.9,
-    ),
-    MarketId.macrocenter: MarketOffer(
-      product: 'Havuç Kg',
-      url: 'https://www.macrocenter.com.tr/havuc-kg-p-1ad3718',
-      price: 89.95,
-    ),
-  },
-  'havuc-1kg__market-markasi': {
     MarketId.sok: MarketOffer(
       product: 'Havuç Kg',
       url: 'https://www.sokmarket.com.tr/havuc-kg-p-36260',
@@ -709,31 +560,7 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
       price: 69.5,
     ),
   },
-  'kabak-1kg__market-markasi': {
-    MarketId.sok: MarketOffer(
-      product: 'Kabak Sakız Kg',
-      url: 'https://www.sokmarket.com.tr/kabak-sakiz-kg-p-36315',
-      price: 69.5,
-    ),
-  },
   'kahve-100__markasiz': {
-    MarketId.sok: MarketOffer(
-      product: 'Yemeneli Türk Kahvesi 100 g',
-      url: 'https://www.sokmarket.com.tr/yemeneli-turk-kahvesi-100-g-p-8744',
-      price: 69.5,
-    ),
-    MarketId.happyCenter: MarketOffer(
-      product: 'Tchibo Türk Kahvesi 100 Gr',
-      url: 'https://happycenter.com.tr/tchibo-turk-kahvesi-100-gr',
-      price: 72.0,
-    ),
-    MarketId.macrocenter: MarketOffer(
-      product: 'Tchibo Türk Kahvesi 100 G',
-      url: 'https://www.macrocenter.com.tr/tchibo-turk-kahvesi-100-g-p-31032b',
-      price: 101.95,
-    ),
-  },
-  'kahve-100__market-markasi': {
     MarketId.sok: MarketOffer(
       product: 'Yemeneli Türk Kahvesi 100 g',
       url: 'https://www.sokmarket.com.tr/yemeneli-turk-kahvesi-100-g-p-8744',
@@ -773,13 +600,6 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
     ),
   },
   'kasar-500__markasiz': {
-    MarketId.sok: MarketOffer(
-      product: 'Sütaş Kaşar Peyniri 500 g',
-      url: 'https://www.sokmarket.com.tr/sutas-kasar-peyniri-500-g-p-4684',
-      price: 299.0,
-    ),
-  },
-  'kasar-500__market-markasi': {
     MarketId.sok: MarketOffer(
       product: 'Sütaş Kaşar Peyniri 500 g',
       url: 'https://www.sokmarket.com.tr/sutas-kasar-peyniri-500-g-p-4684',
@@ -852,13 +672,6 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
       price: 330.0,
     ),
   },
-  'kiyma-400__market-markasi': {
-    MarketId.sok: MarketOffer(
-      product: 'Lezzetlim Dana Kıyma 400 g',
-      url: 'https://www.sokmarket.com.tr/lezzetlim-dana-kiyma-400-g-p-5443',
-      price: 330.0,
-    ),
-  },
   'kofte-500__aytac': {
     MarketId.sok: MarketOffer(
       product: 'Aytaç Dondurulmuş Dana Maydanozlu Köfte 500 g',
@@ -873,21 +686,7 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
       price: 45.5,
     ),
   },
-  'kola-1l__market-markasi': {
-    MarketId.happyCenter: MarketOffer(
-      product: 'Sarıyer Kola 1 Lt',
-      url: 'https://happycenter.com.tr/sariyer-kola-1-lt',
-      price: 45.5,
-    ),
-  },
   'kola-2-5l__markasiz': {
-    MarketId.happyCenter: MarketOffer(
-      product: 'Sarıyer Kola 2.5 Lt',
-      url: 'https://happycenter.com.tr/sariyer-kola-2-5-lt',
-      price: 76.55,
-    ),
-  },
-  'kola-2-5l__market-markasi': {
     MarketId.happyCenter: MarketOffer(
       product: 'Sarıyer Kola 2.5 Lt',
       url: 'https://happycenter.com.tr/sariyer-kola-2-5-lt',
@@ -902,13 +701,6 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
     ),
   },
   'konserve-fasulye__markasiz': {
-    MarketId.happyCenter: MarketOffer(
-      product: 'Tat Haşlanmış Fasulye 800 gr',
-      url: 'https://happycenter.com.tr/Tat_11_Haslanmis_Fasulye_Tnk',
-      price: 94.25,
-    ),
-  },
-  'konserve-fasulye__market-markasi': {
     MarketId.happyCenter: MarketOffer(
       product: 'Tat Haşlanmış Fasulye 800 gr',
       url: 'https://happycenter.com.tr/Tat_11_Haslanmis_Fasulye_Tnk',
@@ -934,7 +726,7 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
       price: 24.95,
     ),
     MarketId.macrocenter: MarketOffer(
-      product: 'Ülker Çiziviç Peynirli Kremalı Sandviç Kraker 82 G',
+      product: 'Ülker Çiziviç Peynirli Kremalı Sandviç Kraker 82 G',
       url: 'https://www.macrocenter.com.tr/ulker-cizivicpeynirlikremali-sandvickraker82-g-p-6b127c',
       price: 22.95,
     ),
@@ -957,18 +749,6 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
     ),
   },
   'labne-400__markasiz': {
-    MarketId.happyCenter: MarketOffer(
-      product: 'İçim Labne 400 gr',
-      url: 'https://happycenter.com.tr/Icim_Labne_500_Gr',
-      price: 183.05,
-    ),
-    MarketId.hakmar: MarketOffer(
-      product: 'İçim Labne 400 Gr',
-      url: 'https://www.hakmarexpress.com.tr/icim-labne-400-gr-1008784-p',
-      price: 145.0,
-    ),
-  },
-  'labne-400__market-markasi': {
     MarketId.happyCenter: MarketOffer(
       product: 'İçim Labne 400 gr',
       url: 'https://happycenter.com.tr/Icim_Labne_500_Gr',
@@ -1019,13 +799,6 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
     ),
   },
   'maden-6x__markasiz': {
-    MarketId.happyCenter: MarketOffer(
-      product: 'Sırma Maden Suyu 6x200 Ml',
-      url: 'https://happycenter.com.tr/Sirma_6x200ml_Maden_Suyu',
-      price: 55.4,
-    ),
-  },
-  'maden-6x__market-markasi': {
     MarketId.happyCenter: MarketOffer(
       product: 'Sırma Maden Suyu 6x200 Ml',
       url: 'https://happycenter.com.tr/Sirma_6x200ml_Maden_Suyu',
@@ -1083,28 +856,6 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
     ),
   },
   'makarna-500__markasiz': {
-    MarketId.sok: MarketOffer(
-      product: 'Barilla Spagetti Makarna No:5 500 g',
-      url: 'https://www.sokmarket.com.tr/barilla-spagetti-makarna-no-5-500-g-p-8013',
-      price: 47.95,
-    ),
-    MarketId.happyCenter: MarketOffer(
-      product: 'Barilla Makarna Spagetti 500 gr',
-      url: 'https://happycenter.com.tr/Barilla_500_Gr_Makarna_Spagetti',
-      price: 66.5,
-    ),
-    MarketId.hakmar: MarketOffer(
-      product: 'Tat Makarna Spagetti 500 gr',
-      url: 'https://www.hakmarexpress.com.tr/tat-makarna-spagetti-500-gr-1007815-p',
-      price: 17.0,
-    ),
-    MarketId.macrocenter: MarketOffer(
-      product: 'Makaroma Spaghetti 500 G',
-      url: 'https://www.macrocenter.com.tr/makaroma-spaghetti-500-g-p-4cc189',
-      price: 48.95,
-    ),
-  },
-  'makarna-500__market-markasi': {
     MarketId.sok: MarketOffer(
       product: 'Barilla Spagetti Makarna No:5 500 g',
       url: 'https://www.sokmarket.com.tr/barilla-spagetti-makarna-no-5-500-g-p-8013',
@@ -1195,13 +946,6 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
       price: 26.75,
     ),
   },
-  'makarna-penne__market-markasi': {
-    MarketId.hakmar: MarketOffer(
-      product: 'Mutlu Penne Makarna 500 gr',
-      url: 'https://www.hakmarexpress.com.tr/mutlu-penne-makarna-500-gr-1034254-p',
-      price: 26.75,
-    ),
-  },
   'makarna-penne__nuh-un-ankara': {
     MarketId.happyCenter: MarketOffer(
       product: 'Nuhun Ankara Penne Makarna 500 gr',
@@ -1228,18 +972,6 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
       price: 32.95,
     ),
   },
-  'maydanoz__market-markasi': {
-    MarketId.happyCenter: MarketOffer(
-      product: 'Maydanoz',
-      url: 'https://happycenter.com.tr/maydanoz-demet',
-      price: 15.65,
-    ),
-    MarketId.macrocenter: MarketOffer(
-      product: 'Maydanoz Adet',
-      url: 'https://www.macrocenter.com.tr/maydanoz-adet-p-1af36a9',
-      price: 32.95,
-    ),
-  },
   'mayonez-430__bizim-vatan': {
     MarketId.sok: MarketOffer(
       product: 'Mayonez Bizim Vatan 430 g',
@@ -1255,18 +987,6 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
     ),
   },
   'mercimek-1kg__markasiz': {
-    MarketId.happyCenter: MarketOffer(
-      product: 'Duru Kırmızı Mercimek 1000 gr',
-      url: 'https://happycenter.com.tr/Duru_1000_Gr_Bkl_Mercimek_Kirmizi',
-      price: 110.9,
-    ),
-    MarketId.macrocenter: MarketOffer(
-      product: 'Yayla Kırmızı Mercimek 1 Kg',
-      url: 'https://www.macrocenter.com.tr/yayla-kirmizi-mercimek-1-kg-p-103416',
-      price: 109.95,
-    ),
-  },
-  'mercimek-1kg__market-markasi': {
     MarketId.happyCenter: MarketOffer(
       product: 'Duru Kırmızı Mercimek 1000 gr',
       url: 'https://happycenter.com.tr/Duru_1000_Gr_Bkl_Mercimek_Kirmizi',
@@ -1342,23 +1062,6 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
       price: 159.95,
     ),
   },
-  'muz-1kg__market-markasi': {
-    MarketId.sok: MarketOffer(
-      product: 'Yerli Muz Kg',
-      url: 'https://www.sokmarket.com.tr/yerli-muz-kg-p-33027',
-      price: 94.9,
-    ),
-    MarketId.hakmar: MarketOffer(
-      product: 'İthal Muz 1 Kg',
-      url: 'https://www.hakmarexpress.com.tr/ithal-muz-1-kg-1000813-p',
-      price: 139.95,
-    ),
-    MarketId.macrocenter: MarketOffer(
-      product: 'Muz İthal Kg',
-      url: 'https://www.macrocenter.com.tr/muz-ithal-kg-p-1a0235b',
-      price: 159.95,
-    ),
-  },
   'nohut-1kg__anadolu-mutfagi': {
     MarketId.sok: MarketOffer(
       product: 'Anadolu Mutfağı Nohut 1 kg',
@@ -1390,18 +1093,6 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
       price: 44.95,
     ),
   },
-  'patates-1kg__market-markasi': {
-    MarketId.sok: MarketOffer(
-      product: 'Patates Kg',
-      url: 'https://www.sokmarket.com.tr/patates-kg-p-35919',
-      price: 39.5,
-    ),
-    MarketId.macrocenter: MarketOffer(
-      product: 'Patates File Kg',
-      url: 'https://www.macrocenter.com.tr/patates-file-kg-p-1afc75d',
-      price: 44.95,
-    ),
-  },
   'patlican-1kg__markasiz': {
     MarketId.sok: MarketOffer(
       product: 'Patlıcan Kemer Kg',
@@ -1409,26 +1100,14 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
       price: 59.0,
     ),
     MarketId.macrocenter: MarketOffer(
-      product: 'Patlıcan Kemer  Kg',
-      url: 'https://www.macrocenter.com.tr/patlican-kemer-kg-p-1aff645',
-      price: 79.95,
-    ),
-  },
-  'patlican-1kg__market-markasi': {
-    MarketId.sok: MarketOffer(
       product: 'Patlıcan Kemer Kg',
-      url: 'https://www.sokmarket.com.tr/patlican-kemer-kg-p-36285',
-      price: 59.0,
-    ),
-    MarketId.macrocenter: MarketOffer(
-      product: 'Patlıcan Kemer  Kg',
       url: 'https://www.macrocenter.com.tr/patlican-kemer-kg-p-1aff645',
       price: 79.95,
     ),
   },
   'peynir-500__icim': {
     MarketId.happyCenter: MarketOffer(
-      product: 'İçim  Beyaz Peynir Tam Yağlı 500 gr',
+      product: 'İçim Beyaz Peynir Tam Yağlı 500 gr',
       url: 'https://happycenter.com.tr/Icim_Tam_Yagli_Beyaz_Peynir_500_Gr',
       price: 210.8,
     ),
@@ -1597,13 +1276,6 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
       price: 1600.0,
     ),
   },
-  'sampuan-400__market-markasi': {
-    MarketId.macrocenter: MarketOffer(
-      product: 'HMA Şampuan 400 Ml',
-      url: 'https://www.macrocenter.com.tr/hma-sampuan-400-ml-p-20ab42f',
-      price: 1600.0,
-    ),
-  },
   'sarimsak-250__markasiz': {
     MarketId.sok: MarketOffer(
       product: 'Sarımsak 250 Gr',
@@ -1616,36 +1288,7 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
       price: 32.49,
     ),
   },
-  'sarimsak-250__market-markasi': {
-    MarketId.sok: MarketOffer(
-      product: 'Sarımsak 250 Gr',
-      url: 'https://www.sokmarket.com.tr/sarimsak-250-gr-p-34665',
-      price: 59.9,
-    ),
-    MarketId.hakmar: MarketOffer(
-      product: 'Sarımsak 250 G',
-      url: 'https://www.hakmarexpress.com.tr/sarimsak-250-g-1035007-p',
-      price: 32.49,
-    ),
-  },
   'seker-1kg__markasiz': {
-    MarketId.happyCenter: MarketOffer(
-      product: 'Balküpü Toz Şeker 1000 gr',
-      url: 'https://happycenter.com.tr/Balkupu_1000_Gr_Seker_Toz',
-      price: 66.5,
-    ),
-    MarketId.hakmar: MarketOffer(
-      product: 'Balküpü Toz Şeker 1000 Gr',
-      url: 'https://www.hakmarexpress.com.tr/balkupu-toz-seker-1000-gr-1011191-p',
-      price: 62.5,
-    ),
-    MarketId.macrocenter: MarketOffer(
-      product: 'Nar Toz Şeker 1Kg',
-      url: 'https://www.macrocenter.com.tr/nar-toz-seker-1kg-p-2be4242',
-      price: 59.95,
-    ),
-  },
-  'seker-1kg__market-markasi': {
     MarketId.happyCenter: MarketOffer(
       product: 'Balküpü Toz Şeker 1000 gr',
       url: 'https://happycenter.com.tr/Balkupu_1000_Gr_Seker_Toz',
@@ -1676,26 +1319,7 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
       price: 94.5,
     ),
   },
-  'seker-2kg__market-markasi': {
-    MarketId.sok: MarketOffer(
-      product: 'Altınküp Toz Şeker 2000 g',
-      url: 'https://www.sokmarket.com.tr/altinkup-toz-seker-2000-g-p-5298',
-      price: 94.5,
-    ),
-  },
   'sogan-1kg__markasiz': {
-    MarketId.sok: MarketOffer(
-      product: 'Kuru Soğan Kg',
-      url: 'https://www.sokmarket.com.tr/kuru-sogan-kg-p-32883',
-      price: 54.5,
-    ),
-    MarketId.happyCenter: MarketOffer(
-      product: 'Soğan kuru kg',
-      url: 'https://happycenter.com.tr/sogan-kuru',
-      price: 78.15,
-    ),
-  },
-  'sogan-1kg__market-markasi': {
     MarketId.sok: MarketOffer(
       product: 'Kuru Soğan Kg',
       url: 'https://www.sokmarket.com.tr/kuru-sogan-kg-p-32883',
@@ -1734,28 +1358,6 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
     ),
   },
   'su-1-5l__markasiz': {
-    MarketId.sok: MarketOffer(
-      product: 'Saka Su 1.5 L',
-      url: 'https://www.sokmarket.com.tr/saka-su-1-5-l-p-5905',
-      price: 34.9,
-    ),
-    MarketId.happyCenter: MarketOffer(
-      product: 'Gümüş Su 1.5 Lt',
-      url: 'https://happycenter.com.tr/gumus-su-1-5-lt',
-      price: 6.1,
-    ),
-    MarketId.hakmar: MarketOffer(
-      product: 'Assu Pet Şişe Su 1.5 lt',
-      url: 'https://www.hakmarexpress.com.tr/assu-pet-sise-su-1-5-lt-1024167-p',
-      price: 12.25,
-    ),
-    MarketId.macrocenter: MarketOffer(
-      product: 'Erikli Su 1,5 L',
-      url: 'https://www.macrocenter.com.tr/erikli-su-15-l-p-7afc69',
-      price: 38.95,
-    ),
-  },
-  'su-1-5l__market-markasi': {
     MarketId.sok: MarketOffer(
       product: 'Saka Su 1.5 L',
       url: 'https://www.sokmarket.com.tr/saka-su-1-5-l-p-5905',
@@ -1821,28 +1423,6 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
     ),
   },
   'su-5l__markasiz': {
-    MarketId.sok: MarketOffer(
-      product: 'Kardelen Su 5 lt',
-      url: 'https://www.sokmarket.com.tr/kardelen-su-5-lt-p-5523',
-      price: 36.0,
-    ),
-    MarketId.happyCenter: MarketOffer(
-      product: 'Erikli Su 5 lt',
-      url: 'https://happycenter.com.tr/Erikli_5_Lt_Su_Pet',
-      price: 77.6,
-    ),
-    MarketId.hakmar: MarketOffer(
-      product: 'Erikli Su Pet Şişe 5 Lt',
-      url: 'https://www.hakmarexpress.com.tr/erikli-su-pet-sise-5-lt-1016461-p',
-      price: 49.5,
-    ),
-    MarketId.macrocenter: MarketOffer(
-      product: 'Erikli Su 5 L',
-      url: 'https://www.macrocenter.com.tr/erikli-su-5-l-p-7b04fb',
-      price: 77.95,
-    ),
-  },
-  'su-5l__market-markasi': {
     MarketId.sok: MarketOffer(
       product: 'Kardelen Su 5 lt',
       url: 'https://www.sokmarket.com.tr/kardelen-su-5-lt-p-5523',
@@ -1990,18 +1570,6 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
       price: 59.75,
     ),
   },
-  'sut-yarim-1l__market-markasi': {
-    MarketId.hakmar: MarketOffer(
-      product: 'İçim Süt Yarım Yağlı 1 Lt',
-      url: 'https://www.hakmarexpress.com.tr/icim-sut-yarim-yagli-1-lt-1009421-p',
-      price: 57.5,
-    ),
-    MarketId.macrocenter: MarketOffer(
-      product: 'İçim Yarım Yağlı Süt 1 L',
-      url: 'https://www.macrocenter.com.tr/icim-yarim-yagli-sut-1-l-p-a811a7',
-      price: 59.75,
-    ),
-  },
   'sut-yarim-1l__mis': {
     MarketId.sok: MarketOffer(
       product: 'Mis Gold Kaymaklı Yarım Yağlı 1000 ml',
@@ -2024,13 +1592,6 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
     ),
   },
   'tavuk-1kg__markasiz': {
-    MarketId.sok: MarketOffer(
-      product: 'Gedik Piliç But Pirzola Kg',
-      url: 'https://www.sokmarket.com.tr/gedik-pilic-but-pirzola-kg-p-461813',
-      price: 249.0,
-    ),
-  },
-  'tavuk-1kg__market-markasi': {
     MarketId.sok: MarketOffer(
       product: 'Gedik Piliç But Pirzola Kg',
       url: 'https://www.sokmarket.com.tr/gedik-pilic-but-pirzola-kg-p-461813',
@@ -2060,33 +1621,6 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
       url: 'https://www.hakmarexpress.com.tr/kebir-tereyag-500-gr-1000091-p',
       price: 445.0,
     ),
-    MarketId.macrocenter: MarketOffer(
-      product: 'Ariste Tereyağı 500 G',
-      url: 'https://www.macrocenter.com.tr/ariste-tereyagi-500-g-p-b75cae',
-      price: 549.9,
-    ),
-  },
-  'tereyag-500__market-markasi': {
-    MarketId.sok: MarketOffer(
-      product: 'Kebir Tereyağı 500 g',
-      url: 'https://www.sokmarket.com.tr/kebir-tereyagi-500-g-p-8101',
-      price: 445.0,
-    ),
-    MarketId.happyCenter: MarketOffer(
-      product: 'İçim Tereyağı 500 gr',
-      url: 'https://happycenter.com.tr/Icim_Tereyag_500_Gr_Rulo',
-      price: 510.5,
-    ),
-    MarketId.hakmar: MarketOffer(
-      product: 'Kebir Tereyağ 500 Gr',
-      url: 'https://www.hakmarexpress.com.tr/kebir-tereyag-500-gr-1000091-p',
-      price: 445.0,
-    ),
-    MarketId.macrocenter: MarketOffer(
-      product: 'Ariste Tereyağı 500 G',
-      url: 'https://www.macrocenter.com.tr/ariste-tereyagi-500-g-p-b75cae',
-      price: 549.9,
-    ),
   },
   'tereyag-500__mis': {
     MarketId.sok: MarketOffer(
@@ -2096,18 +1630,6 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
     ),
   },
   'tuvalet-16__markasiz': {
-    MarketId.sok: MarketOffer(
-      product: 'Confort Tuvalet Kağıdı 16\'lı',
-      url: 'https://www.sokmarket.com.tr/confort-tuvalet-kagidi-16-li-p-541856',
-      price: 129.0,
-    ),
-    MarketId.macrocenter: MarketOffer(
-      product: 'Selpak Tuvalet Kağıdı 16\'lı',
-      url: 'https://www.macrocenter.com.tr/selpak-tuvalet-kagidi-16li-p-1d934a8',
-      price: 339.95,
-    ),
-  },
-  'tuvalet-16__market-markasi': {
     MarketId.sok: MarketOffer(
       product: 'Confort Tuvalet Kağıdı 16\'lı',
       url: 'https://www.sokmarket.com.tr/confort-tuvalet-kagidi-16-li-p-541856',
@@ -2154,23 +1676,6 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
     ),
   },
   'un-5kg__markasiz': {
-    MarketId.sok: MarketOffer(
-      product: 'Piyale Un 5 Kg',
-      url: 'https://www.sokmarket.com.tr/piyale-un-5-kg-p-8539',
-      price: 135.0,
-    ),
-    MarketId.happyCenter: MarketOffer(
-      product: 'Eriş Un 5 Kg',
-      url: 'https://happycenter.com.tr/eris-un-5-kg',
-      price: 110.9,
-    ),
-    MarketId.hakmar: MarketOffer(
-      product: 'Akun Un 5 Kg',
-      url: 'https://www.hakmarexpress.com.tr/akun-un-5-kg-1000285-p',
-      price: 135.0,
-    ),
-  },
-  'un-5kg__market-markasi': {
     MarketId.sok: MarketOffer(
       product: 'Piyale Un 5 Kg',
       url: 'https://www.sokmarket.com.tr/piyale-un-5-kg-p-8539',
@@ -2290,13 +1795,6 @@ const priceBook = <String, Map<MarketId, MarketOffer>>{
     ),
   },
   'zeytinyagi-1l__markasiz': {
-    MarketId.macrocenter: MarketOffer(
-      product: 'Makaron Zeytinyağı 1Lt',
-      url: 'https://www.macrocenter.com.tr/makaron-zeytinyagi-1lt-p-3f0536',
-      price: 968.95,
-    ),
-  },
-  'zeytinyagi-1l__market-markasi': {
     MarketId.macrocenter: MarketOffer(
       product: 'Makaron Zeytinyağı 1Lt',
       url: 'https://www.macrocenter.com.tr/makaron-zeytinyagi-1lt-p-3f0536',

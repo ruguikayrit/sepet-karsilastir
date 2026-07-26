@@ -90,7 +90,7 @@ void main() {
   test('markalı satırda marka market ürün adında geçer', () {
     for (final entry in priceBook.entries) {
       final brandKey = entry.key.split('__').last;
-      if (brandKey == 'markasiz' || brandKey == 'market-markasi') continue;
+      if (brandKey == 'markasiz') continue;
       final brand = brandNames
           .firstWhere((name) => Product.brandKeyOf(name) == brandKey);
 
@@ -126,7 +126,7 @@ void main() {
     for (final entry in priceBook.entries) {
       final brandKey = entry.key.split('__').last;
       // Markasız satırda her market kendi ürününü gösterir; fark gerçektir.
-      if (brandKey == 'markasiz' || brandKey == 'market-markasi') continue;
+      if (brandKey == 'markasiz') continue;
       if (entry.value.length < 3) continue;
 
       final prices = entry.value.values.map((o) => o.price).toList()..sort();

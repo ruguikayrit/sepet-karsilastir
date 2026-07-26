@@ -7,7 +7,8 @@ Akış:
 2. Dönen ürünlerden marka + çeşit + gramaj birebir tutanları seçer.
 3. Aynı satırda birden fazla ürün varsa stokta olan ve en ucuz olanı alır.
 4. Kalan (tip, marka) satırları için markanın adıyla hedefli arama yapar.
-5. Sonucu Dart fiyat defterine yazar.
+5. Seçilen her ürünü kendi sayfasında doğrular: sayfadaki ad ve tutar.
+6. Sonucu Dart fiyat defterine yazar.
 
 Örnek::
 
@@ -27,7 +28,7 @@ import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from pathlib import Path
 
 if __package__ in (None, ''):  # doğrudan `python3 tools/price_sync/sync.py`
@@ -36,7 +37,9 @@ if __package__ in (None, ''):  # doğrudan `python3 tools/price_sync/sync.py`
         GENERIC_BRAND, REPO, load_catalog, product_id, slug,
     )
     from price_sync.emit import write_dart  # noqa: E402
-    from price_sync.markets import ADAPTERS, FetchError  # noqa: E402
+    from price_sync.markets import (  # noqa: E402
+        ADAPTERS, FetchError, price_on_page,
+    )
     from price_sync.matching import (  # noqa: E402
         Offer, brand_of, brand_position, choose_shared_variant, matches_rule,
         variant_tokens,
@@ -45,7 +48,7 @@ if __package__ in (None, ''):  # doğrudan `python3 tools/price_sync/sync.py`
 else:
     from .catalog import GENERIC_BRAND, REPO, load_catalog, product_id, slug
     from .emit import write_dart
-    from .markets import ADAPTERS, FetchError
+    from .markets import ADAPTERS, FetchError, price_on_page
     from .matching import (
         Offer, brand_of, brand_position, choose_shared_variant, matches_rule,
         variant_tokens,
@@ -205,18 +208,15 @@ def build_market(market: str, catalog, cache: SearchCache, jobs: int,
             else:
                 misses.append((type_.id, brand))
 
-        # Markasız satır ancak marketin kendi ürün adı da markasızsa fiyat
-        # alır: "Domates Kg", "Ekmek" gibi. Aksi halde markette bulunan
-        # rastgele bir marka satıra yazılır ve marketler farklı ürünleri
-        # karşılaştırır — kullanıcı marka seçmeli.
+        # Markasız satırda market kendi ürününü gösterir, ama ürün adı sade
+        # olmalı: "Domates Kg" girer, "Kabak Çekirdeği Tuzlu Kg" girmez. Aksi
+        # halde marketler birbirinden apayrı çeşitleri karşılaştırır.
         plain = [
             o for o in matched
             if len(variant_tokens(o.name, rule, None)) <= 1
         ]
         if plain:
             found[product_id(type_.id, None)] = plain
-            if GENERIC_BRAND in brands:
-                found[product_id(type_.id, GENERIC_BRAND)] = plain
 
     if targeted and misses and not health.gave_up:
         extra = [(f'{brand} {RULES[type_id]["term"]}', 1)
@@ -238,26 +238,98 @@ def build_market(market: str, catalog, cache: SearchCache, jobs: int,
     return found
 
 
-def resolve(candidates: dict[str, dict[str, list[Offer]]],
-            catalog) -> dict[str, dict[str, Offer]]:
-    """Her satır için marketlerde mümkün olduğunca aynı çeşidi seçer."""
-    brand_names = {
+def brand_index(catalog) -> dict[str, str | None]:
+    """`ürün kimliği` -> katalogdaki marka adı (markasız satırda `None`)."""
+    return {
         product_id(t.id, brand): brand
         for t in catalog.types
         for brand in [*catalog.brands_for(t), None]
+        if brand != GENERIC_BRAND
     }
+
+
+def resolve(candidates: dict[str, dict[str, list[Offer]]],
+            catalog) -> dict[str, dict[str, Offer]]:
+    """Her satır için marketlerde mümkün olduğunca aynı çeşidi seçer."""
+    brand_names = brand_index(catalog)
     book: dict[str, dict[str, Offer]] = {}
     for product, per_market in candidates.items():
         type_id = product.split('__')[0]
         brand = brand_names.get(product)
-        chosen = choose_shared_variant(
-            per_market,
-            RULES[type_id],
-            None if brand == GENERIC_BRAND else brand,
-        )
+        chosen = choose_shared_variant(per_market, RULES[type_id], brand)
         if chosen:
             book[product] = chosen
     return book
+
+
+def confirm(product: str, market: str, offer: Offer, rule: dict,
+            brand: str | None, weight_based: bool) -> Offer | None:
+    """Ürünü kendi sayfasında doğrular.
+
+    Uygulamanın sözü şu: satıra dokununca açılan sayfada aynı ürün ve aynı
+    tutar yazar. Bunu varsaymak yerine sayfayı açıp okuyoruz — ürün adı
+    sayfadan alınır, tutarın sayfada yazdığı görülür, ad hâlâ katalog satırının
+    çeşit ve gramajını taşıyor mu diye yeniden bakılır. Geçmeyen kayıt deftere
+    girmez.
+    """
+    adapter = ADAPTERS[market]
+    try:
+        title, text = adapter.page(offer.url)
+    except FetchError as exc:
+        print(f'  ? {product} · {market}: sayfa açılmadı ({exc})',
+              file=sys.stderr)
+        return None
+
+    if not title:
+        print(f'  ? {product} · {market}: sayfada ürün adı yok', file=sys.stderr)
+        return None
+    if not price_on_page(text, offer.price):
+        print(f'  ? {product} · {market}: {offer.price} sayfada yazmıyor '
+              f'({offer.url})', file=sys.stderr)
+        return None
+
+    # Ad sayfadan geliyor: ekranda yazan ürün, açılan sayfadaki üründür.
+    confirmed = replace(offer, name=title)
+    if not matches_rule(rule, confirmed, weight_based):
+        print(f'  ? {product} · {market}: sayfadaki ürün "{title}" satıra '
+              'uymuyor', file=sys.stderr)
+        return None
+    if brand and brand_position(title, brand) < 0:
+        print(f'  ? {product} · {market}: sayfadaki ürün "{title}" {brand} '
+              'göstermiyor', file=sys.stderr)
+        return None
+    return confirmed
+
+
+def confirm_book(book: dict[str, dict[str, Offer]], catalog, jobs: int,
+                 brand_names: dict[str, str | None]) -> dict[str, dict[str, Offer]]:
+    """Defterdeki her kaydı kendi ürün sayfasında doğrular."""
+    types_by_id = {t.id: t for t in catalog.types}
+    tasks = [
+        (product, market, offer)
+        for product, per_market in book.items()
+        for market, offer in per_market.items()
+    ]
+
+    def run(task):
+        product, market, offer = task
+        type_ = types_by_id[product.split('__')[0]]
+        brand = brand_names.get(product)
+        return task, confirm(
+            product, market, offer, RULES[type_.id], brand,
+            type_.unit == 'kg',
+        )
+
+    with ThreadPoolExecutor(max_workers=jobs) as pool:
+        results = list(pool.map(run, tasks))
+
+    confirmed: dict[str, dict[str, Offer]] = {}
+    for (product, market, _), offer in results:
+        if offer is not None:
+            confirmed.setdefault(product, {})[market] = offer
+    dropped = len(tasks) - sum(len(e) for e in confirmed.values())
+    print(f'  sayfada doğrulanmayan {dropped} kayıt düşürüldü')
+    return confirmed
 
 
 def previous_offer_count(path: Path) -> int:
@@ -287,6 +359,8 @@ def main() -> int:
                         help='dosyaya yazılacak çekim tarihi (YYYY-MM-DD)')
     parser.add_argument('--allow-shrink', action='store_true',
                         help='defter belirgin küçülse de yaz')
+    parser.add_argument('--no-verify', action='store_true',
+                        help='kayıtları ürün sayfasında doğrulamaz (hızlı)')
     args = parser.parse_args()
 
     markets = [m.strip() for m in args.markets.split(',') if m.strip()]
@@ -311,6 +385,9 @@ def main() -> int:
         print(f'  {ADAPTERS[market].label}: {len(found)} satır eşleşti')
 
     book = resolve(candidates, catalog)
+
+    if not args.no_verify and not args.offline:
+        book = confirm_book(book, catalog, args.jobs, brand_index(catalog))
 
     if not book:
         print('hiçbir markette fiyat bulunamadı; dosya değiştirilmedi',
