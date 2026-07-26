@@ -127,7 +127,9 @@ class BasketScreen extends StatelessWidget {
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      item.product.category,
+                                      item.product.brand == null
+                                          ? item.product.category
+                                          : '${item.product.brand} · ${item.product.category}',
                                       style: const TextStyle(
                                         color: AppColors.inkMuted,
                                         fontSize: 13,

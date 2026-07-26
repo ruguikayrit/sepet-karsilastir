@@ -67,7 +67,9 @@ class BackendMarketPriceClient implements MarketPriceClient {
         'items': items.map((item) {
           return {
             'productId': item.product.id,
-            'externalSku': skuMap.skuFor(marketId, item.product.id),
+            'typeId': item.product.typeId,
+            'brand': item.product.brand,
+            'externalSku': skuMap.skuFor(marketId, item.product.typeId),
             'quantity': item.quantity,
             'name': item.product.displayName,
           };
@@ -148,10 +150,10 @@ class StubMarketPriceClient implements MarketPriceClient {
       fetchedAt: DateTime.now(),
       storeId: storeId ?? 'stub-store',
       quotes: items.map((item) {
-        final base = 50.0 + item.product.id.hashCode % 40;
+        final base = 50.0 + item.product.typeId.hashCode % 40;
         return ProductQuote(
           productId: item.product.id,
-          externalSku: skuMap.skuFor(marketId, item.product.id),
+          externalSku: skuMap.skuFor(marketId, item.product.typeId),
           unitPrice: double.parse((base * priceFactor).toStringAsFixed(2)),
           available: true,
         );

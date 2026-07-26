@@ -1,140 +1,162 @@
 import '../models/product.dart';
 
-/// Sık alınan market ürünleri — gerçek API bağlanınca katalog buradan beslenir.
-const mockCatalog = <Product>[
-  Product(
+/// Markasız ürün tipi — kullanıcı eklerken marka seçer.
+class ProductType {
+  const ProductType({
+    required this.id,
+    required this.name,
+    required this.category,
+    required this.unit,
+  });
+
+  final String id;
+  final String name;
+  final String category;
+  final String unit;
+
+  Product withBrand(String? brand) {
+    final brandKey = (brand ?? 'markasiz')
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '-');
+    return Product(
+      id: '${id}__$brandKey',
+      typeId: id,
+      name: name,
+      category: category,
+      unit: unit,
+      brand: brand,
+    );
+  }
+}
+
+const productTypes = <ProductType>[
+  ProductType(
     id: 'sut-1l',
     name: 'Tam Yağlı Süt 1L',
-    brand: 'İçim',
     category: 'Süt & Kahvaltı',
     unit: 'adet',
   ),
-  Product(
+  ProductType(
     id: 'yumurta-30',
-    name: 'Yumurta 30\'lu',
-    brand: 'Pak',
+    name: "Yumurta 30'lu",
     category: 'Süt & Kahvaltı',
     unit: 'adet',
   ),
-  Product(
+  ProductType(
+    id: 'peynir-500',
+    name: 'Beyaz Peynir 500g',
+    category: 'Süt & Kahvaltı',
+    unit: 'adet',
+  ),
+  ProductType(
+    id: 'yogurt-1kg',
+    name: 'Yoğurt 1kg',
+    category: 'Süt & Kahvaltı',
+    unit: 'adet',
+  ),
+  ProductType(
     id: 'ekmek-250',
     name: 'Tam Buğday Ekmek',
     category: 'Fırın',
     unit: 'adet',
   ),
-  Product(
+  ProductType(
     id: 'pirinc-1kg',
     name: 'Baldo Pirinç 1kg',
-    brand: 'Yayla',
     category: 'Temel Gıda',
     unit: 'adet',
   ),
-  Product(
+  ProductType(
     id: 'makarna-500',
     name: 'Spagetti 500g',
-    brand: 'Barilla',
     category: 'Temel Gıda',
     unit: 'adet',
   ),
-  Product(
+  ProductType(
     id: 'aycicek-1l',
     name: 'Ayçiçek Yağı 1L',
-    brand: 'Yudum',
     category: 'Temel Gıda',
     unit: 'adet',
   ),
-  Product(
+  ProductType(
     id: 'seker-1kg',
     name: 'Toz Şeker 1kg',
-    brand: 'Türk Şeker',
     category: 'Temel Gıda',
     unit: 'adet',
   ),
-  Product(
+  ProductType(
     id: 'cay-500',
-    name: 'Rize Çay 500g',
-    brand: 'Çaykur',
+    name: 'Dökme Çay 500g',
     category: 'İçecek',
     unit: 'adet',
   ),
-  Product(
+  ProductType(
     id: 'su-6x',
     name: 'Su 6x1.5L',
-    brand: 'Erikli',
     category: 'İçecek',
     unit: 'adet',
   ),
-  Product(
+  ProductType(
     id: 'domates-1kg',
     name: 'Domates',
     category: 'Meyve & Sebze',
     unit: 'kg',
   ),
-  Product(
+  ProductType(
     id: 'patates-1kg',
     name: 'Patates',
     category: 'Meyve & Sebze',
     unit: 'kg',
   ),
-  Product(
+  ProductType(
     id: 'muz-1kg',
     name: 'Muz',
     category: 'Meyve & Sebze',
     unit: 'kg',
   ),
-  Product(
+  ProductType(
     id: 'tavuk-1kg',
     name: 'Tavuk Göğüs',
     category: 'Et & Tavuk',
     unit: 'kg',
   ),
-  Product(
+  ProductType(
     id: 'kofte-400',
     name: 'Köfte 400g',
-    brand: 'Namet',
     category: 'Et & Tavuk',
     unit: 'adet',
   ),
-  Product(
-    id: 'peynir-500',
-    name: 'Beyaz Peynir 500g',
-    brand: 'Sütaş',
-    category: 'Süt & Kahvaltı',
-    unit: 'adet',
-  ),
-  Product(
-    id: 'yogurt-1kg',
-    name: 'Yoğurt 1kg',
-    brand: 'Eker',
-    category: 'Süt & Kahvaltı',
-    unit: 'adet',
-  ),
-  Product(
+  ProductType(
     id: 'deterjan-3kg',
     name: 'Çamaşır Deterjanı 3kg',
-    brand: 'Ariel',
     category: 'Temizlik',
     unit: 'adet',
   ),
-  Product(
+  ProductType(
     id: 'sampuan-400',
     name: 'Şampuan 400ml',
-    brand: 'Elidor',
     category: 'Kişisel Bakım',
     unit: 'adet',
   ),
-  Product(
+  ProductType(
     id: 'tuvalet-8',
-    name: 'Tuvalet Kağıdı 8\'li',
-    brand: 'Solo',
+    name: "Tuvalet Kağıdı 8'li",
     category: 'Temizlik',
     unit: 'adet',
   ),
-  Product(
+  ProductType(
     id: 'cips-107',
     name: 'Patates Cipsi 107g',
-    brand: 'Lays',
     category: 'Atıştırmalık',
     unit: 'adet',
   ),
 ];
+
+List<ProductType> searchProductTypesLocal(String query) {
+  final q = query.trim().toLowerCase();
+  if (q.isEmpty) return productTypes;
+  return productTypes.where((p) {
+    return p.name.toLowerCase().contains(q) ||
+        p.category.toLowerCase().contains(q);
+  }).toList();
+}

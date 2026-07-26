@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../data/mock_catalog.dart';
 import '../models/comparison_result.dart';
 import '../models/list_item.dart';
 import '../models/product.dart';
@@ -22,6 +23,15 @@ class BasketController extends ChangeNotifier {
   int get totalQuantity =>
       _items.fold<int>(0, (sum, item) => sum + item.quantity);
   bool get isEmpty => _items.isEmpty;
+
+  int get uniqueBrandCount {
+    final brands = <String>{};
+    for (final item in _items) {
+      final brand = item.product.brand;
+      if (brand != null && brand.isNotEmpty) brands.add(brand);
+    }
+    return brands.length;
+  }
 
   void addProduct(Product product) {
     final index = _items.indexWhere((i) => i.product.id == product.id);
@@ -79,6 +89,6 @@ class BasketController extends ChangeNotifier {
     }
   }
 
-  Future<List<Product>> search(String query) =>
-      _priceService.searchProducts(query);
+  Future<List<ProductType>> searchTypes(String query) =>
+      _priceService.searchProductTypes(query);
 }

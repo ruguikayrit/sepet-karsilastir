@@ -1,10 +1,10 @@
 import '../config/app_config.dart';
+import '../data/mock_catalog.dart';
 import '../models/comparison_result.dart';
 import '../models/fetch_status.dart';
 import '../models/list_item.dart';
 import '../models/market.dart';
 import '../models/market_quote.dart';
-import '../models/product.dart';
 import 'catalog/catalog_client.dart';
 import 'http/api_client.dart';
 import 'mapping/product_sku_map.dart';
@@ -70,7 +70,8 @@ class LivePriceService implements PriceService {
   final bool allowPartialFailures;
 
   @override
-  Future<List<Product>> searchProducts(String query) => _catalog.search(query);
+  Future<List<ProductType>> searchProductTypes(String query) =>
+      _catalog.search(query);
 
   @override
   Future<ComparisonResult> compareBasket(List<ListItem> items) async {
@@ -171,7 +172,7 @@ class _ResilientCatalogClient implements CatalogClient {
   final CatalogClient fallback;
 
   @override
-  Future<List<Product>> search(String query) async {
+  Future<List<ProductType>> search(String query) async {
     try {
       return await primary.search(query);
     } catch (_) {

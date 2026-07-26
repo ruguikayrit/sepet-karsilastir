@@ -3,7 +3,6 @@ import '../models/comparison_result.dart';
 import '../models/fetch_status.dart';
 import '../models/list_item.dart';
 import '../models/market.dart';
-import '../models/product.dart';
 import 'price_service.dart';
 
 /// Demo / geliştirme: marketlere göre değişen güncel-benzer fiyatlar.
@@ -150,14 +149,9 @@ class MockPriceService implements PriceService {
   };
 
   @override
-  Future<List<Product>> searchProducts(String query) async {
+  Future<List<ProductType>> searchProductTypes(String query) async {
     await Future<void>.delayed(const Duration(milliseconds: 180));
-    final q = query.trim().toLowerCase();
-    if (q.isEmpty) return mockCatalog;
-    return mockCatalog.where((p) {
-      return p.displayName.toLowerCase().contains(q) ||
-          p.category.toLowerCase().contains(q);
-    }).toList();
+    return searchProductTypesLocal(query);
   }
 
   @override
@@ -170,10 +164,12 @@ class MockPriceService implements PriceService {
       final missing = _unavailable[market.id] ?? {};
 
       final lines = items.map((item) {
-        final base = _basePrices[item.product.id] ?? 49.90;
-        final factor = bias[item.product.id] ?? 1.0;
-        final available = !missing.contains(item.product.id);
-        final price = _roundMoney(base * factor);
+        final typeId = item.product.typeId;
+        final base = _basePrices[typeId] ?? 49.90;
+        final factor = bias[typeId] ?? 1.0;
+        final brandFactor = _brandFactor(item.product.brand);
+        final available = !missing.contains(typeId);
+        final price = _roundMoney(base * factor * brandFactor);
         return LinePrice(
           product: item.product,
           quantity: item.quantity,
@@ -195,6 +191,14 @@ class MockPriceService implements PriceService {
       comparedAt: now,
       source: PriceSource.mock,
     );
+  }
+
+  /// Markaya göre küçük fiyat farkı (demo).
+  double _brandFactor(String? brand) {
+    if (brand == null || brand.isEmpty) return 0.97;
+    if (brand == 'Market markası') return 0.92;
+    final h = brand.hashCode.abs() % 9;
+    return 0.96 + (h * 0.01);
   }
 
   double _roundMoney(double value) => (value * 100).roundToDouble() / 100;

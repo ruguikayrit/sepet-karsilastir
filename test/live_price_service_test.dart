@@ -8,7 +8,8 @@ import 'package:sepet_karsilastir/services/markets/backend_market_price_client.d
 
 void main() {
   const milk = Product(
-    id: 'sut-1l',
+    id: 'sut-1l__icim',
+    typeId: 'sut-1l',
     name: 'Tam Yağlı Süt 1L',
     brand: 'İçim',
     category: 'Süt & Kahvaltı',
