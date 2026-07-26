@@ -296,7 +296,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Alışveriş listeni oluştur.\nMigros, BİM, A101, Şok, Macrocenter ve\n${Market.all.length} markette fiyatları karşılaştır.',
+              'Alışveriş listeni oluştur.\nBİM, A101, Şok, Migros, CarrefourSA dahil\n${Market.all.length} markette fiyatları karşılaştır.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: palette.inkMuted,

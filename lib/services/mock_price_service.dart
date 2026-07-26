@@ -1,3 +1,4 @@
+import '../data/market_price_index.dart';
 import '../data/market_price_snapshot.dart';
 import '../data/market_product_snapshot.dart';
 import '../data/mock_catalog.dart';
@@ -14,11 +15,12 @@ import 'price_service.dart';
 /// Kullanıcı sepete "marka + birim" seçerek girer; bu servis aynı ürünün
 /// 13 markette ne tutacağını üretir. İki farklı doğruluk seviyesi vardır:
 ///
-/// 1. **Doğrulanmış satır** — fiyat ve stok bilgisi marketin kendi ürün
-///    sayfasından gelir (Şok Market, Happy Center). Markalı satırlarda
-///    [marketProductSnapshot], markasız/market markası satırlarda
-///    [marketPriceSnapshot] tip kaydının o markete ait fiyatı kullanılır.
-/// 2. **Türetilmiş satır** — diğer marketlerde referans birim fiyat
+/// 1. **Doğrulanmış satır** — fiyat marketin kendi yayınından gelir:
+///    - Şok Market ve Happy Center ürün sayfaları ([marketProductSnapshot],
+///      markasız satırlarda [marketPriceSnapshot] tip kaydı),
+///    - BİM, A101, Şok, Migros, CarrefourSA, Hakmar ve Tarım Kredi için
+///      marketfiyati.org.tr fiyat indeksi ([marketPriceIndex]).
+/// 2. **Türetilmiş satır** — kalan marketlerde referans birim fiyat
 ///    ([marketPriceSnapshot] ya da markanın doğrulanmış fiyat ortalaması)
 ///    market fiyat seviyesi ve deterministik bir sapma ile ölçeklenir.
 ///    Bu satırlar [LinePrice.verified] `false` ile işaretlenir; ekran
@@ -125,19 +127,40 @@ class MockPriceService implements PriceService {
 
   LinePrice _line(MarketId marketId, Product product, int quantity) {
     final brandRef = _brandRef(marketId, product);
-    final typePrice = brandRef == null ? _typePrice(marketId, product) : null;
-    final verifiedPrice = brandRef?.price ?? typePrice;
+    final indexed = marketPriceIndex[product.id]?[marketId];
+    final verifiedPrice =
+        brandRef?.price ?? indexed?.price ?? _typePrice(marketId, product);
 
     return LinePrice(
       product: product,
       quantity: quantity,
       unitPrice: verifiedPrice ?? _derivedPrice(marketId, product),
-      // Markalı kayıtta stok bilgisi marketin sayfasından gelir; markasız
-      // satırda tek bir örnek ürünün stoğu tipin tamamını temsil etmez.
-      available: brandRef?.inStock ?? _carries(marketId, product),
+      available: _available(marketId, product, brandRef, indexed),
       verified: verifiedPrice != null,
       source: ProductSourceUrl.resolve(marketId: marketId, product: product),
     );
+  }
+
+  /// Bu market bu marka + birimi satıyor mu?
+  ///
+  /// Sırasıyla: marketin ürün sayfasındaki stok bilgisi, fiyat indeksindeki
+  /// kayıt, indeksin o tipteki çeşidi (kayıt yoksa market gerçekten
+  /// taşımıyor demektir) ve son olarak katalog varsayımları.
+  bool _available(
+    MarketId marketId,
+    Product product,
+    MarketProductRef? brandRef,
+    MarketIndexPrice? indexed,
+  ) {
+    if (brandRef != null) return brandRef.inStock;
+    if (indexed != null) return true;
+    final assortment =
+        marketPriceIndexAssortment[product.typeId] ?? const <MarketId>{};
+    if (assortment.contains(marketId) &&
+        marketPriceIndex.containsKey(product.id)) {
+      return false;
+    }
+    return _carries(marketId, product);
   }
 
   /// Bu market bu ürünün marka + birim eşleşmesini sitesinde yayınlıyor mu?
@@ -181,13 +204,16 @@ class MockPriceService implements PriceService {
 
   /// Ürünün market seviyesinden bağımsız referans fiyatı.
   ///
-  /// Marka doğrulanmış kayıtların ortalaması varsa o kullanılır; böylece
-  /// "Sütaş Kaşar 500g" ile "Mis Kaşar 500g" gerçek fiyat farkını korur.
+  /// Markanın doğrulanmış fiyatları varsa onların ortalaması kullanılır;
+  /// böylece "Sütaş Kaşar 500g" ile "Mis Kaşar 500g" gerçek fiyat farkını
+  /// indeksin kapsamadığı marketlerde de korur.
   static double _referencePrice(Product product) {
-    final refs = marketProductSnapshot[product.id]?.all.toList() ?? const [];
-    if (refs.isNotEmpty) {
-      final sum = refs.fold<double>(0, (total, ref) => total + ref.price);
-      return sum / refs.length;
+    final verified = <double>[
+      ...?marketProductSnapshot[product.id]?.all.map((ref) => ref.price),
+      ...?marketPriceIndex[product.id]?.values.map((cell) => cell.price),
+    ];
+    if (verified.isNotEmpty) {
+      return verified.reduce((a, b) => a + b) / verified.length;
     }
     final typeRef = marketPriceSnapshot[product.typeId];
     if (typeRef == null) return 49.90;
