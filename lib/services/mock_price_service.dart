@@ -127,9 +127,9 @@ class MockPriceService implements PriceService {
 
   LinePrice _line(MarketId marketId, Product product, int quantity) {
     final brandRef = _brandRef(marketId, product);
-    final indexed = marketPriceIndex[product.id]?[marketId];
+    final indexed = marketPriceIndex[product.id]?.prices[marketId];
     final verifiedPrice =
-        brandRef?.price ?? indexed?.price ?? _typePrice(marketId, product);
+        brandRef?.price ?? indexed ?? _typePrice(marketId, product);
 
     return LinePrice(
       product: product,
@@ -144,22 +144,17 @@ class MockPriceService implements PriceService {
   /// Bu market bu marka + birimi satıyor mu?
   ///
   /// Sırasıyla: marketin ürün sayfasındaki stok bilgisi, fiyat indeksindeki
-  /// kayıt, indeksin o tipteki çeşidi (kayıt yoksa market gerçekten
-  /// taşımıyor demektir) ve son olarak katalog varsayımları.
+  /// kayıt ve son olarak katalog varsayımları. İndekste kayıt bulunmaması
+  /// "satılmıyor" demek değildir; indeks her zincirin tüm çeşidini
+  /// kapsamadığı için eksiklik kanıt sayılmaz.
   bool _available(
     MarketId marketId,
     Product product,
     MarketProductRef? brandRef,
-    MarketIndexPrice? indexed,
+    double? indexed,
   ) {
     if (brandRef != null) return brandRef.inStock;
     if (indexed != null) return true;
-    final assortment =
-        marketPriceIndexAssortment[product.typeId] ?? const <MarketId>{};
-    if (assortment.contains(marketId) &&
-        marketPriceIndex.containsKey(product.id)) {
-      return false;
-    }
     return _carries(marketId, product);
   }
 
@@ -210,7 +205,7 @@ class MockPriceService implements PriceService {
   static double _referencePrice(Product product) {
     final verified = <double>[
       ...?marketProductSnapshot[product.id]?.all.map((ref) => ref.price),
-      ...?marketPriceIndex[product.id]?.values.map((cell) => cell.price),
+      ...?marketPriceIndex[product.id]?.prices.values,
     ];
     if (verified.isNotEmpty) {
       return verified.reduce((a, b) => a + b) / verified.length;

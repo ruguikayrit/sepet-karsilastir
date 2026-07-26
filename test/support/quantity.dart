@@ -12,11 +12,15 @@ Set<String> normalizedQuantities(String text) {
     found.add('ml:1000');
   }
 
-  final matches = RegExp(r'(\d+(?:[.,]\d+)?)\s*(kg|gr|g|lt|l|ml|cc)\b')
-      .allMatches(folded);
+  // `3x200 g` çoklu paketi 600 g sayılır: katalog da toplam gramajı yazar.
+  final matches =
+      RegExp(r'(?:(\d+)\s*[x*]\s*)?(\d+(?:[.,]\d+)?)\s*(kg|gr|g|lt|l|ml|cc)\b')
+          .allMatches(folded);
   for (final match in matches) {
-    final amount = double.parse(match.group(1)!.replaceAll(',', '.'));
-    final unit = match.group(2)!;
+    final pack = int.tryParse(match.group(1) ?? '') ?? 1;
+    final amount =
+        double.parse(match.group(2)!.replaceAll(',', '.')) * pack;
+    final unit = match.group(3)!;
     final (base, factor) = switch (unit) {
       'kg' => ('g', 1000),
       'gr' || 'g' => ('g', 1),
