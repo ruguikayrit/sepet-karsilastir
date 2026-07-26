@@ -6,6 +6,7 @@ import '../models/comparison_result.dart';
 import '../models/market.dart';
 import '../models/product.dart';
 import '../models/product_link.dart';
+import '../services/price_book_service.dart';
 import '../state/basket_controller.dart';
 import '../theme/app_theme.dart';
 import '../utils/dates.dart';
@@ -126,7 +127,7 @@ class _LoadingView extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            '${Market.priced.length} market taranıyor',
+            '${PriceBookService.compared.length} market taranıyor',
             style: TextStyle(color: palette.inkMuted),
           ),
         ],
@@ -221,7 +222,7 @@ class _ResultBody extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             ...ranked.map((b) => _MarketBreakdown(basket: b)),
-            if (Market.unpriced.isNotEmpty) ...[
+            if (_absentMarkets.isNotEmpty) ...[
               const SizedBox(height: 8),
               const _UnpricedMarketsCard(),
             ],
@@ -246,17 +247,23 @@ class _ResultBody extends StatelessWidget {
   }
 }
 
-/// Kendi sitesinde ürün fiyatı yayınlamayan marketler.
+/// Karşılaştırmaya girmeyen marketler ve sebepleri.
 ///
-/// Bu zincirler karşılaştırmaya girmez: fiyatı okunamadığı için uygulama
-/// tahmin üretmez, uydurma tutar göstermez.
+/// İki grup var: kendi sitesinde hiç ürün fiyatı yayınlamayanlar ve son
+/// çekimde sitesi yanıt vermeyenler. İkisinde de uygulama tahmin üretmez.
+Map<String, String> get _absentMarkets => {
+      for (final market in Market.unpriced) market.name: market.noPriceReason!,
+      for (final market in PriceBookService.missing)
+        market.name: 'son çekimde sitesinden fiyat alınamadı',
+    };
+
 class _UnpricedMarketsCard extends StatelessWidget {
   const _UnpricedMarketsCard();
 
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    final markets = Market.unpriced;
+    final markets = _absentMarkets;
 
     return Container(
       width: double.infinity,
@@ -284,11 +291,11 @@ class _UnpricedMarketsCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          ...markets.map(
+          ...markets.entries.map(
             (market) => Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: Text(
-                '${market.name} — ${market.noPriceReason}',
+                '${market.key} — ${market.value}',
                 style: TextStyle(
                   color: palette.ink,
                   fontSize: 13,

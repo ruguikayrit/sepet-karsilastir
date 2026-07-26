@@ -9,6 +9,7 @@ import 'package:sepet_karsilastir/models/market.dart';
 import 'package:sepet_karsilastir/models/product.dart';
 import 'package:sepet_karsilastir/models/product_link.dart';
 import 'package:sepet_karsilastir/screens/compare_screen.dart';
+import 'package:sepet_karsilastir/services/price_book_service.dart';
 import 'package:sepet_karsilastir/services/mapping/product_source_url.dart';
 import 'package:sepet_karsilastir/services/price_service.dart';
 import 'package:sepet_karsilastir/state/basket_controller.dart';
@@ -263,8 +264,11 @@ void main() {
     final card = find.text('BİM — ${bim.noPriceReason}');
     await _scrollTo(tester, card);
     expect(card, findsOneWidget);
+    // Kart iki grubu birlikte anlatır: hiç fiyat yayınlamayanlar ve son
+    // çekimde sitesinden fiyat alınamayanlar.
+    final absent = Market.unpriced.length + PriceBookService.missing.length;
     expect(
-      find.text('Karşılaştırmaya girmeyen ${Market.unpriced.length} market'),
+      find.text('Karşılaştırmaya girmeyen $absent market'),
       findsOneWidget,
     );
   });

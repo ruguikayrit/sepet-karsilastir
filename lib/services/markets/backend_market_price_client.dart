@@ -139,7 +139,8 @@ class MarketClients {
 
   static List<MarketPriceClient> all(ApiClient api, {QuoteCache? cache}) {
     final sharedCache = cache ?? QuoteCache(ttl: AppConfig.quoteCacheTtl);
-    return Market.all
+    // Fiyatını kendi sitesinde yayınlamayan zincir için teklif istenmez.
+    return Market.priced
         .map(
           (market) => BackendMarketPriceClient(
             marketId: market.id,

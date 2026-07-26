@@ -37,7 +37,7 @@ void main() {
 
     expect(
       result.baskets.map((b) => b.market.id),
-      Market.priced.map((m) => m.id),
+      PriceBookService.compared.map((m) => m.id),
     );
     // Fiyatını kendi sitesinde yayınlamayan zincir hiç görünmez: uygulama o
     // market için tutar uyduramaz.

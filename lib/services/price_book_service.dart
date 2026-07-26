@@ -16,8 +16,9 @@ import 'price_service.dart';
 /// fiyatıdır; kullanıcı tıklayıp doğrulayabilir. Fiyat yoksa tahmin
 /// üretilmez — satır o markette fiyatsız kalır ve toplama girmez.
 ///
-/// Karşılaştırma yalnızca [Market.priced] listesini kapsar: kendi sitesinde
-/// ürün fiyatı yayınlamayan zincir (BİM gibi) hiç fiyat göstermez.
+/// Karşılaştırma yalnızca defterde fiyatı olan marketleri kapsar: kendi
+/// sitesinde ürün fiyatı yayınlamayan zincir (BİM gibi) ve son çekimde yanıt
+/// vermeyen market hiç görünmez.
 class PriceBookService implements PriceService {
   const PriceBookService();
 
@@ -27,12 +28,24 @@ class PriceBookService implements PriceService {
     return searchProductTypesLocal(query);
   }
 
+  /// Bugünün defterinde fiyatı olan marketler — karşılaştırma bunları kapsar.
+  static List<Market> get compared =>
+      Market.priced.where((m) => priceBookMarkets.contains(m.id)).toList();
+
+  /// Fiyat yayınlıyor ama son çekimde fiyatı alınamayan marketler.
+  ///
+  /// Sitesi o gün yanıt vermediyse market karşılaştırmaya girmez: her satırı
+  /// "fiyat yok" olan bir sütun göstermek, marketi ucuz/pahalı diye yanlış
+  /// okumaya davet eder.
+  static List<Market> get missing =>
+      Market.priced.where((m) => !priceBookMarkets.contains(m.id)).toList();
+
   @override
   Future<ComparisonResult> compareBasket(List<ListItem> items) async {
     await Future<void>.delayed(const Duration(milliseconds: 250));
     final now = DateTime.now();
 
-    final baskets = Market.priced.map((market) {
+    final baskets = compared.map((market) {
       return MarketBasketResult(
         market: market,
         lines: items
