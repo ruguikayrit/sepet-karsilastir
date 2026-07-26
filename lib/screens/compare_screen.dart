@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../models/comparison_result.dart';
 import '../models/market.dart';
@@ -200,10 +201,15 @@ class _ResultBody extends StatelessWidget {
             }),
             const SizedBox(height: 8),
             Text(
-              'Ürün kırılımı',
+              'Ürün fiyat detayları',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Satıra dokununca fiyatın alındığı market sayfası açılır',
+              style: TextStyle(color: palette.inkMuted, fontSize: 13),
             ),
             const SizedBox(height: 10),
             ...ranked.map((b) => _MarketBreakdown(basket: b)),
@@ -442,32 +448,72 @@ class _MarketBreakdown extends StatelessWidget {
             ],
           ),
           children: basket.lines.map((line) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      '${line.product.displayName} ×${line.quantity}',
-                      style: TextStyle(
-                        color: line.available ? palette.ink : palette.inkMuted,
-                        decoration: line.available
-                            ? null
-                            : TextDecoration.lineThrough,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    line.available ? formatTry(line.lineTotal) : 'Yok',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: line.available ? palette.ink : palette.danger,
-                    ),
-                  ),
-                ],
-              ),
-            );
+            return _ProductPriceRow(line: line);
           }).toList(),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProductPriceRow extends StatelessWidget {
+  const _ProductPriceRow({required this.line});
+
+  final LinePrice line;
+
+  Future<void> _openSource() async {
+    final raw = line.sourceUrl;
+    if (raw == null || raw.isEmpty) return;
+    final uri = Uri.tryParse(raw);
+    if (uri == null) return;
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final hasLink = line.sourceUrl != null && line.sourceUrl!.isNotEmpty;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: hasLink ? _openSource : null,
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '${line.product.displayName} ×${line.quantity}',
+                  style: TextStyle(
+                    color: line.available ? palette.ink : palette.inkMuted,
+                    decoration: line.available
+                        ? (hasLink ? TextDecoration.underline : null)
+                        : TextDecoration.lineThrough,
+                    decorationColor: hasLink
+                        ? palette.ink.withValues(alpha: 0.35)
+                        : null,
+                  ),
+                ),
+              ),
+              if (hasLink) ...[
+                Icon(
+                  Icons.open_in_new_rounded,
+                  size: 16,
+                  color: palette.inkMuted,
+                ),
+                const SizedBox(width: 6),
+              ],
+              Text(
+                line.available ? formatTry(line.lineTotal) : 'Yok',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: line.available ? palette.ink : palette.danger,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

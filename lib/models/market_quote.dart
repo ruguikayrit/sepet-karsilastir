@@ -9,6 +9,7 @@ class ProductQuote {
     required this.available,
     this.externalSku,
     this.currency = 'TRY',
+    this.sourceUrl,
   });
 
   final String productId;
@@ -17,6 +18,9 @@ class ProductQuote {
   final bool available;
   final String currency;
 
+  /// Fiyatın alındığı orijinal ürün sayfası (backend sağlarsa).
+  final String? sourceUrl;
+
   factory ProductQuote.fromJson(Map<String, dynamic> json) {
     return ProductQuote(
       productId: json['productId'] as String,
@@ -24,6 +28,7 @@ class ProductQuote {
       unitPrice: (json['unitPrice'] as num).toDouble(),
       available: json['available'] as bool? ?? true,
       currency: json['currency'] as String? ?? 'TRY',
+      sourceUrl: json['sourceUrl'] as String?,
     );
   }
 }
