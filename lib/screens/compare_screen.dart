@@ -208,7 +208,7 @@ class _ResultBody extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Satıra dokununca fiyatın alındığı market sayfası açılır',
+              'Satıra dokununca o marketin sitesinde aynı marka ve birim açılır',
               style: TextStyle(color: palette.inkMuted, fontSize: 13),
             ),
             const SizedBox(height: 10),
