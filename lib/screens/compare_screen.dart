@@ -126,7 +126,7 @@ class _LoadingView extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            '${Market.all.length} market taranıyor',
+            '${Market.priced.length} market taranıyor',
             style: TextStyle(color: palette.inkMuted),
           ),
         ],
@@ -170,9 +170,9 @@ class _ResultBody extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Güncellendi: ${formatClock(result.comparedAt)}'
-              ' · ${result.source == PriceSource.live ? 'Canlı' : 'Demo'}'
-              ' · ${result.completeCount}/${result.baskets.length} market listeyi tamamlıyor',
+              'Fiyatlar ${_priceDate(result)} · marketlerin kendi ürün '
+              'sayfalarından · ${result.completeCount}/${result.baskets.length}'
+              ' market listeyi tamamlıyor',
               style: TextStyle(color: palette.inkMuted, fontSize: 13),
             ),
             if (result.failedMarketCount > 0) ...[
@@ -214,13 +214,17 @@ class _ResultBody extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Satıra dokununca o marketin sitesinde aynı marka ve birim açılır. '
-              'Eksik ürünler toplama eklenmez.'
-              '${result.hasEstimates ? ' “~” işaretli fiyatlar market sayfasından doğrulanmadı, tahminidir.' : ''}',
+              'Her tutar, satıra dokununca açılan ürün sayfasındaki fiyattır; '
+              'tıklayıp doğrulayabilirsin. Fiyatı yayınlanmayan satır boş '
+              'kalır ve toplama eklenmez.',
               style: TextStyle(color: palette.inkMuted, fontSize: 13),
             ),
             const SizedBox(height: 10),
             ...ranked.map((b) => _MarketBreakdown(basket: b)),
+            if (Market.unpriced.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              const _UnpricedMarketsCard(),
+            ],
           ],
         ),
         if (refreshing)
@@ -231,6 +235,70 @@ class _ResultBody extends StatelessWidget {
             child: LinearProgressIndicator(minHeight: 2),
           ),
       ],
+    );
+  }
+
+  static String _priceDate(ComparisonResult result) {
+    final fetchedAt = result.pricesFetchedAt;
+    final parsed = fetchedAt == null ? null : DateTime.tryParse(fetchedAt);
+    if (parsed != null) return formatDateTr(parsed);
+    return formatClock(result.comparedAt);
+  }
+}
+
+/// Kendi sitesinde ürün fiyatı yayınlamayan marketler.
+///
+/// Bu zincirler karşılaştırmaya girmez: fiyatı okunamadığı için uygulama
+/// tahmin üretmez, uydurma tutar göstermez.
+class _UnpricedMarketsCard extends StatelessWidget {
+  const _UnpricedMarketsCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final markets = Market.unpriced;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: palette.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: palette.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Karşılaştırmaya girmeyen ${markets.length} market',
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Fiyatı kendi sitesinden okunamayan market için tutar '
+            'göstermiyoruz; tahmin yerine boş bırakıyoruz.',
+            style: TextStyle(
+              color: palette.inkMuted,
+              fontSize: 13,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 10),
+          ...markets.map(
+            (market) => Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Text(
+                '${market.name} — ${market.noPriceReason}',
+                style: TextStyle(
+                  color: palette.ink,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -297,9 +365,7 @@ class _WinnerCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            winner.hasEstimates
-                ? '~${formatTry(winner.total)}'
-                : formatTry(winner.total),
+            formatTry(winner.total),
             style: TextStyle(
               color: palette.onAccent,
               fontSize: 34,
@@ -309,10 +375,8 @@ class _WinnerCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            winner.hasEstimates
-                ? '${winner.verifiedCount}/${winner.lines.length} satır market '
-                    'sayfasından doğrulandı, kalanı tahmini'
-                : 'Tüm satırlar market sayfasından doğrulandı',
+            '${winner.lines.length} satırın tamamı ${winner.market.name} '
+            'ürün sayfalarından okundu',
             style: TextStyle(
               color: palette.onAccent.withValues(alpha: 0.9),
               fontWeight: FontWeight.w600,
@@ -377,8 +441,8 @@ class _NoCompleteBasketCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Eksik ürünü olan market “en ucuz” sayılmaz. Aşağıdaki toplamlar '
-            'yalnızca o markette bulunan ürünleri kapsar.',
+            'Fiyatı eksik olan market “en ucuz” sayılmaz. Aşağıdaki toplamlar '
+            'yalnızca o marketin sayfasından okunan ürünleri kapsar.',
             style: TextStyle(
               color: palette.ink,
               fontWeight: FontWeight.w600,
@@ -390,7 +454,7 @@ class _NoCompleteBasketCard extends StatelessWidget {
             Text(
               'Listeye en yakın: ${closest.market.name} · '
               '${closest.availableCount}/${closest.lines.length} ürün '
-              '(${closest.hasEstimates ? '~' : ''}${formatTry(closest.total)})',
+              '(${formatTry(closest.total)})',
               style: TextStyle(
                 color: palette.ink,
                 fontWeight: FontWeight.w700,
@@ -489,7 +553,7 @@ class _MarketRankTile extends StatelessWidget {
                       ? (basket.errorMessage ?? 'Fiyat alınamadı')
                       : basket.isComplete
                           ? '${basket.market.segment.label} · ${basket.availableCount} ürün tamam'
-                          : '${basket.market.segment.label} · yok: '
+                          : '${basket.market.segment.label} · fiyatı yok: '
                               '${_NoCompleteBasketCard._names(basket.missingProducts)}',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -508,10 +572,7 @@ class _MarketRankTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                basket.fetchFailed
-                    ? '—'
-                    : '${basket.hasEstimates ? '~' : ''}'
-                        '${formatTry(basket.total)}',
+                basket.fetchFailed ? '—' : formatTry(basket.total),
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 17,
@@ -583,24 +644,21 @@ class _MarketBreakdown extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    basket.hasEstimates
-                        ? '~${formatTry(basket.total)}'
-                        : formatTry(basket.total),
+                    formatTry(basket.total),
                     style: const TextStyle(fontWeight: FontWeight.w800),
                   ),
                   if (basket.isPartial)
                     Text(
-                      '${basket.missingCount} ürün eksik',
+                      '${basket.missingCount} ürünün fiyatı yok',
                       style: TextStyle(
                         color: palette.danger,
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                       ),
                     )
-                  else if (basket.verifiedCount > 0)
+                  else
                     Text(
-                      '${basket.verifiedCount}/${basket.lines.length}'
-                      ' fiyat doğrulandı',
+                      '${basket.lines.length} fiyat market sayfasından',
                       style: TextStyle(
                         color: palette.inkMuted,
                         fontSize: 11,
@@ -652,6 +710,7 @@ class _ProductPriceRow extends StatelessWidget {
     final palette = context.palette;
     final link = line.source;
     final hasLink = link != null && link.url.isNotEmpty;
+    final marketProduct = line.marketProduct;
 
     return Material(
       color: Colors.transparent,
@@ -661,33 +720,45 @@ class _ProductPriceRow extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Text(
-                  '${line.product.displayName} ×${line.quantity}',
-                  style: TextStyle(
-                    color: line.available ? palette.ink : palette.inkMuted,
-                    decoration: line.available
-                        ? (hasLink ? TextDecoration.underline : null)
-                        : TextDecoration.lineThrough,
-                    decorationColor: hasLink
-                        ? palette.ink.withValues(alpha: 0.35)
-                        : null,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${line.product.displayName} ×${line.quantity}',
+                      style: TextStyle(
+                        color: line.available ? palette.ink : palette.inkMuted,
+                        decoration: line.available
+                            ? TextDecoration.underline
+                            : TextDecoration.lineThrough,
+                        decorationColor: palette.ink.withValues(alpha: 0.35),
+                      ),
+                    ),
+                    // Fiyatın okunduğu ürün: satıra dokununca bu ürün açılır.
+                    if (marketProduct != null)
+                      Text(
+                        marketProduct,
+                        style: TextStyle(
+                          color: palette.inkMuted,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                  ],
                 ),
               ),
+              const SizedBox(width: 8),
               if (hasLink) ...[
                 Tooltip(
-                  message: '${link.kind.label} · ${link.host}'
-                      '${line.isEstimate ? ' · tahmini fiyat' : ''}',
+                  message: '${link.kind.label} · ${link.host}',
                   child: Icon(_icon, size: 16, color: palette.inkMuted),
                 ),
                 const SizedBox(width: 6),
               ],
               Text(
-                line.available
-                    ? '${line.isEstimate ? '~' : ''}${formatTry(line.lineTotal)}'
-                    : 'Yok',
+                line.available ? formatTry(line.lineTotal) : 'Fiyat yok',
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   color: line.available ? palette.ink : palette.danger,

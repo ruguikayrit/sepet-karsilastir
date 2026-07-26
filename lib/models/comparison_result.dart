@@ -3,38 +3,45 @@ import 'market.dart';
 import 'product.dart';
 import 'product_link.dart';
 
-enum PriceSource { mock, live }
+enum PriceSource { priceBook, live }
 
+/// Bir marketin bir sepet satırı için verdiği fiyat.
+///
+/// Fiyat yalnızca marketin kendi ürün sayfasından okunduysa vardır: bu yüzden
+/// [unitPrice] boş olabilir. Tahmin üretilmez — fiyat yoksa satır o markette
+/// fiyatsızdır. Fiyat varsa [source] mutlaka o fiyatın okunduğu ürün
+/// sayfasıdır, yani kullanıcı tutarı tıklayıp doğrulayabilir.
 class LinePrice {
   const LinePrice({
     required this.product,
     required this.quantity,
-    required this.unitPrice,
-    required this.available,
+    this.unitPrice,
+    this.marketProduct,
     this.source,
-    this.verified = false,
   });
 
   final Product product;
   final int quantity;
-  final double unitPrice;
-  final bool available;
 
-  /// Fiyatın doğrulanabileceği market bağlantısı (varsa).
+  /// Marketin sayfasındaki raf fiyatı; fiyat yayınlanmıyorsa `null`.
+  final double? unitPrice;
+
+  /// Fiyatın okunduğu ürünün marketteki adı ("Mis Kaşar Peyniri 500 g").
+  final String? marketProduct;
+
+  /// Fiyatın okunduğu sayfa; fiyat varsa doğrudan ürün bağlantısıdır.
   final ProductLink? source;
-
-  /// Fiyat, marketin kendi ürün sayfasından mı geldi?
-  ///
-  /// `false` ise satır bir tahmindir: birim ve marka aynı kalır ama tutar
-  /// referans fiyattan türetilir, bu yüzden toplam "yaklaşık" gösterilir.
-  final bool verified;
 
   String? get sourceUrl => source?.url;
 
-  /// Satır tutara giriyor ama fiyatı doğrulanmadı.
-  bool get isEstimate => available && !verified;
+  /// Bu market bu satırı fiyatlıyor mu?
+  bool get available => unitPrice != null;
 
-  double get lineTotal => available ? unitPrice * quantity : 0;
+  /// Fiyat, satıra dokununca açılan ürün sayfasından mı okundu?
+  bool get opensPricedProduct =>
+      available && source?.kind == ProductLinkKind.product;
+
+  double get lineTotal => (unitPrice ?? 0) * quantity;
 }
 
 class MarketBasketResult {
@@ -70,20 +77,18 @@ class MarketBasketResult {
 
   List<Product> get missingProducts =>
       lines.where((l) => !l.available).map((l) => l.product).toList();
-
-  /// Marketin sitesinden birebir doğrulanan satır sayısı.
-  int get verifiedCount => lines.where((l) => l.available && l.verified).length;
-
-  /// Toplamın içinde en az bir tahmini satır var mı?
-  bool get hasEstimates => lines.any((l) => l.isEstimate);
 }
 
 class ComparisonResult {
   const ComparisonResult({
     required this.baskets,
     required this.comparedAt,
-    this.source = PriceSource.mock,
+    this.source = PriceSource.priceBook,
+    this.pricesFetchedAt,
   });
+
+  /// Fiyatların market sitelerinden çekildiği gün (ISO 8601).
+  final String? pricesFetchedAt;
 
   final List<MarketBasketResult> baskets;
   final DateTime comparedAt;
@@ -158,9 +163,5 @@ class ComparisonResult {
     return complete.last.total - complete.first.total;
   }
 
-  int get failedMarketCount =>
-      baskets.where((b) => b.fetchFailed).length;
-
-  /// Toplamlardan herhangi biri tahmini satır içeriyor mu?
-  bool get hasEstimates => baskets.any((b) => b.hasEstimates);
+  int get failedMarketCount => baskets.where((b) => b.fetchFailed).length;
 }

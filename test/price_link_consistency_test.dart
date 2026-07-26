@@ -1,124 +1,107 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sepet_karsilastir/data/brands.dart';
-import 'package:sepet_karsilastir/data/market_price_index.dart';
-import 'package:sepet_karsilastir/data/market_price_snapshot.dart';
-import 'package:sepet_karsilastir/data/market_product_snapshot.dart';
 import 'package:sepet_karsilastir/data/mock_catalog.dart';
+import 'package:sepet_karsilastir/data/price_book.dart';
 import 'package:sepet_karsilastir/models/list_item.dart';
 import 'package:sepet_karsilastir/models/market.dart';
 import 'package:sepet_karsilastir/models/product.dart';
 import 'package:sepet_karsilastir/models/product_link.dart';
-import 'package:sepet_karsilastir/services/mock_price_service.dart';
-import 'package:sepet_karsilastir/utils/text.dart';
+import 'package:sepet_karsilastir/services/mapping/product_source_url.dart';
+import 'package:sepet_karsilastir/services/price_book_service.dart';
 
-/// Satırda yazan tutar ile satırın açtığı bağlantı aynı ürünü göstermeli.
+/// Ekranda yazan tutar ile satırın açtığı sayfa aynı ürünü göstermeli.
 ///
-/// Doğrulanmış bir fiyat gösterip başka bir ürünün sayfasına gitmek, "aynı
-/// listeyi karşılaştırıyoruz" sözünün en kolay bozulduğu yer. Bu dosya bütün
-/// veri kaynaklarını sepete koyup her market satırını tek tek denetler.
+/// Kullanıcıya verilen söz bu: "fiyat doğru mu?" diye merak edince satıra
+/// dokunur, marketin sayfası açılır ve aynı tutarı görür. Bu dosya bütün
+/// katalogu sepete koyup her market satırını tek tek denetler; fiyatı olan
+/// satır daima ürün sayfasına, fiyatı olmayan satır asla ürün sayfasına
+/// bağlanmaz.
 void main() {
-  final typeById = {for (final type in productTypes) type.id: type};
-  final brandKeyToName = {
-    for (final brand in foodBrands) slugifyTurkish(brand.name): brand.name,
-  };
+  final typesById = {for (final type in productTypes) type.id: type};
+  final brandNames = foodBrands.map((b) => b.name).toList();
 
-  Product? productOf(String id) {
-    final parts = id.split('__');
-    final type = typeById[parts.first];
-    final brand = brandKeyToName[parts.last];
-    if (type == null || brand == null) return null;
+  Product productOf(String productId) {
+    final type = typesById[productId.split('__').first]!;
+    final brandKey = productId.split('__').last;
+    final brand = brandKey == 'markasiz'
+        ? null
+        : brandNames.firstWhere(
+            (name) => Product.brandKeyOf(name) == brandKey,
+            orElse: () => brandKey,
+          );
     return type.withBrand(brand);
   }
 
-  test('doğrulanmış fiyat ile bağlantı aynı ürünü gösterir', () async {
+  test('fiyat gösteren satır fiyatın okunduğu sayfayı açar', () async {
     final products = <Product>[
-      for (final id in {
-        ...marketProductSnapshot.keys,
-        ...marketPriceIndex.keys,
-      })
-        if (productOf(id) case final product?) product,
-      // Markasız satırlar tip seviyesindeki ürün sayfasına bağlanır.
+      for (final productId in priceBook.keys) productOf(productId),
+      // Markasız satırlar da aynı kurala tabi: fiyat varsa ürün sayfası vardır.
       for (final type in productTypes) type.withBrand(null),
     ];
-    expect(products, hasLength(greaterThan(150)));
 
-    final result = await MockPriceService().compareBasket([
+    final result = await const PriceBookService().compareBasket([
       for (final product in products) ListItem(product: product),
     ]);
+    expect(result.baskets.map((b) => b.market.id), Market.priced.map((m) => m.id));
 
-    var verified = 0;
+    var priced = 0;
     for (final basket in result.baskets) {
       final marketId = basket.market.id;
       for (final line in basket.lines) {
-        final id = line.product.id;
+        final label = '${line.product.id} · ${marketId.name}';
         final link = line.source!;
-        final reason = '$id · ${marketId.name}';
+        final offer = priceBook[line.product.id]?[marketId];
 
-        final brandRef = switch (marketId) {
-          MarketId.sok => marketProductSnapshot[id]?.sok,
-          MarketId.happyCenter => marketProductSnapshot[id]?.happyCenter,
-          _ => null,
-        };
-        if (brandRef != null) {
-          verified++;
-          expect(line.unitPrice, brandRef.price, reason: reason);
-          expect(line.verified, isTrue, reason: reason);
-          expect(link.kind, ProductLinkKind.product, reason: reason);
-          expect(link.url, endsWith(brandRef.path), reason: reason);
+        if (line.available) {
+          priced++;
+          expect(offer, isNotNull, reason: '$label: defterde kayıt yok');
+          expect(line.unitPrice, offer!.price, reason: label);
+          expect(offer.inStock, isTrue, reason: label);
+          // Tutar, açılan sayfadaki üründen okundu: ikisi aynı kayıt.
+          expect(line.marketProduct, offer.product, reason: label);
+          expect(link.url, offer.url, reason: label);
+          expect(link.kind, ProductLinkKind.product, reason: label);
+          expect(line.opensPricedProduct, isTrue, reason: label);
+          expect(link.host, isNotEmpty, reason: label);
           continue;
         }
 
-        final indexed = marketPriceIndex[id];
-        if (indexed != null && indexed.prices.containsKey(marketId)) {
-          verified++;
-          expect(line.unitPrice, indexed.prices[marketId], reason: reason);
-          expect(line.verified, isTrue, reason: reason);
-          // Arama sunan marketlerde sorgu, fiyatı yazan ürünün adıdır.
-          if (link.kind == ProductLinkKind.search) {
-            expect(
-              Uri.parse(link.url).queryParameters.values.single,
-              indexed.product,
-              reason: reason,
-            );
-          }
-          continue;
-        }
+        // Fiyat yok: tahmin de yok, ürün sayfası iddiası da yok.
+        expect(line.unitPrice, isNull, reason: label);
+        expect(line.lineTotal, 0, reason: label);
+        expect(line.marketProduct, isNull, reason: label);
+        expect(link.kind, isNot(ProductLinkKind.product), reason: label);
+        expect(offer?.inStock ?? false, isFalse, reason: label);
 
-        final typeRef = marketPriceSnapshot[line.product.typeId]!;
-        final generic = line.product.brand == null;
-        final typePath = switch (marketId) {
-          MarketId.sok => generic ? typeRef.sokPath : null,
-          MarketId.happyCenter => generic ? typeRef.happyCenterPath : null,
-          _ => null,
-        };
-        if (typePath != null) {
-          verified++;
-          final price = marketId == MarketId.sok
-              ? typeRef.sokPrice
-              : typeRef.happyCenterPrice;
-          expect(line.unitPrice, price, reason: reason);
-          expect(line.verified, isTrue, reason: reason);
-          expect(link.kind, ProductLinkKind.product, reason: reason);
-          expect(link.url, endsWith(typePath), reason: reason);
-          continue;
-        }
-
-        // Kalan satırlar tahmini: tutar türetilir ama marka ve birim korunur.
-        expect(line.verified, isFalse, reason: reason);
-        expect(line.product.name, typeById[line.product.typeId]!.name,
-            reason: reason);
         if (link.kind == ProductLinkKind.search) {
           final query = Uri.parse(link.url).queryParameters.values.single;
-          expect(query, contains(line.product.name), reason: reason);
-          if (line.product.brand != null) {
-            expect(query, contains(line.product.brand!), reason: reason);
+          expect(query, contains(line.product.name), reason: label);
+          final brand = line.product.brand;
+          if (brand != null && !ProductSourceUrl.isGenericBrand(brand)) {
+            expect(query, contains(brand), reason: label);
           }
         }
       }
     }
 
-    // Kaynakların gerçekten kullanıldığını görmek için: aksi halde test
-    // yalnızca tahmini satırları denetliyor olurdu.
-    expect(verified, greaterThan(300));
+    // Defterin gerçekten okunduğunu görmek için: aksi halde test yalnızca
+    // fiyatsız satırları denetliyor olurdu.
+    expect(priced, greaterThan(150));
+  });
+
+  test('marketin toplamı yalnızca fiyatı okunan satırlardan oluşur', () async {
+    final result = await const PriceBookService().compareBasket([
+      for (final productId in priceBook.keys.take(60))
+        ListItem(product: productOf(productId), quantity: 2),
+    ]);
+
+    for (final basket in result.baskets) {
+      final expected = basket.lines
+          .where((line) => line.available)
+          .fold<double>(0, (sum, line) => sum + line.unitPrice! * 2);
+      expect(basket.total, closeTo(expected, 0.001),
+          reason: basket.market.name);
+      expect(basket.availableCount + basket.missingCount, basket.lines.length);
+    }
   });
 }

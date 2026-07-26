@@ -92,7 +92,9 @@ class ComparisonSnapshot {
           .map((e) => MarketTotalSnapshot.fromJson(e as Map<String, dynamic>))
           .whereType<MarketTotalSnapshot>()
           .toList(),
-      source: json['source'] == 'live' ? PriceSource.live : PriceSource.mock,
+      source: json['source'] == 'live'
+          ? PriceSource.live
+          : PriceSource.priceBook,
       winnerMarketId: Market.idFromName(json['winnerMarketId'] as String?),
       winnerTotal: (json['winnerTotal'] as num?)?.toDouble(),
       savings: (json['savings'] as num?)?.toDouble(),
@@ -119,7 +121,7 @@ class ComparisonSnapshot {
         'comparedAt': comparedAt.toIso8601String(),
         'items': items.map((e) => e.toJson()).toList(),
         'marketTotals': marketTotals.map((e) => e.toJson()).toList(),
-        'source': source == PriceSource.live ? 'live' : 'mock',
+        'source': source == PriceSource.live ? 'live' : 'priceBook',
         if (winnerMarketId != null) 'winnerMarketId': winnerMarketId!.name,
         if (winnerTotal != null) 'winnerTotal': winnerTotal,
         if (savings != null) 'savings': savings,

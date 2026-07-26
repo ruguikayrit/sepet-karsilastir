@@ -1,67 +1,51 @@
-import '../../data/market_price_index.dart';
-import '../../data/market_price_snapshot.dart';
-import '../../data/market_product_snapshot.dart';
 import '../../models/market.dart';
 import '../../models/product.dart';
 import '../../models/product_link.dart';
 import '../../utils/text.dart';
 
-/// Karşılaştırma satırının fiyatını doğrulayacak market bağlantısını üretir.
+/// Fiyatı olmayan satır için marketin arama bağlantısını üretir.
 ///
-/// Sıra:
-/// 1. O markette marka + birim birebir eşleşen ürün sayfası ([marketProductSnapshot])
-/// 2. Markasız/market markası satırlarda tip seviyesindeki ürün sayfası
-/// 3. Market site içi arama sunuyorsa arama; fiyat indeksten geliyorsa
-///    aramada indeksin ürün adı kullanılır, böylece link fiyatı yazan ürüne
-///    çıkar ([marketPriceIndex])
-/// 4. Aksi halde marketin kendi sitesi
-///
-/// Bağlantı her zaman ilgili marketin kendi alan adına gider.
+/// Fiyatlı satırın bağlantısı buradan gelmez: o bağlantı fiyatın okunduğu ürün
+/// sayfasıdır ve fiyat defterinde tutulur. Burada üretilen bağlantı yalnızca
+/// "bu markette fiyat bulamadım, sen bakmak ister misin" içindir; bu yüzden
+/// yanına hiçbir zaman tutar yazılmaz.
 class ProductSourceUrl {
   const ProductSourceUrl._();
 
-  static const sokHost = 'https://www.sokmarket.com.tr';
-  static const happyCenterHost = 'https://happycenter.com.tr';
-
-  static ProductLink resolve({
+  /// Marketin site içi araması varsa arama, yoksa kendi ana sayfası.
+  static ProductLink search({
     required MarketId marketId,
     required Product product,
   }) {
-    final query = searchQuery(product, marketId: marketId);
+    final query = searchQuery(product);
+    final market = Market.byId(marketId);
     return switch (marketId) {
-      MarketId.sok => _sok(product, query),
-      MarketId.happyCenter => _happyCenter(product, query),
+      MarketId.sok =>
+        _search('https://www.sokmarket.com.tr/arama', 'q', query),
+      MarketId.happyCenter =>
+        // Happy Center araması /Product/Search/ altında `ara` parametresiyle.
+        _search('https://happycenter.com.tr/Product/Search/', 'ara', query),
+      MarketId.hakmar =>
+        _search('https://www.hakmarexpress.com.tr/arama', 'q', query),
       MarketId.migros => _search('https://www.migros.com.tr/arama', 'q', query),
       MarketId.macrocenter =>
         _search('https://www.macrocenter.com.tr/arama', 'q', query),
       MarketId.a101 => _search('https://www.a101.com.tr/arama', 'k', query),
       MarketId.carrefour =>
         _search('https://www.carrefoursa.com/search/', 'text', query),
-      MarketId.hakmar =>
-        _search('https://www.hakmarexpress.com.tr/arama', 'q', query),
-      // Aşağıdaki marketlerin sitesinde URL ile tetiklenen ürün araması yok;
-      // yalnızca marketin kendi ana sayfası açılır.
-      MarketId.bim => _site('https://www.bim.com.tr/'),
-      MarketId.file => _site('https://www.file.com.tr/'),
-      MarketId.tarimKredi => _site('https://www.tkkoop.com.tr/'),
-      MarketId.onur => _site('https://www.onurmarket.com/'),
-      MarketId.metro => _site('https://www.metro-tr.com/'),
-      MarketId.getir => _site('https://getir.com/buyuk/'),
+      // Kalan marketlerin sitesinde URL ile tetiklenen ürün araması yok.
+      MarketId.bim ||
+      MarketId.file ||
+      MarketId.tarimKredi ||
+      MarketId.onur ||
+      MarketId.metro ||
+      MarketId.getir =>
+        ProductLink(url: market.site, kind: ProductLinkKind.site),
     };
   }
 
-  /// Aramaya gidecek metin; birim her zaman sorgunun içinde kalır.
-  ///
-  /// [marketId] verilir ve fiyat o market için indeksten geliyorsa indeksin
-  /// ürün adı kullanılır: satırda yazan tutar ile aramanın açtığı ürün aynı
-  /// olur. Aksi halde sepetteki marka + ürün adı aranır.
-  static String searchQuery(Product product, {MarketId? marketId}) {
-    if (marketId != null) {
-      final indexed = marketPriceIndex[product.id];
-      if (indexed != null && indexed.prices.containsKey(marketId)) {
-        return indexed.product;
-      }
-    }
+  /// Aranacak metin: marka + ürün adı; birim her zaman sorgunun içinde kalır.
+  static String searchQuery(Product product) {
     final brand = product.brand?.trim();
     if (brand == null || brand.isEmpty || isGenericBrand(brand)) {
       return product.name;
@@ -72,41 +56,13 @@ class ProductSourceUrl {
   /// Markasız veya market markası satırı mı?
   static bool isGenericBrand(String? brand) {
     if (brand == null || brand.trim().isEmpty) return true;
-    final key = foldBrand(brand);
+    final key = slugifyTurkish(brand);
     return key.isEmpty || key == 'markasiz' || key == 'market-markasi';
   }
-
-  /// Türkçe karakterleri ASCII'ye katlar (eşleştirme için).
-  static String foldBrand(String brand) => slugifyTurkish(brand);
 
   static ProductLink _search(String base, String param, String query) {
     final url =
         Uri.parse(base).replace(queryParameters: {param: query}).toString();
     return ProductLink(url: url, kind: ProductLinkKind.search);
-  }
-
-  static ProductLink _site(String url) =>
-      ProductLink(url: url, kind: ProductLinkKind.site);
-
-  static ProductLink _product(String url) =>
-      ProductLink(url: url, kind: ProductLinkKind.product);
-
-  static ProductLink _sok(Product product, String query) {
-    final path = marketProductSnapshot[product.id]?.sok?.path ??
-        (isGenericBrand(product.brand)
-            ? marketPriceSnapshot[product.typeId]?.sokPath
-            : null);
-    if (path != null) return _product('$sokHost/$path');
-    return _search('$sokHost/arama', 'q', query);
-  }
-
-  static ProductLink _happyCenter(Product product, String query) {
-    final path = marketProductSnapshot[product.id]?.happyCenter?.path ??
-        (isGenericBrand(product.brand)
-            ? marketPriceSnapshot[product.typeId]?.happyCenterPath
-            : null);
-    if (path != null) return _product('$happyCenterHost/$path');
-    // Happy Center araması /Product/Search/ altında `ara` parametresiyle çalışır.
-    return _search('$happyCenterHost/Product/Search/', 'ara', query);
   }
 }

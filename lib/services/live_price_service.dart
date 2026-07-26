@@ -51,37 +51,6 @@ class LivePriceService implements PriceService {
     );
   }
 
-  /// Backend yokken entegrasyon akışını test etmek için.
-  factory LivePriceService.stubbed() {
-    const factors = <MarketId, double>{
-      MarketId.tarimKredi: 0.89,
-      MarketId.bim: 0.91,
-      MarketId.hakmar: 0.92,
-      MarketId.a101: 0.93,
-      MarketId.sok: 0.94,
-      MarketId.metro: 0.95,
-      MarketId.onur: 0.98,
-      MarketId.file: 0.99,
-      MarketId.happyCenter: 1.00,
-      MarketId.migros: 1.05,
-      MarketId.carrefour: 1.06,
-      MarketId.getir: 1.12,
-      MarketId.macrocenter: 1.24,
-    };
-
-    return LivePriceService(
-      marketClients: Market.all
-          .map(
-            (market) => StubMarketPriceClient(
-              marketId: market.id,
-              priceFactor: factors[market.id] ?? 1.0,
-            ),
-          )
-          .toList(),
-      catalogClient: LocalCatalogClient(),
-    );
-  }
-
   final List<MarketPriceClient> _clients;
   final CatalogClient _catalog;
   final ProductSkuMap _skuMap;
@@ -140,8 +109,6 @@ class LivePriceService implements PriceService {
               (item) => LinePrice(
                 product: item.product,
                 quantity: item.quantity,
-                unitPrice: 0,
-                available: false,
               ),
             )
             .toList(),
@@ -154,30 +121,29 @@ class LivePriceService implements PriceService {
 
     final lines = items.map((item) {
       final quote = byProduct[item.product.id];
-      final fallback = ProductSourceUrl.resolve(
+      final search = ProductSourceUrl.search(
         marketId: batch.marketId,
         product: item.product,
       );
-      if (quote == null) {
+      final backendUrl = quote?.sourceUrl;
+      // Fiyatı ancak ürün sayfasıyla birlikte gösteriyoruz: kullanıcı tutarı
+      // tıklayıp doğrulayamıyorsa satır fiyatsız kalır.
+      if (quote == null ||
+          !quote.available ||
+          backendUrl == null ||
+          backendUrl.isEmpty) {
         return LinePrice(
           product: item.product,
           quantity: item.quantity,
-          unitPrice: 0,
-          available: false,
-          source: fallback,
+          source: search,
         );
       }
-      final backendUrl = quote.sourceUrl;
       return LinePrice(
         product: item.product,
         quantity: item.quantity,
         unitPrice: quote.unitPrice,
-        available: quote.available,
-        // Canlı fiyat marketin kendi kotasyonundan geliyor.
-        verified: true,
-        source: backendUrl == null || backendUrl.isEmpty
-            ? fallback
-            : ProductLink(url: backendUrl, kind: ProductLinkKind.product),
+        marketProduct: quote.marketProduct,
+        source: ProductLink(url: backendUrl, kind: ProductLinkKind.product),
       );
     }).toList();
 

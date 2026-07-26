@@ -1,8 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sepet_karsilastir/data/market_price_snapshot.dart';
 import 'package:sepet_karsilastir/data/mock_catalog.dart';
 import 'package:sepet_karsilastir/models/list_item.dart';
-import 'package:sepet_karsilastir/services/mock_price_service.dart';
+import 'package:sepet_karsilastir/services/price_book_service.dart';
 import 'package:sepet_karsilastir/services/storage/basket_repository.dart';
 import 'package:sepet_karsilastir/services/storage/key_value_store.dart';
 import 'package:sepet_karsilastir/state/basket_controller.dart';
@@ -14,12 +13,12 @@ void main() {
     final store = InMemoryStore();
     final repo = BasketRepository(store);
 
-    final first = BasketController(MockPriceService(), repository: repo);
+    final first = BasketController(const PriceBookService(), repository: repo);
     first.addProduct(milkType.withBrand('İçim'));
     first.addProduct(milkType.withBrand('Pınar'));
     first.setQuantity(milkType.withBrand('İçim').id, 3);
 
-    final second = BasketController(MockPriceService(), repository: repo);
+    final second = BasketController(const PriceBookService(), repository: repo);
     expect(second.items, hasLength(2));
     expect(second.totalQuantity, 4);
     expect(
@@ -31,7 +30,7 @@ void main() {
   test('kayıtlı liste kaydedilir, yüklenir ve silinir', () {
     final store = InMemoryStore();
     final controller = BasketController(
-      MockPriceService(),
+      const PriceBookService(),
       repository: BasketRepository(store),
     );
 
@@ -54,7 +53,7 @@ void main() {
   test('karşılaştırma geçmişe yazılır ve sepete geri yüklenir', () async {
     final store = InMemoryStore();
     final controller = BasketController(
-      MockPriceService(),
+      const PriceBookService(),
       repository: BasketRepository(store),
     );
 
@@ -62,7 +61,12 @@ void main() {
     final result = await controller.compare();
     expect(result, isNotNull);
     expect(controller.history, hasLength(1));
-    expect(controller.history.first.winnerMarketId, isNotNull);
+    // Kazanan, fiyatı gerçekten okunmuş marketlerden çıkar; defter her gün
+    // yenilendiği için bu satırın hiç fiyatı olmadığı bir gün olabilir.
+    expect(
+      controller.history.first.winnerMarketId,
+      result!.cheapestComplete?.market.id,
+    );
 
     controller.clear();
     expect(controller.isEmpty, isTrue);
@@ -72,7 +76,7 @@ void main() {
 
     // Yeniden açınca geçmiş hâlâ orada.
     final restored = BasketController(
-      MockPriceService(),
+      const PriceBookService(),
       repository: BasketRepository(store),
     );
     expect(restored.history, hasLength(1));
@@ -97,7 +101,6 @@ void main() {
       product.id,
       productTypes.firstWhere((t) => t.id == 'tuz-500').withBrand('Billur').id,
     );
-    expect(marketPriceSnapshot[product.typeId], isNotNull);
   });
 
   test('bozuk kayıtlar sessizce atlanır', () async {

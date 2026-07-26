@@ -75,7 +75,7 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 _InfoRow(
                   label: 'Market',
-                  value: '${Market.all.length} zincir',
+                  value: '${Market.priced.length}/${Market.all.length} zincir fiyat yayınlıyor',
                 ),
               ],
             ),

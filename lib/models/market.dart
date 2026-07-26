@@ -37,6 +37,8 @@ class Market {
     required this.shortName,
     required this.color,
     required this.segment,
+    required this.site,
+    this.noPriceReason,
   });
 
   final MarketId id;
@@ -45,6 +47,18 @@ class Market {
   final Color color;
   final MarketSegment segment;
 
+  /// Marketin kendi sitesi.
+  final String site;
+
+  /// Fiyatı okunamıyorsa nedeni; okunuyorsa `null`.
+  ///
+  /// Karşılaştırma yalnızca kendi sitesinde ürün fiyatı yayınlayan marketleri
+  /// kapsar. Kalanlar için uygulama fiyat üretmez, sebebi kullanıcıya yazar.
+  final String? noPriceReason;
+
+  /// Fiyatı kendi sitesinden okunabiliyor mu?
+  bool get publishesPrices => noPriceReason == null;
+
   static const all = <Market>[
     Market(
       id: MarketId.migros,
@@ -52,6 +66,7 @@ class Market {
       shortName: 'MIG',
       color: Color(0xFFFF6600),
       segment: MarketSegment.ulusal,
+      site: 'https://www.migros.com.tr/',
     ),
     Market(
       id: MarketId.macrocenter,
@@ -59,6 +74,7 @@ class Market {
       shortName: 'MACRO',
       color: Color(0xFF1B4D3E),
       segment: MarketSegment.premium,
+      site: 'https://www.macrocenter.com.tr/',
     ),
     Market(
       id: MarketId.a101,
@@ -66,6 +82,8 @@ class Market {
       shortName: 'A101',
       color: Color(0xFF00ADEF),
       segment: MarketSegment.indirim,
+      site: 'https://www.a101.com.tr/',
+      noPriceReason: 'sitesi otomatik fiyat okumaya kapalı',
     ),
     Market(
       id: MarketId.bim,
@@ -73,6 +91,8 @@ class Market {
       shortName: 'BİM',
       color: Color(0xFFE2001A),
       segment: MarketSegment.indirim,
+      site: 'https://www.bim.com.tr/',
+      noPriceReason: 'online satış yapmıyor, raf fiyatı yayınlamıyor',
     ),
     Market(
       id: MarketId.sok,
@@ -80,6 +100,7 @@ class Market {
       shortName: 'ŞOK',
       color: Color(0xFFFFCC00),
       segment: MarketSegment.indirim,
+      site: 'https://www.sokmarket.com.tr/',
     ),
     Market(
       id: MarketId.carrefour,
@@ -87,6 +108,8 @@ class Market {
       shortName: 'CRF',
       color: Color(0xFF0055A5),
       segment: MarketSegment.ulusal,
+      site: 'https://www.carrefoursa.com/',
+      noPriceReason: 'sitesi otomatik fiyat okumaya kapalı',
     ),
     Market(
       id: MarketId.file,
@@ -94,6 +117,8 @@ class Market {
       shortName: 'FILE',
       color: Color(0xFF6B2D8B),
       segment: MarketSegment.ulusal,
+      site: 'https://www.file.com.tr/',
+      noPriceReason: 'sitesinde ürün fiyatı yayınlanmıyor',
     ),
     Market(
       id: MarketId.tarimKredi,
@@ -101,6 +126,8 @@ class Market {
       shortName: 'TKM',
       color: Color(0xFF1F7A4D),
       segment: MarketSegment.indirim,
+      site: 'https://www.tkkoop.com.tr/',
+      noPriceReason: 'online mağazası yayında değil',
     ),
     Market(
       id: MarketId.hakmar,
@@ -108,6 +135,7 @@ class Market {
       shortName: 'HAK',
       color: Color(0xFFD32F2F),
       segment: MarketSegment.indirim,
+      site: 'https://www.hakmarexpress.com.tr/',
     ),
     Market(
       id: MarketId.onur,
@@ -115,6 +143,8 @@ class Market {
       shortName: 'ONUR',
       color: Color(0xFFEF6C00),
       segment: MarketSegment.yerel,
+      site: 'https://www.onurmarket.com/',
+      noPriceReason: 'sitesinde ürün fiyatı yayınlanmıyor',
     ),
     Market(
       id: MarketId.happyCenter,
@@ -122,6 +152,7 @@ class Market {
       shortName: 'HAPPY',
       color: Color(0xFF2E7D32),
       segment: MarketSegment.yerel,
+      site: 'https://happycenter.com.tr/',
     ),
     Market(
       id: MarketId.metro,
@@ -129,6 +160,8 @@ class Market {
       shortName: 'METRO',
       color: Color(0xFF283593),
       segment: MarketSegment.toptan,
+      site: 'https://www.metro-tr.com/',
+      noPriceReason: 'sitesi otomatik fiyat okumaya kapalı',
     ),
     Market(
       id: MarketId.getir,
@@ -136,10 +169,20 @@ class Market {
       shortName: 'GETIR',
       color: Color(0xFF5D3EBC),
       segment: MarketSegment.hizli,
+      site: 'https://getir.com/buyuk/',
+      noPriceReason: 'sitesi otomatik fiyat okumaya kapalı',
     ),
   ];
 
   static Market byId(MarketId id) => all.firstWhere((m) => m.id == id);
+
+  /// Fiyatı kendi sitesinden okunan marketler — karşılaştırma bunları kapsar.
+  static List<Market> get priced =>
+      all.where((m) => m.publishesPrices).toList();
+
+  /// Fiyat yayınlamayan marketler; ekranda sebebiyle birlikte listelenir.
+  static List<Market> get unpriced =>
+      all.where((m) => !m.publishesPrices).toList();
 
   static List<Market> bySegment(MarketSegment segment) =>
       all.where((m) => m.segment == segment).toList();

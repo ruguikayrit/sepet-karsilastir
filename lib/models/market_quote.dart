@@ -10,6 +10,7 @@ class ProductQuote {
     this.externalSku,
     this.currency = 'TRY',
     this.sourceUrl,
+    this.marketProduct,
   });
 
   final String productId;
@@ -18,8 +19,14 @@ class ProductQuote {
   final bool available;
   final String currency;
 
-  /// Fiyatın alındığı orijinal ürün sayfası (backend sağlarsa).
+  /// Fiyatın okunduğu ürün sayfası.
+  ///
+  /// Boşsa fiyat kullanıcıya gösterilmez: tutarı tıklayıp doğrulayamadığı bir
+  /// fiyat, tahminden farksızdır.
   final String? sourceUrl;
+
+  /// Marketin sayfasındaki ürün adı ("Sütaş Kaşar Peyniri 500 g").
+  final String? marketProduct;
 
   factory ProductQuote.fromJson(Map<String, dynamic> json) {
     return ProductQuote(
@@ -29,6 +36,7 @@ class ProductQuote {
       available: json['available'] as bool? ?? true,
       currency: json['currency'] as String? ?? 'TRY',
       sourceUrl: json['sourceUrl'] as String?,
+      marketProduct: json['marketProduct'] as String?,
     );
   }
 }

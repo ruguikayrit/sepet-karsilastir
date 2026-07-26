@@ -1,16 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sepet_karsilastir/data/brands.dart';
-import 'package:sepet_karsilastir/data/market_price_index.dart';
-import 'package:sepet_karsilastir/data/market_price_snapshot.dart';
-import 'package:sepet_karsilastir/data/market_product_snapshot.dart';
 import 'package:sepet_karsilastir/data/mock_catalog.dart';
 import 'package:sepet_karsilastir/models/market.dart';
 import 'package:sepet_karsilastir/models/product_link.dart';
 import 'package:sepet_karsilastir/services/mapping/product_source_url.dart';
 
-/// Her market satırı kendi alan adına gitmeli ve marka + birim korunmalı.
+/// Fiyatsız satırın bağlantısı: her zaman o marketin kendi alan adı, hiçbir
+/// zaman fiyat iddiası yok.
 void main() {
-  /// Bağlantının gitmesi gereken alan adı (market bazında).
   const expectedHost = <MarketId, String>{
     MarketId.migros: 'www.migros.com.tr',
     MarketId.macrocenter: 'www.macrocenter.com.tr',
@@ -33,11 +29,10 @@ void main() {
     expect(expectedHost.keys, hasLength(MarketId.values.length));
 
     for (final type in productTypes) {
-      final product = type.withBrand('Market markası');
       for (final market in Market.all) {
-        final link = ProductSourceUrl.resolve(
+        final link = ProductSourceUrl.search(
           marketId: market.id,
-          product: product,
+          product: type.withBrand('Market markası'),
         );
         final uri = Uri.parse(link.url);
         expect(uri.scheme, 'https', reason: '${market.id} https değil');
@@ -50,11 +45,22 @@ void main() {
     }
   });
 
+  test('bağlantı asla ürün sayfası olarak işaretlenmez', () {
+    // Ürün sayfası bağlantısı yalnızca fiyat defterinden gelir; buradan gelen
+    // bağlantının yanında tutar gösterilmediği için türü de arama/sitedir.
+    for (final market in Market.all) {
+      final link = ProductSourceUrl.search(
+        marketId: market.id,
+        product: kasar.withBrand('Bahçıvan'),
+      );
+      expect(link.kind, isNot(ProductLinkKind.product));
+    }
+  });
+
   test('arama bağlantısı marka ve birimi sorguda taşır', () {
-    final product = kasar.withBrand('Bahçıvan');
-    final link = ProductSourceUrl.resolve(
+    final link = ProductSourceUrl.search(
       marketId: MarketId.migros,
-      product: product,
+      product: kasar.withBrand('Bahçıvan'),
     );
 
     expect(link.kind, ProductLinkKind.search);
@@ -62,136 +68,54 @@ void main() {
     expect(query, 'Bahçıvan Kaşar Peynir 500g');
   });
 
-  test('fiyat indeksten gelen aramada indeksin ürün adı kullanılır', () {
-    // Migros araması, fiyatı yazan ürünün kendisine çıkmalı; sepetin genel
-    // ürün adı ("Sofra Tuzu 500g") başka bir ürünü öne çıkarabilir.
-    final entry = marketPriceIndex.entries.firstWhere(
-      (e) =>
-          e.value.prices.containsKey(MarketId.migros) &&
-          !marketProductSnapshot.containsKey(e.key),
-    );
-    final type =
-        productTypes.firstWhere((t) => t.id == entry.key.split('__').first);
-    final brandName = foodBrands
-        .firstWhere((b) => type.withBrand(b.name).id == entry.key)
-        .name;
-
-    final link = ProductSourceUrl.resolve(
-      marketId: MarketId.migros,
-      product: type.withBrand(brandName),
-    );
-    expect(link.kind, ProductLinkKind.search);
-    expect(
-      Uri.parse(link.url).queryParameters['q'],
-      entry.value.product,
-    );
-
-    // İndeksin kapsamadığı markette sepetteki marka + birim aranır.
-    final macro = ProductSourceUrl.resolve(
-      marketId: MarketId.macrocenter,
-      product: type.withBrand(brandName),
-    );
-    expect(
-      Uri.parse(macro.url).queryParameters['q'],
-      '$brandName ${type.name}',
-    );
+  test('markasız satırda sorgu yalnızca ürün adını taşır', () {
+    for (final brand in [null, '', 'Market markası', 'Markasız']) {
+      final link = ProductSourceUrl.search(
+        marketId: MarketId.sok,
+        product: kasar.withBrand(brand),
+      );
+      expect(Uri.parse(link.url).queryParameters['q'], 'Kaşar Peynir 500g');
+    }
   });
 
-  test('site bağlantısı sunan marketlerde sorgu parametresi olmaz', () {
-    const siteOnly = [
+  test('arama sunmayan market kendi ana sayfasını açar', () {
+    for (final marketId in [
       MarketId.bim,
       MarketId.file,
       MarketId.tarimKredi,
       MarketId.onur,
       MarketId.metro,
       MarketId.getir,
-    ];
-
-    for (final marketId in siteOnly) {
-      final link = ProductSourceUrl.resolve(
+    ]) {
+      final link = ProductSourceUrl.search(
         marketId: marketId,
         product: kasar.withBrand('Sütaş'),
       );
-      expect(link.kind, ProductLinkKind.site, reason: '$marketId');
-      expect(Uri.parse(link.url).queryParameters, isEmpty, reason: '$marketId');
+      expect(link.kind, ProductLinkKind.site);
+      expect(link.url, Market.byId(marketId).site);
     }
   });
 
-  test('doğrulanmış marka kaydı doğrudan ürün sayfasına gider', () {
-    final verified = marketProductSnapshot.entries
-        .where((e) => e.value.sok != null)
-        .toList();
-    expect(verified, isNotEmpty);
+  test('site içi arama sunan marketlerde sorgu parametresi doğru', () {
+    final cases = {
+      MarketId.sok: ('www.sokmarket.com.tr', 'q'),
+      MarketId.happyCenter: ('happycenter.com.tr', 'ara'),
+      MarketId.hakmar: ('www.hakmarexpress.com.tr', 'q'),
+      MarketId.migros: ('www.migros.com.tr', 'q'),
+      MarketId.macrocenter: ('www.macrocenter.com.tr', 'q'),
+      MarketId.a101: ('www.a101.com.tr', 'k'),
+      MarketId.carrefour: ('www.carrefoursa.com', 'text'),
+    };
 
-    for (final entry in verified.take(20)) {
-      final parts = entry.key.split('__');
-      final type = productTypes.firstWhere((t) => t.id == parts.first);
-      final brandName = foodBrands
-          .firstWhere((b) => type.withBrand(b.name).id == entry.key)
-          .name;
-
-      final link = ProductSourceUrl.resolve(
-        marketId: MarketId.sok,
-        product: type.withBrand(brandName),
+    for (final entry in cases.entries) {
+      final link = ProductSourceUrl.search(
+        marketId: entry.key,
+        product: kasar.withBrand('Sütaş'),
       );
-      expect(link.kind, ProductLinkKind.product, reason: entry.key);
-      expect(link.url, endsWith(entry.value.sok!.path), reason: entry.key);
+      final uri = Uri.parse(link.url);
+      expect(link.kind, ProductLinkKind.search, reason: entry.key.name);
+      expect(uri.host, entry.value.$1);
+      expect(uri.queryParameters[entry.value.$2], contains('Kaşar'));
     }
-  });
-
-  test('markasız satır tip seviyesindeki ürün sayfasına gider', () {
-    for (final type in productTypes) {
-      final ref = marketPriceSnapshot[type.id]!;
-      final product = type.withBrand(null);
-
-      final sok = ProductSourceUrl.resolve(
-        marketId: MarketId.sok,
-        product: product,
-      );
-      expect(
-        sok.kind,
-        ref.sokPath == null ? ProductLinkKind.search : ProductLinkKind.product,
-        reason: type.id,
-      );
-
-      final happy = ProductSourceUrl.resolve(
-        marketId: MarketId.happyCenter,
-        product: product,
-      );
-      expect(
-        happy.kind,
-        ref.happyCenterPath == null
-            ? ProductLinkKind.search
-            : ProductLinkKind.product,
-        reason: type.id,
-      );
-    }
-  });
-
-  test('doğrulanmamış marka aramaya düşer, tip sayfasına sapmaz', () {
-    // Bahçıvan kaşar peyniri Şok kataloğunda doğrulanmadı: tip seviyesindeki
-    // Sütaş ürününe gitmek yanlış marka gösterir, o yüzden arama açılmalı.
-    final product = kasar.withBrand('Bahçıvan');
-    expect(marketProductSnapshot[product.id]?.sok, isNull);
-
-    final link = ProductSourceUrl.resolve(
-      marketId: MarketId.sok,
-      product: product,
-    );
-    expect(link.kind, ProductLinkKind.search);
-    expect(link.url, isNot(contains(marketPriceSnapshot['kasar-500']!.sokPath!)));
-    expect(Uri.parse(link.url).queryParameters['q'], contains('Bahçıvan'));
-  });
-
-  test('market markası ve markasız satırlar aynı tip sayfasını kullanır', () {
-    final withoutBrand = ProductSourceUrl.resolve(
-      marketId: MarketId.sok,
-      product: kasar.withBrand(null),
-    );
-    final privateLabel = ProductSourceUrl.resolve(
-      marketId: MarketId.sok,
-      product: kasar.withBrand('Market markası'),
-    );
-    expect(privateLabel.url, withoutBrand.url);
   });
 }

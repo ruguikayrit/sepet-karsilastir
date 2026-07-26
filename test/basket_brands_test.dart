@@ -3,14 +3,14 @@ import 'package:sepet_karsilastir/data/brands.dart';
 import 'package:sepet_karsilastir/data/mock_catalog.dart';
 import 'package:sepet_karsilastir/models/list_item.dart';
 import 'package:sepet_karsilastir/models/market.dart';
-import 'package:sepet_karsilastir/services/mock_price_service.dart';
+import 'package:sepet_karsilastir/services/price_book_service.dart';
 import 'package:sepet_karsilastir/state/basket_controller.dart';
 
 void main() {
   final milkType = productTypes.firstWhere((t) => t.id == 'sut-1l');
 
   test('aynı ürün farklı markalarla ayrı satır olur', () {
-    final controller = BasketController(MockPriceService());
+    final controller = BasketController(const PriceBookService());
 
     controller.addProduct(milkType.withBrand('İçim'));
     controller.addProduct(milkType.withBrand('Pınar'));
@@ -29,22 +29,24 @@ void main() {
     expect(dairy, isNot(contains('Ariel')));
   });
 
-  test('mock servis genişletilmiş market listesini fiyatlar', () async {
-    final service = MockPriceService();
-    final result = await service.compareBasket([
+  test('karşılaştırma yalnızca fiyat yayınlayan marketleri kapsar', () async {
+    final result = await const PriceBookService().compareBasket([
       ListItem(product: milkType.withBrand('İçim')),
       ListItem(product: milkType.withBrand('Sütaş')),
     ]);
 
-    expect(result.baskets, hasLength(Market.all.length));
     expect(
       result.baskets.map((b) => b.market.id),
-      containsAll([MarketId.macrocenter, MarketId.bim, MarketId.tarimKredi]),
+      Market.priced.map((m) => m.id),
     );
-
-    final macro = result.baskets
-        .firstWhere((b) => b.market.id == MarketId.macrocenter);
-    final bim = result.baskets.firstWhere((b) => b.market.id == MarketId.bim);
-    expect(macro.total, greaterThan(bim.total));
+    // Fiyatını kendi sitesinde yayınlamayan zincir hiç görünmez: uygulama o
+    // market için tutar uyduramaz.
+    for (final market in Market.unpriced) {
+      expect(
+        result.baskets.map((b) => b.market.id),
+        isNot(contains(market.id)),
+        reason: '${market.name}: ${market.noPriceReason}',
+      );
+    }
   });
 }

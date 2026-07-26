@@ -80,7 +80,8 @@ class HomeScreen extends StatelessWidget {
                           title: 'Sepetin hazır — karşılaştır',
                           body:
                               '${basket.totalQuantity} ürün · ${basket.uniqueBrandCount} marka. '
-                              '${Market.all.length} marketten en düşük toplamı şimdi gör.',
+                              '${Market.priced.length} marketin yayınladığı fiyatlarla '
+                              'en düşük toplamı şimdi gör.',
                           cta: 'Sonucu gör',
                           onTap: () => onOpenTab(2),
                         )
@@ -89,8 +90,8 @@ class HomeScreen extends StatelessWidget {
                           title: 'Markanı seç, sepetini kur',
                           body:
                               'Her ürün için bir veya birden fazla marka seç. '
-                              'Sonra indirim, ulusal ve premium ${Market.all.length} marketin '
-                              'fiyatlarını tek ekranda kıyasla.',
+                              'Sonra fiyatını kendi sitesinde yayınlayan '
+                              '${Market.priced.length} marketi tek ekranda kıyasla.',
                           cta: 'Sepete ürün ekle',
                           onTap: () => onOpenTab(1),
                         ),
@@ -236,7 +237,7 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             Text(
-              'Karşılaştırılan ${Market.all.length} market',
+              'Karşılaştırılan ${Market.priced.length} market',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),

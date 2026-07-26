@@ -519,7 +519,7 @@ class _SnapshotCard extends StatelessWidget {
     if (savings != null && savings > 0) {
       parts.add('${formatTry(savings)} fark');
     }
-    if (snapshot.source == PriceSource.mock) parts.add('Demo');
+    if (snapshot.source == PriceSource.live) parts.add('Canlı');
     return parts.join(' · ');
   }
 

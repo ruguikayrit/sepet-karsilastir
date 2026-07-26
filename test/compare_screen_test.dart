@@ -7,22 +7,33 @@ import 'package:sepet_karsilastir/models/fetch_status.dart';
 import 'package:sepet_karsilastir/models/list_item.dart';
 import 'package:sepet_karsilastir/models/market.dart';
 import 'package:sepet_karsilastir/models/product.dart';
+import 'package:sepet_karsilastir/models/product_link.dart';
 import 'package:sepet_karsilastir/screens/compare_screen.dart';
 import 'package:sepet_karsilastir/services/mapping/product_source_url.dart';
 import 'package:sepet_karsilastir/services/price_service.dart';
 import 'package:sepet_karsilastir/state/basket_controller.dart';
 import 'package:sepet_karsilastir/theme/app_theme.dart';
 
+/// Marketin sayfasında bulunan ürün: fiyat ve o fiyatın okunduğu adres.
+class _Found {
+  const _Found(this.price, this.product, this.url);
+
+  final double price;
+  final String product;
+  final String url;
+}
+
 /// Verilen fiyat tablosunu aynen döndüren servis: ekran davranışını
 /// deterministik olarak sınamak için.
+///
+/// Fiyat defterinin kuralını taklit eder: fiyat varsa bağlantı o fiyatın
+/// okunduğu ürün sayfasıdır, fiyat yoksa satır fiyatsız kalır ve bağlantı
+/// yalnızca marketin aramasına gider.
 class _ScriptedPriceService implements PriceService {
-  _ScriptedPriceService(this.prices);
+  _ScriptedPriceService(this.found);
 
-  /// marketId -> (ürün kimliği -> birim fiyat; `null` ise o markette yok)
-  final Map<MarketId, Map<String, double?>> prices;
-
-  /// Fiyatı market sayfasından doğrulanmış sayılan marketler.
-  final Set<MarketId> verifiedMarkets = {};
+  /// marketId -> (ürün kimliği -> markette bulunan ürün; `null` ise fiyat yok)
+  final Map<MarketId, Map<String, _Found?>> found;
 
   @override
   Future<List<ProductType>> searchProductTypes(String query) async =>
@@ -31,23 +42,13 @@ class _ScriptedPriceService implements PriceService {
   @override
   Future<model.ComparisonResult> compareBasket(List<ListItem> items) async {
     final baskets = <model.MarketBasketResult>[];
-    for (final entry in prices.entries) {
+    for (final entry in found.entries) {
       baskets.add(
         model.MarketBasketResult(
           market: Market.byId(entry.key),
           lines: [
             for (final item in items)
-              model.LinePrice(
-                product: item.product,
-                quantity: item.quantity,
-                unitPrice: entry.value[item.product.id] ?? 0,
-                available: entry.value[item.product.id] != null,
-                verified: verifiedMarkets.contains(entry.key),
-                source: ProductSourceUrl.resolve(
-                  marketId: entry.key,
-                  product: item.product,
-                ),
-              ),
+              _line(entry.key, item, entry.value[item.product.id]),
           ],
           fetchedAt: DateTime(2026, 7, 26),
           status: FetchStatus.ok,
@@ -57,6 +58,27 @@ class _ScriptedPriceService implements PriceService {
     return model.ComparisonResult(
       baskets: baskets,
       comparedAt: DateTime(2026, 7, 26),
+      pricesFetchedAt: '2026-07-26',
+    );
+  }
+
+  model.LinePrice _line(MarketId marketId, ListItem item, _Found? offer) {
+    if (offer == null) {
+      return model.LinePrice(
+        product: item.product,
+        quantity: item.quantity,
+        source: ProductSourceUrl.search(
+          marketId: marketId,
+          product: item.product,
+        ),
+      );
+    }
+    return model.LinePrice(
+      product: item.product,
+      quantity: item.quantity,
+      unitPrice: offer.price,
+      marketProduct: offer.product,
+      source: ProductLink(url: offer.url, kind: ProductLinkKind.product),
     );
   }
 }
@@ -94,15 +116,31 @@ void main() {
   Product milkOf(String brand) => milk.withBrand(brand);
   Product cheeseOf(String brand) => cheese.withBrand(brand);
 
-  testWidgets('eksik ürünü olan market kısmi toplam olarak işaretlenir',
+  const sokCheese = _Found(
+    299,
+    'Sütaş Kaşar Peyniri 500 g',
+    'https://www.sokmarket.com.tr/sutas-kasar-peyniri-500-g-p-4684',
+  );
+  const sokMilk = _Found(
+    45,
+    'İçim Süt Tam Yağlı 1 L',
+    'https://www.sokmarket.com.tr/icim-sut-tam-yagli-1-l-p-1234',
+  );
+  const hakmarMilk = _Found(
+    40,
+    'İçim Süt Tam Yağlı 1 Lt',
+    'https://www.hakmarexpress.com.tr/icim-sut-tam-yagli-1-lt-1009421-p',
+  );
+
+  testWidgets('fiyatı olmayan market kısmi toplam olarak işaretlenir',
       (tester) async {
     final icim = milkOf('İçim');
     final sutas = cheeseOf('Sütaş');
 
     final controller = BasketController(
       _ScriptedPriceService({
-        MarketId.bim: {icim.id: 40, sutas.id: null},
-        MarketId.sok: {icim.id: 45, sutas.id: 300},
+        MarketId.hakmar: {icim.id: hakmarMilk, sutas.id: null},
+        MarketId.sok: {icim.id: sokMilk, sutas.id: sokCheese},
       }),
     );
     controller.addProduct(icim);
@@ -116,10 +154,11 @@ void main() {
     expect(find.text('kısmi toplam'), findsOneWidget);
     expect(find.textContaining('1/2 market listeyi tamamlıyor'),
         findsOneWidget);
+    // Fiyatın hangi gün marketin sayfasından okunduğu yazar.
+    expect(find.textContaining('Fiyatlar 26 Tem 2026'), findsOneWidget);
 
-    // Fiyat dökümünde eksik ürün sayısı da yazar.
-    await _scrollTo(tester, find.text('1 ürün eksik'));
-    expect(find.text('1 ürün eksik'), findsOneWidget);
+    await _scrollTo(tester, find.text('1 ürünün fiyatı yok'));
+    expect(find.text('1 ürünün fiyatı yok'), findsOneWidget);
   });
 
   testWidgets('hiçbir market listeyi tamamlamıyorsa uyarı gösterilir',
@@ -129,8 +168,8 @@ void main() {
 
     final controller = BasketController(
       _ScriptedPriceService({
-        MarketId.bim: {icim.id: 40, sutas.id: null},
-        MarketId.sok: {icim.id: 45, sutas.id: null},
+        MarketId.hakmar: {icim.id: hakmarMilk, sutas.id: null},
+        MarketId.sok: {icim.id: sokMilk, sutas.id: null},
       }),
     );
     controller.addProduct(icim);
@@ -146,15 +185,17 @@ void main() {
       find.textContaining('Hiçbir markette bulunamadı: Sütaş Kaşar Peynir'),
       findsOneWidget,
     );
-    expect(find.textContaining('Listeye en yakın: BİM'), findsOneWidget);
+    expect(find.textContaining('Listeye en yakın: Hakmar Express'),
+        findsOneWidget);
   });
 
-  testWidgets('ürün satırı marketin ürün sayfasına bağlanır', (tester) async {
+  testWidgets('fiyatlı satır fiyatın okunduğu ürün sayfasını açar',
+      (tester) async {
     final sutas = cheeseOf('Sütaş');
 
     final controller = BasketController(
       _ScriptedPriceService({
-        MarketId.sok: {sutas.id: 299},
+        MarketId.sok: {sutas.id: sokCheese},
       }),
     );
     controller.addProduct(sutas);
@@ -167,32 +208,64 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Sütaş Kaşar Peynir 500g ×1'), findsOneWidget);
-    expect(find.byTooltip('Ürün sayfası · www.sokmarket.com.tr · tahmini fiyat'),
-        findsOneWidget);
+    // Tutarın yanında, fiyatın okunduğu marketteki ürünün adı yazar.
+    expect(find.text(sokCheese.product), findsOneWidget);
+    expect(find.textContaining('299,00'), findsWidgets);
+    expect(
+      find.byTooltip('Ürün sayfası · www.sokmarket.com.tr'),
+      findsOneWidget,
+    );
   });
 
-  testWidgets('tahmini fiyatlı toplam “~” ile gösterilir', (tester) async {
+  testWidgets('fiyatı olmayan satırda tutar yerine “Fiyat yok” yazar',
+      (tester) async {
     final sutas = cheeseOf('Sütaş');
-    final service = _ScriptedPriceService({
-      MarketId.sok: {sutas.id: 299},
-      MarketId.migros: {sutas.id: 340},
-    });
-    // Şok fiyatı doğrulandı, Migros satırı tahmin.
-    service.verifiedMarkets.add(MarketId.sok);
 
-    final controller = BasketController(service);
+    final controller = BasketController(
+      _ScriptedPriceService({
+        MarketId.sok: {sutas.id: null},
+      }),
+    );
     controller.addProduct(sutas);
     await controller.compare();
 
     await _pumpCompare(tester, controller);
 
-    expect(find.textContaining('Tüm satırlar market sayfasından doğrulandı'),
-        findsOneWidget);
-    expect(find.textContaining('“~” işaretli fiyatlar'), findsOneWidget);
-    // Migros toplamı tahmini olduğu için tilde ile yazılır.
-    expect(find.textContaining('~'), findsWidgets);
+    await _scrollTo(tester, find.byType(ExpansionTile).first);
+    await tester.tap(find.byType(ExpansionTile).first);
+    await tester.pumpAndSettle();
 
-    await _scrollTo(tester, find.text('1/1 fiyat doğrulandı'));
-    expect(find.text('1/1 fiyat doğrulandı'), findsOneWidget);
+    expect(find.text('Fiyat yok'), findsOneWidget);
+    // Tahmini tutar üretilmez: ne satırda ne toplamda sayı çıkar.
+    expect(find.textContaining('~'), findsNothing);
+    // Bağlantı ürün sayfası değil, marketin kendi araması.
+    expect(
+      find.byTooltip('Site içi arama · www.sokmarket.com.tr'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('fiyat yayınlamayan marketler sebebiyle listelenir',
+      (tester) async {
+    final sutas = cheeseOf('Sütaş');
+
+    final controller = BasketController(
+      _ScriptedPriceService({
+        MarketId.sok: {sutas.id: sokCheese},
+      }),
+    );
+    controller.addProduct(sutas);
+    await controller.compare();
+
+    await _pumpCompare(tester, controller);
+
+    final bim = Market.byId(MarketId.bim);
+    final card = find.text('BİM — ${bim.noPriceReason}');
+    await _scrollTo(tester, card);
+    expect(card, findsOneWidget);
+    expect(
+      find.text('Karşılaştırmaya girmeyen ${Market.unpriced.length} market'),
+      findsOneWidget,
+    );
   });
 }
