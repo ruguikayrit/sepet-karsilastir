@@ -1,4 +1,5 @@
 import '../config/app_config.dart';
+import '../data/market_price_snapshot.dart';
 import '../data/mock_catalog.dart';
 import '../models/comparison_result.dart';
 import '../models/fetch_status.dart';
@@ -152,12 +153,15 @@ class LivePriceService implements PriceService {
 
     final lines = items.map((item) {
       final quote = byProduct[item.product.id];
+      final fallbackUrl =
+          marketPriceSnapshot[item.product.typeId]?.sourceUrl;
       if (quote == null) {
         return LinePrice(
           product: item.product,
           quantity: item.quantity,
           unitPrice: 0,
           available: false,
+          sourceUrl: fallbackUrl,
         );
       }
       return LinePrice(
@@ -165,6 +169,7 @@ class LivePriceService implements PriceService {
         quantity: item.quantity,
         unitPrice: quote.unitPrice,
         available: quote.available,
+        sourceUrl: quote.sourceUrl ?? fallbackUrl,
       );
     }).toList();
 

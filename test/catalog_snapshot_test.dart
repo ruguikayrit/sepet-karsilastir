@@ -18,6 +18,7 @@ void main() {
       expect(ref, isNotNull, reason: '${type.id} snapshot’ta yok');
       expect(ref!.unitPrice, greaterThan(0));
       expect(ref.sampleProduct, isNotEmpty);
+      expect(ref.sourceUrl, startsWith('http'));
     }
   });
 

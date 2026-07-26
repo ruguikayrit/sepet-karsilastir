@@ -10,12 +10,16 @@ class LinePrice {
     required this.quantity,
     required this.unitPrice,
     required this.available,
+    this.sourceUrl,
   });
 
   final Product product;
   final int quantity;
   final double unitPrice;
   final bool available;
+
+  /// Fiyatın alındığı orijinal market ürün sayfası (varsa).
+  final String? sourceUrl;
 
   double get lineTotal => available ? unitPrice * quantity : 0;
 }

@@ -116,6 +116,7 @@ class MockPriceService implements PriceService {
           quantity: item.quantity,
           unitPrice: price,
           available: available,
+          sourceUrl: marketPriceSnapshot[typeId]?.sourceUrl,
         );
       }).toList();
 
