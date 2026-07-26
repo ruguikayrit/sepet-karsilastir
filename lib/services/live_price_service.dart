@@ -5,6 +5,7 @@ import '../models/fetch_status.dart';
 import '../models/list_item.dart';
 import '../models/market.dart';
 import '../models/market_quote.dart';
+import '../models/product_link.dart';
 import 'catalog/catalog_client.dart';
 import 'http/api_client.dart';
 import 'mapping/product_sku_map.dart';
@@ -153,7 +154,7 @@ class LivePriceService implements PriceService {
 
     final lines = items.map((item) {
       final quote = byProduct[item.product.id];
-      final fallbackUrl = ProductSourceUrl.resolve(
+      final fallback = ProductSourceUrl.resolve(
         marketId: batch.marketId,
         product: item.product,
       );
@@ -163,15 +164,18 @@ class LivePriceService implements PriceService {
           quantity: item.quantity,
           unitPrice: 0,
           available: false,
-          sourceUrl: fallbackUrl,
+          source: fallback,
         );
       }
+      final backendUrl = quote.sourceUrl;
       return LinePrice(
         product: item.product,
         quantity: item.quantity,
         unitPrice: quote.unitPrice,
         available: quote.available,
-        sourceUrl: quote.sourceUrl ?? fallbackUrl,
+        source: backendUrl == null || backendUrl.isEmpty
+            ? fallback
+            : ProductLink(url: backendUrl, kind: ProductLinkKind.product),
       );
     }).toList();
 

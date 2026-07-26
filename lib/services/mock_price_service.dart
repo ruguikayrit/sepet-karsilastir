@@ -1,26 +1,30 @@
 import '../data/market_price_snapshot.dart';
+import '../data/market_product_snapshot.dart';
 import '../data/mock_catalog.dart';
 import '../models/comparison_result.dart';
 import '../models/fetch_status.dart';
 import '../models/list_item.dart';
 import '../models/market.dart';
+import '../models/product.dart';
 import 'mapping/product_source_url.dart';
 import 'price_service.dart';
 
-/// Demo / geliştirme: market sitelerinden derlenen referans fiyatlara göre
-/// market bazlı karşılaştırma üretir.
+/// Demo / geliştirme fiyat motoru.
 ///
-/// Taban fiyatlar [marketPriceSnapshot] içindeki resmi site verileridir
-/// (Şok Market + Happy Center, 2026-07-26). Her market için tek bir fiyat
-/// seviyesi (index) tutulur; ürün bazlı küçük sapma deterministik hash ile
-/// üretilir. Satır linkleri [ProductSourceUrl] ile o marketin sitesine gider.
+/// Kullanıcı sepete "marka + birim" seçerek girer; bu servis aynı ürünün
+/// 13 markette ne tutacağını üretir. İki farklı doğruluk seviyesi vardır:
+///
+/// 1. **Doğrulanmış satır** — [marketProductSnapshot] içinde o market ve o
+///    ürün kimliği (`tip__marka`) için kayıt varsa fiyat ve stok bilgisi
+///    doğrudan marketin sitesinden gelir (Şok Market, Happy Center).
+/// 2. **Türetilmiş satır** — diğer marketlerde referans birim fiyat
+///    ([marketPriceSnapshot] ya da markanın doğrulanmış fiyat ortalaması)
+///    market fiyat seviyesi ve deterministik bir sapma ile ölçeklenir.
+///
+/// Birim hiçbir zaman değişmez: ürün adındaki gramaj tüm satırlarda aynıdır,
+/// farklı gramaj ayrı bir ürün tipidir. Satır bağlantıları [ProductSourceUrl]
+/// ile daima ilgili marketin kendi alan adına gider.
 class MockPriceService implements PriceService {
-  /// Snapshot’taki Şok/Happy Center birim fiyatları — diğer marketler index ile sapar.
-  static final Map<String, double> _basePrices = {
-    for (final entry in marketPriceSnapshot.entries)
-      entry.key: entry.value.unitPrice,
-  };
-
   /// Marketin genel fiyat seviyesi (1.0 ≈ snapshot kaynak marketleri).
   static const _marketIndex = <MarketId, double>{
     MarketId.bim: 0.97,
@@ -61,7 +65,7 @@ class MockPriceService implements PriceService {
       'bebek-bezi',
       'dus-jeli',
     },
-    MarketId.metro: {'ekmek-250', 'ekmek-beyaz', 'maydanoz'},
+    MarketId.metro: {'ekmek-tam-bugday', 'ekmek-beyaz', 'maydanoz'},
     MarketId.getir: {'kofte-500', 'kiyma-400', 'un-5kg'},
     MarketId.file: {'kofte-500', 'sucuk-250'},
   };
@@ -97,32 +101,9 @@ class MockPriceService implements PriceService {
     final now = DateTime.now();
 
     final baskets = Market.all.map((market) {
-      final index = _marketIndex[market.id] ?? 1.0;
-      final missingTypes = _unavailableTypes[market.id] ?? const <String>{};
-
-      final lines = items.map((item) {
-        final typeId = item.product.typeId;
-        final brand = item.product.brand;
-        final base = _basePrices[typeId] ?? 49.90;
-
-        final available = !missingTypes.contains(typeId) &&
-            !_brandMissing(market.id, brand);
-
-        final price = _roundMoney(
-          base * index * _productJitter(market.id, typeId) * _brandFactor(brand),
-        );
-
-        return LinePrice(
-          product: item.product,
-          quantity: item.quantity,
-          unitPrice: price,
-          available: available,
-          sourceUrl: ProductSourceUrl.resolve(
-            marketId: market.id,
-            product: item.product,
-          ),
-        );
-      }).toList();
+      final lines = items
+          .map((item) => _line(market.id, item.product, item.quantity))
+          .toList();
 
       return MarketBasketResult(
         market: market,
@@ -139,6 +120,59 @@ class MockPriceService implements PriceService {
     );
   }
 
+  LinePrice _line(MarketId marketId, Product product, int quantity) {
+    final verified = _verifiedRef(marketId, product);
+    final available = verified != null
+        ? verified.inStock
+        : _carries(marketId, product);
+
+    return LinePrice(
+      product: product,
+      quantity: quantity,
+      unitPrice: verified?.price ?? _derivedPrice(marketId, product),
+      available: available,
+      source: ProductSourceUrl.resolve(marketId: marketId, product: product),
+    );
+  }
+
+  /// Bu market bu ürünün marka + birim eşleşmesini sitesinde yayınlıyor mu?
+  static MarketProductRef? _verifiedRef(MarketId marketId, Product product) {
+    final entry = marketProductSnapshot[product.id];
+    if (entry == null) return null;
+    return switch (marketId) {
+      MarketId.sok => entry.sok,
+      MarketId.happyCenter => entry.happyCenter,
+      _ => null,
+    };
+  }
+
+  bool _carries(MarketId marketId, Product product) {
+    final missingTypes = _unavailableTypes[marketId] ?? const <String>{};
+    if (missingTypes.contains(product.typeId)) return false;
+    return !_brandMissing(marketId, product.brand);
+  }
+
+  double _derivedPrice(MarketId marketId, Product product) {
+    final index = _marketIndex[marketId] ?? 1.0;
+    final jitter = _productJitter(marketId, product.typeId);
+    return _roundMoney(_referencePrice(product) * index * jitter);
+  }
+
+  /// Ürünün market seviyesinden bağımsız referans fiyatı.
+  ///
+  /// Marka doğrulanmış kayıtların ortalaması varsa o kullanılır; böylece
+  /// "Sütaş Kaşar 500g" ile "Mis Kaşar 500g" gerçek fiyat farkını korur.
+  static double _referencePrice(Product product) {
+    final refs = marketProductSnapshot[product.id]?.all.toList() ?? const [];
+    if (refs.isNotEmpty) {
+      final sum = refs.fold<double>(0, (total, ref) => total + ref.price);
+      return sum / refs.length;
+    }
+    final typeRef = marketPriceSnapshot[product.typeId];
+    if (typeRef == null) return 49.90;
+    return typeRef.unitPrice * _brandFactor(product.brand);
+  }
+
   bool _brandMissing(MarketId marketId, String? brand) {
     if (brand == null || brand.isEmpty) return false;
     return _limitedAssortment.contains(marketId) &&
@@ -151,8 +185,8 @@ class MockPriceService implements PriceService {
     return 0.96 + (seed % 9) * 0.01;
   }
 
-  /// Markaya göre fiyat farkı (demo).
-  double _brandFactor(String? brand) {
+  /// Doğrulanmış fiyatı olmayan markalar için segment farkı.
+  static double _brandFactor(String? brand) {
     if (brand == null || brand.isEmpty) return 0.97;
     if (brand == 'Market markası') return 0.88;
     if (_premiumOnlyBrands.contains(brand)) return 1.12;
@@ -160,5 +194,6 @@ class MockPriceService implements PriceService {
     return 0.96 + (h * 0.01);
   }
 
-  double _roundMoney(double value) => (value * 100).roundToDouble() / 100;
+  static double _roundMoney(double value) =>
+      (value * 100).roundToDouble() / 100;
 }
