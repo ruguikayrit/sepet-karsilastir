@@ -215,7 +215,8 @@ class _ResultBody extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               'Satıra dokununca o marketin sitesinde aynı marka ve birim açılır. '
-              'Eksik ürünler toplama eklenmez.',
+              'Eksik ürünler toplama eklenmez.'
+              '${result.hasEstimates ? ' “~” işaretli fiyatlar market sayfasından doğrulanmadı, tahminidir.' : ''}',
               style: TextStyle(color: palette.inkMuted, fontSize: 13),
             ),
             const SizedBox(height: 10),
@@ -296,12 +297,26 @@ class _WinnerCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            formatTry(winner.total),
+            winner.hasEstimates
+                ? '~${formatTry(winner.total)}'
+                : formatTry(winner.total),
             style: TextStyle(
               color: palette.onAccent,
               fontSize: 34,
               fontWeight: FontWeight.w800,
               height: 1.05,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            winner.hasEstimates
+                ? '${winner.verifiedCount}/${winner.lines.length} satır market '
+                    'sayfasından doğrulandı, kalanı tahmini'
+                : 'Tüm satırlar market sayfasından doğrulandı',
+            style: TextStyle(
+              color: palette.onAccent.withValues(alpha: 0.9),
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
             ),
           ),
           if (savings != null && savings! > 0) ...[
@@ -565,7 +580,9 @@ class _MarketBreakdown extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    formatTry(basket.total),
+                    basket.hasEstimates
+                        ? '~${formatTry(basket.total)}'
+                        : formatTry(basket.total),
                     style: const TextStyle(fontWeight: FontWeight.w800),
                   ),
                   if (basket.isPartial)
@@ -575,6 +592,16 @@ class _MarketBreakdown extends StatelessWidget {
                         color: palette.danger,
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
+                      ),
+                    )
+                  else if (basket.verifiedCount > 0)
+                    Text(
+                      '${basket.verifiedCount}/${basket.lines.length}'
+                      ' fiyat doğrulandı',
+                      style: TextStyle(
+                        color: palette.inkMuted,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                 ],
@@ -648,13 +675,16 @@ class _ProductPriceRow extends StatelessWidget {
               ),
               if (hasLink) ...[
                 Tooltip(
-                  message: '${link.kind.label} · ${link.host}',
+                  message: '${link.kind.label} · ${link.host}'
+                      '${line.isEstimate ? ' · tahmini fiyat' : ''}',
                   child: Icon(_icon, size: 16, color: palette.inkMuted),
                 ),
                 const SizedBox(width: 6),
               ],
               Text(
-                line.available ? formatTry(line.lineTotal) : 'Yok',
+                line.available
+                    ? '${line.isEstimate ? '~' : ''}${formatTry(line.lineTotal)}'
+                    : 'Yok',
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   color: line.available ? palette.ink : palette.danger,

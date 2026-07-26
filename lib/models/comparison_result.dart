@@ -12,6 +12,7 @@ class LinePrice {
     required this.unitPrice,
     required this.available,
     this.source,
+    this.verified = false,
   });
 
   final Product product;
@@ -22,7 +23,16 @@ class LinePrice {
   /// Fiyatın doğrulanabileceği market bağlantısı (varsa).
   final ProductLink? source;
 
+  /// Fiyat, marketin kendi ürün sayfasından mı geldi?
+  ///
+  /// `false` ise satır bir tahmindir: birim ve marka aynı kalır ama tutar
+  /// referans fiyattan türetilir, bu yüzden toplam "yaklaşık" gösterilir.
+  final bool verified;
+
   String? get sourceUrl => source?.url;
+
+  /// Satır tutara giriyor ama fiyatı doğrulanmadı.
+  bool get isEstimate => available && !verified;
 
   double get lineTotal => available ? unitPrice * quantity : 0;
 }
@@ -60,6 +70,12 @@ class MarketBasketResult {
 
   List<Product> get missingProducts =>
       lines.where((l) => !l.available).map((l) => l.product).toList();
+
+  /// Marketin sitesinden birebir doğrulanan satır sayısı.
+  int get verifiedCount => lines.where((l) => l.available && l.verified).length;
+
+  /// Toplamın içinde en az bir tahmini satır var mı?
+  bool get hasEstimates => lines.any((l) => l.isEstimate);
 }
 
 class ComparisonResult {
@@ -144,4 +160,7 @@ class ComparisonResult {
 
   int get failedMarketCount =>
       baskets.where((b) => b.fetchFailed).length;
+
+  /// Toplamlardan herhangi biri tahmini satır içeriyor mu?
+  bool get hasEstimates => baskets.any((b) => b.hasEstimates);
 }

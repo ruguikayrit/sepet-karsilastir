@@ -14,12 +14,15 @@ import 'price_service.dart';
 /// Kullanıcı sepete "marka + birim" seçerek girer; bu servis aynı ürünün
 /// 13 markette ne tutacağını üretir. İki farklı doğruluk seviyesi vardır:
 ///
-/// 1. **Doğrulanmış satır** — [marketProductSnapshot] içinde o market ve o
-///    ürün kimliği (`tip__marka`) için kayıt varsa fiyat ve stok bilgisi
-///    doğrudan marketin sitesinden gelir (Şok Market, Happy Center).
+/// 1. **Doğrulanmış satır** — fiyat ve stok bilgisi marketin kendi ürün
+///    sayfasından gelir (Şok Market, Happy Center). Markalı satırlarda
+///    [marketProductSnapshot], markasız/market markası satırlarda
+///    [marketPriceSnapshot] tip kaydının o markete ait fiyatı kullanılır.
 /// 2. **Türetilmiş satır** — diğer marketlerde referans birim fiyat
 ///    ([marketPriceSnapshot] ya da markanın doğrulanmış fiyat ortalaması)
 ///    market fiyat seviyesi ve deterministik bir sapma ile ölçeklenir.
+///    Bu satırlar [LinePrice.verified] `false` ile işaretlenir; ekran
+///    toplamı "yaklaşık" gösterir.
 ///
 /// Birim hiçbir zaman değişmez: ürün adındaki gramaj tüm satırlarda aynıdır,
 /// farklı gramaj ayrı bir ürün tipidir. Satır bağlantıları [ProductSourceUrl]
@@ -121,27 +124,45 @@ class MockPriceService implements PriceService {
   }
 
   LinePrice _line(MarketId marketId, Product product, int quantity) {
-    final verified = _verifiedRef(marketId, product);
-    final available = verified != null
-        ? verified.inStock
-        : _carries(marketId, product);
+    final brandRef = _brandRef(marketId, product);
+    final typePrice = brandRef == null ? _typePrice(marketId, product) : null;
+    final verifiedPrice = brandRef?.price ?? typePrice;
 
     return LinePrice(
       product: product,
       quantity: quantity,
-      unitPrice: verified?.price ?? _derivedPrice(marketId, product),
-      available: available,
+      unitPrice: verifiedPrice ?? _derivedPrice(marketId, product),
+      // Markalı kayıtta stok bilgisi marketin sayfasından gelir; markasız
+      // satırda tek bir örnek ürünün stoğu tipin tamamını temsil etmez.
+      available: brandRef?.inStock ?? _carries(marketId, product),
+      verified: verifiedPrice != null,
       source: ProductSourceUrl.resolve(marketId: marketId, product: product),
     );
   }
 
   /// Bu market bu ürünün marka + birim eşleşmesini sitesinde yayınlıyor mu?
-  static MarketProductRef? _verifiedRef(MarketId marketId, Product product) {
+  static MarketProductRef? _brandRef(MarketId marketId, Product product) {
     final entry = marketProductSnapshot[product.id];
     if (entry == null) return null;
     return switch (marketId) {
       MarketId.sok => entry.sok,
       MarketId.happyCenter => entry.happyCenter,
+      _ => null,
+    };
+  }
+
+  /// Markasız / market markası satırın bağlandığı tip ürününün gerçek fiyatı.
+  ///
+  /// Satır o marketin ürün sayfasına gittiği için fiyat da aynı sayfadan
+  /// okunur; aksi halde ekranda yazan tutar linkteki fiyattan farklı olurdu.
+  static double? _typePrice(MarketId marketId, Product product) {
+    if (!ProductSourceUrl.isGenericBrand(product.brand)) return null;
+    final ref = marketPriceSnapshot[product.typeId];
+    if (ref == null) return null;
+    return switch (marketId) {
+      MarketId.sok => ref.sokPath == null ? null : ref.sokPrice,
+      MarketId.happyCenter =>
+        ref.happyCenterPath == null ? null : ref.happyCenterPrice,
       _ => null,
     };
   }

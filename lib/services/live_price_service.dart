@@ -173,6 +173,8 @@ class LivePriceService implements PriceService {
         quantity: item.quantity,
         unitPrice: quote.unitPrice,
         available: quote.available,
+        // Canlı fiyat marketin kendi kotasyonundan geliyor.
+        verified: true,
         source: backendUrl == null || backendUrl.isEmpty
             ? fallback
             : ProductLink(url: backendUrl, kind: ProductLinkKind.product),

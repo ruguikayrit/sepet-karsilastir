@@ -16,7 +16,9 @@ class MarketPriceRef {
     required this.source,
     required this.sampleProduct,
     this.sokPath,
+    this.sokPrice,
     this.happyCenterPath,
+    this.happyCenterPrice,
   });
 
   final String typeId;
@@ -27,8 +29,14 @@ class MarketPriceRef {
   /// Şok Market ürün yolu (ör. `mis-bakraclik-sut-tam-yagli-1-l-p-7501`).
   final String? sokPath;
 
+  /// [sokPath] sayfasında yayınlanan fiyat.
+  final double? sokPrice;
+
   /// Happy Center ürün yolu (ör. `domates`).
   final String? happyCenterPath;
+
+  /// [happyCenterPath] sayfasında yayınlanan mağaza fiyatı.
+  final double? happyCenterPrice;
 
   String? get sokUrl =>
       sokPath == null ? null : 'https://www.sokmarket.com.tr/$sokPath';
@@ -52,7 +60,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Mis Bakraçlık Süt Tam Yağlı 1 L',
     sokPath: 'mis-bakraclik-sut-tam-yagli-1-l-p-7501',
+    sokPrice: 59.5,
     happyCenterPath: 'Pinar_Sut_11_Tam_Yagli',
+    happyCenterPrice: 88.0,
   ),
   'sut-yarim-1l': MarketPriceRef(
     typeId: 'sut-yarim-1l',
@@ -60,7 +70,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'happycenter.com.tr',
     sampleProduct: 'Yörsan Süt Yarım Yağlı Uht 1/1',
     sokPath: 'teksut-yarim-yagli-sut-1-l-p-32330',
+    sokPrice: 39.9,
     happyCenterPath: 'yorsan-sut-yarim-yagli-uht-11',
+    happyCenterPrice: 44.3,
   ),
   'yumurta-30': MarketPriceRef(
     typeId: 'yumurta-30',
@@ -68,7 +80,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Anadolu Çiftliği M Yumurta 30\'lu (53-63 g)',
     sokPath: 'anadolu-ciftligi-m-yumurta-30-lu-53-63-g-p-4948',
+    sokPrice: 129.0,
     happyCenterPath: 'Keskinoglu_Yumurta_30_Lu_Large',
+    happyCenterPrice: 133.1,
   ),
   'yumurta-15': MarketPriceRef(
     typeId: 'yumurta-15',
@@ -76,7 +90,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Anadolu Çiftliği L Yumurta 15\'li (63-72 g)',
     sokPath: 'anadolu-ciftligi-l-yumurta-15-li-63-72-g-p-4821',
+    sokPrice: 64.9,
     happyCenterPath: 'Kaya_Yumurta_15_Li_Pk_',
+    happyCenterPrice: 83.15,
   ),
   'peynir-500': MarketPriceRef(
     typeId: 'peynir-500',
@@ -84,7 +100,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Mis Tam Yağlı Beyaz Peynir 500 g',
     sokPath: 'mis-tam-yagli-beyaz-peynir-500-g-p-7382',
+    sokPrice: 139.0,
     happyCenterPath: 'Unal_Klasik_Beyaz_Peynir_600_Gr',
+    happyCenterPrice: 332.9,
   ),
   'kasar-500': MarketPriceRef(
     typeId: 'kasar-500',
@@ -92,7 +110,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Sütaş Kaşar Peyniri 500 g',
     sokPath: 'sutas-kasar-peyniri-500-g-p-4684',
+    sokPrice: 299.0,
     happyCenterPath: 'Muratbey_Taze_Kasar_400_Gr',
+    happyCenterPrice: 360.65,
   ),
   'labne-400': MarketPriceRef(
     typeId: 'labne-400',
@@ -100,7 +120,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Mis Labne Peyniri 400 g',
     sokPath: 'mis-labne-peyniri-400-g-p-5592',
+    sokPrice: 112.0,
     happyCenterPath: 'teksut-labne-400-gr',
+    happyCenterPrice: 166.4,
   ),
   'yogurt-1kg': MarketPriceRef(
     typeId: 'yogurt-1kg',
@@ -108,7 +130,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Mis Kaymaklı Yoğurt 1 kg',
     sokPath: 'mis-kaymakli-yogurt-1-kg-p-2229',
+    sokPrice: 84.9,
     happyCenterPath: 'Yorsan_Yogurt_2000_Gr_Kaymakli_Tava',
+    happyCenterPrice: 86.5,
   ),
   'tereyag-500': MarketPriceRef(
     typeId: 'tereyag-500',
@@ -116,7 +140,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Kebir Tereyağı 500 g',
     sokPath: 'kebir-tereyagi-500-g-p-8101',
+    sokPrice: 445.0,
     happyCenterPath: 'Icim_Tereyag_500_Gr_Rulo',
+    happyCenterPrice: 510.5,
   ),
   'zeytin-500': MarketPriceRef(
     typeId: 'zeytin-500',
@@ -124,7 +150,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'happycenter.com.tr',
     sampleProduct: 'Gürağaç Zeytin Yağlı Siyah 500 Gr (351-380 2XS)',
     sokPath: 'marmarabirlik-mega-zeytin-201-230-500-g-p-4494',
+    sokPrice: 225.0,
     happyCenterPath: 'guragac-zeytin-yagli-siyah-500-gr-351-380-2xs',
+    happyCenterPrice: 83.15,
   ),
   'recel-380': MarketPriceRef(
     typeId: 'recel-380',
@@ -132,7 +160,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Boltane Vişne Reçeli 380 g',
     sokPath: 'boltane-visne-receli-380-g-p-6931',
+    sokPrice: 69.5,
     happyCenterPath: 'Sitoglu_Recel_380_Gr_Ayva',
+    happyCenterPrice: 99.8,
   ),
   'misir-gevregi': MarketPriceRef(
     typeId: 'misir-gevregi',
@@ -140,7 +170,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Kranky Chocomix Mısır Ve Buğday Gevreği 450 g',
     sokPath: 'kranky-chocomix-misir-ve-bugday-gevregi-450-g-p-640990',
+    sokPrice: 63.5,
     happyCenterPath: 'nestle-450-gr-nesquik-misir-gevregi-2--si-50-indi',
+    happyCenterPrice: 130.9,
   ),
   'ekmek-tam-bugday': MarketPriceRef(
     typeId: 'ekmek-tam-bugday',
@@ -148,7 +180,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Tam Buğday Unlu Ekmek',
     sokPath: 'tam-bugday-unlu-ekmek-p-35417',
+    sokPrice: 49.95,
     happyCenterPath: 'Ihe_400_Gr_Tam_Bugday_Ekmek',
+    happyCenterPrice: 61.05,
   ),
   'ekmek-beyaz': MarketPriceRef(
     typeId: 'ekmek-beyaz',
@@ -156,7 +190,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Odun Ekmek',
     sokPath: 'odun-ekmek-p-5643',
+    sokPrice: 17.5,
     happyCenterPath: 'etc-lkp-ekmek-normal-200-gr',
+    happyCenterPrice: 14.45,
   ),
   'pirinc-1kg': MarketPriceRef(
     typeId: 'pirinc-1kg',
@@ -164,7 +200,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'happycenter.com.tr',
     sampleProduct: 'Happy Sweet Kırık Pirinç 1 kg',
     sokPath: 'gokbayrak-osmancik-pirinc-1-kg-p-45409',
+    sokPrice: 56.75,
     happyCenterPath: 'Happy_Sweet_1000_Gr_Bkl_Pirinc_Kirik',
+    happyCenterPrice: 44.3,
   ),
   'makarna-500': MarketPriceRef(
     typeId: 'makarna-500',
@@ -172,7 +210,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Piyale Spagetti 500 g',
     sokPath: 'piyale-spagetti-500-g-p-5641',
+    sokPrice: 17.0,
     happyCenterPath: 'Oba_500_Gr_Makarna_Spagetti',
+    happyCenterPrice: 17.7,
   ),
   'makarna-penne': MarketPriceRef(
     typeId: 'makarna-penne',
@@ -180,7 +220,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Barilla Penne Rigate (Kalem) Makarna 500 g',
     sokPath: 'barilla-penne-rigate-kalem-makarna-500-g-p-4733',
+    sokPrice: 47.95,
     happyCenterPath: 'Veronelle_500_Gr_Penne_Makarna',
+    happyCenterPrice: 41.0,
   ),
   'aycicek-1l': MarketPriceRef(
     typeId: 'aycicek-1l',
@@ -188,7 +230,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Evin Ayçiçek Yağı 1 L',
     sokPath: 'evin-aycicek-yagi-1-l-p-8747',
+    sokPrice: 122.0,
     happyCenterPath: 'happy-sweet-aycicek-yagi-pet-1-lt',
+    happyCenterPrice: 127.55,
   ),
   'aycicek-5l': MarketPriceRef(
     typeId: 'aycicek-5l',
@@ -196,7 +240,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Evin Ayçiçek Yağı Pet 5 L',
     sokPath: 'evin-aycicek-yagi-pet-5-l-p-6486',
+    sokPrice: 469.0,
     happyCenterPath: 'r-yudum-aycicek-yagi-1-lt-pet-4-al-3-ode',
+    happyCenterPrice: 554.9,
   ),
   'zeytinyagi-1l': MarketPriceRef(
     typeId: 'zeytinyagi-1l',
@@ -204,7 +250,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Lio Sızma Zeytinyağı 1 L',
     sokPath: 'lio-sizma-zeytinyagi-1-l-p-5180',
+    sokPrice: 310.0,
     happyCenterPath: 'emek-y-zeytinyagi--riviera-pet-1-lt',
+    happyCenterPrice: 332.9,
   ),
   'seker-2kg': MarketPriceRef(
     typeId: 'seker-2kg',
@@ -212,6 +260,7 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Altınküp Toz Şeker 2000 g',
     sokPath: 'altinkup-toz-seker-2000-g-p-5298',
+    sokPrice: 94.5,
     happyCenterPath: null,
   ),
   'seker-1kg': MarketPriceRef(
@@ -221,6 +270,7 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     sampleProduct: 'Türkşeker Toz Şeker 1000 GR',
     sokPath: null,
     happyCenterPath: 'turkseker-toz-seker-1000-gr',
+    happyCenterPrice: 55.4,
   ),
   'un-5kg': MarketPriceRef(
     typeId: 'un-5kg',
@@ -228,7 +278,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'happycenter.com.tr',
     sampleProduct: 'Happy Sweet Un 5 kg',
     sokPath: 'sinangil-un-5-kg-p-53770',
+    sokPrice: 82.5,
     happyCenterPath: 'happy-sweet-un-5-kg',
+    happyCenterPrice: 77.6,
   ),
   'tuz-500': MarketPriceRef(
     typeId: 'tuz-500',
@@ -236,7 +288,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'happycenter.com.tr',
     sampleProduct: 'City Farm Organik İyotlu Deniz Tuzu 500 gr',
     sokPath: 'salina-iyotlu-sofra-tuzu-500-g-p-152086',
+    sokPrice: 24.9,
     happyCenterPath: 'Cf_Organik_500_Gr_Iyotlu_Deniz_Tuzu',
+    happyCenterPrice: 49.85,
   ),
   'mercimek-1kg': MarketPriceRef(
     typeId: 'mercimek-1kg',
@@ -244,7 +298,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'happycenter.com.tr',
     sampleProduct: 'Göze İthal Kırmızı Mercimek 1 kg',
     sokPath: 'gokbayrak-kirmizi-mercimek-1-kg-p-44383',
+    sokPrice: 32.0,
     happyCenterPath: 'goze-kirmizi-mercimek-1-kg',
+    happyCenterPrice: 77.6,
   ),
   'nohut-1kg': MarketPriceRef(
     typeId: 'nohut-1kg',
@@ -252,7 +308,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'happycenter.com.tr',
     sampleProduct: 'Happy Sweet Nohut 1 kg',
     sokPath: 'bashan-nohut-1-kg-p-5136',
+    sokPrice: 50.0,
     happyCenterPath: 'Happy_Sweet_1000_Gr_Bkl_Nohut',
+    happyCenterPrice: 110.9,
   ),
   'bulgur-1kg': MarketPriceRef(
     typeId: 'bulgur-1kg',
@@ -260,7 +318,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Anadolu Mutfağı Köftelik Bulgur 1 kg',
     sokPath: 'anadolu-mutfagi-koftelik-bulgur-1-kg-p-7644',
+    sokPrice: 34.0,
     happyCenterPath: 'Happy_Sweet_1000_Gr_Bkl_Bulgur_Koftelik__',
+    happyCenterPrice: 55.4,
   ),
   'salca-650': MarketPriceRef(
     typeId: 'salca-650',
@@ -268,7 +328,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Tatlı Biber Salçası Bizim Vatan 650 g',
     sokPath: 'tatli-biber-salcasi-bizim-vatan-650-g-p-8365',
+    sokPrice: 72.5,
     happyCenterPath: 'Ipek_11_Biber_Salcasi_Tatli',
+    happyCenterPrice: 110.9,
   ),
   'ketcap-500': MarketPriceRef(
     typeId: 'ketcap-500',
@@ -276,6 +338,7 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Ketçap Bizim Vatan 500 g',
     sokPath: 'ketcap-bizim-vatan-500-g-p-8444',
+    sokPrice: 39.9,
     happyCenterPath: null,
   ),
   'mayonez-430': MarketPriceRef(
@@ -284,6 +347,7 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Mayonez Bizim Vatan 430 g',
     sokPath: 'mayonez-bizim-vatan-430-g-p-8372',
+    sokPrice: 79.0,
     happyCenterPath: null,
   ),
   'ton-2x160': MarketPriceRef(
@@ -292,6 +356,7 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Ton Balığı Bizim Vatan 2*160 g',
     sokPath: 'ton-baligi-bizim-vatan-2-160-g-p-7471',
+    sokPrice: 121.0,
     happyCenterPath: null,
   ),
   'konserve-fasulye': MarketPriceRef(
@@ -300,7 +365,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Haşlanmış Kuru Fasulye Bizim Vatan 800 g',
     sokPath: 'haslanmis-kuru-fasulye-bizim-vatan-800-g-p-5612',
+    sokPrice: 40.5,
     happyCenterPath: 'Yurt_11_Haslanmis_Fasulye_Tnk',
+    happyCenterPrice: 74.3,
   ),
   'konserve-misir': MarketPriceRef(
     typeId: 'konserve-misir',
@@ -308,7 +375,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Superfresh Mısır Konservesi 3*200 g',
     sokPath: 'superfresh-misir-konservesi-3-200-g-p-5279',
+    sokPrice: 89.0,
     happyCenterPath: 'S_fresh_220_Gr_X_3_Misir_Tnk',
+    happyCenterPrice: 93.7,
   ),
   'cay-500': MarketPriceRef(
     typeId: 'cay-500',
@@ -316,6 +385,7 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Çaykur Filiz Çay 500 g',
     sokPath: 'caykur-filiz-cay-500-g-p-4576',
+    sokPrice: 225.0,
     happyCenterPath: null,
   ),
   'cay-1000': MarketPriceRef(
@@ -324,7 +394,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Deren Rize Çay 1 kg',
     sokPath: 'deren-rize-cay-1-kg-p-5924',
+    sokPrice: 225.0,
     happyCenterPath: 'guzel-tiryaki-cay-1000-gr',
+    happyCenterPrice: 255.2,
   ),
   'su-5l': MarketPriceRef(
     typeId: 'su-5l',
@@ -332,7 +404,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'happycenter.com.tr',
     sampleProduct: 'Aquasera Pet Su 5 Lt',
     sokPath: 'bursa-su-5-l-p-530',
+    sokPrice: 36.0,
     happyCenterPath: 'aquasera-pet-su-5-lt',
+    happyCenterPrice: 24.95,
   ),
   'su-1-5l': MarketPriceRef(
     typeId: 'su-1-5l',
@@ -340,7 +414,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'happycenter.com.tr',
     sampleProduct: 'Gümüş Su 1.5 Lt',
     sokPath: 'bursa-su-1-5-l-p-752',
+    sokPrice: 12.15,
     happyCenterPath: 'gumus-su-1-5-lt',
+    happyCenterPrice: 6.1,
   ),
   'kola-1l': MarketPriceRef(
     typeId: 'kola-1l',
@@ -348,7 +424,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Pepsi Cola 1 L',
     sokPath: 'pepsi-cola-1-l-p-4688',
+    sokPrice: 49.9,
     happyCenterPath: 'sariyer-kola-sekersiz-1-lt',
+    happyCenterPrice: 42.7,
   ),
   'kola-2-5l': MarketPriceRef(
     typeId: 'kola-2-5l',
@@ -356,7 +434,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'happycenter.com.tr',
     sampleProduct: 'Sarıyer Kola 2.5 Lt',
     sokPath: 'kristal-kola-2-5-l-p-464832',
+    sokPrice: 57.5,
     happyCenterPath: 'sariyer-kola-2-5-lt',
+    happyCenterPrice: 76.55,
   ),
   'ayran-285': MarketPriceRef(
     typeId: 'ayran-285',
@@ -364,7 +444,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Mis Ayran Tam Yağlı 285 ml',
     sokPath: 'mis-ayran-tam-yagli-285-ml-p-6643',
+    sokPrice: 13.5,
     happyCenterPath: 'b--icim-ayran--bardak-285-ml',
+    happyCenterPrice: 31.0,
   ),
   'kahve-100': MarketPriceRef(
     typeId: 'kahve-100',
@@ -372,7 +454,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Yemeneli Türk Kahvesi 100 g',
     sokPath: 'yemeneli-turk-kahvesi-100-g-p-8744',
+    sokPrice: 69.5,
     happyCenterPath: 'hakki-efendi-turk-kahvesi-100-gr',
+    happyCenterPrice: 55.4,
   ),
   'filtre-kahve': MarketPriceRef(
     typeId: 'filtre-kahve',
@@ -380,7 +464,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Lezzcafe Filtre Kahve 250 g',
     sokPath: 'lezzcafe-filtre-kahve-250-g-p-2970',
+    sokPrice: 189.0,
     happyCenterPath: 'black-pearl-guatamala-filtre-kahve-250-gr',
+    happyCenterPrice: 138.65,
   ),
   'meyvesuyu-1l': MarketPriceRef(
     typeId: 'meyvesuyu-1l',
@@ -388,7 +474,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Cappy Ananaslı Meyve Suyu 1 L',
     sokPath: 'cappy-ananasli-meyve-suyu-1-l-p-7043',
+    sokPrice: 70.0,
     happyCenterPath: 'Cappy_1_Lt_Pet_M_suyu_Meyve_Tanem_Seftali',
+    happyCenterPrice: 72.05,
   ),
   'maden-6x': MarketPriceRef(
     typeId: 'maden-6x',
@@ -396,7 +484,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Kızılay Sade Maden Suyu 6*200 ml',
     sokPath: 'kizilay-sade-maden-suyu-6-200-ml-p-7025',
+    sokPrice: 66.0,
     happyCenterPath: 'Sirma_6x200ml_Maden_Suyu',
+    happyCenterPrice: 55.4,
   ),
   'domates-1kg': MarketPriceRef(
     typeId: 'domates-1kg',
@@ -404,6 +494,7 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Salkım Domates Kg',
     sokPath: 'salkim-domates-kg-p-32771',
+    sokPrice: 45.0,
     happyCenterPath: null,
   ),
   'patates-1kg': MarketPriceRef(
@@ -412,6 +503,7 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Patates Kg',
     sokPath: 'patates-kg-p-35919',
+    sokPrice: 39.5,
     happyCenterPath: null,
   ),
   'muz-1kg': MarketPriceRef(
@@ -420,6 +512,7 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Yerli Muz Kg',
     sokPath: 'yerli-muz-kg-p-33027',
+    sokPrice: 94.9,
     happyCenterPath: null,
   ),
   'sogan-1kg': MarketPriceRef(
@@ -428,7 +521,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Kuru Soğan Kg',
     sokPath: 'kuru-sogan-kg-p-32883',
+    sokPrice: 54.5,
     happyCenterPath: 'sogan-kuru',
+    happyCenterPrice: 78.15,
   ),
   'salatalik-1kg': MarketPriceRef(
     typeId: 'salatalik-1kg',
@@ -436,6 +531,7 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Salatalık Kg',
     sokPath: 'salatalik-kg-p-34550',
+    sokPrice: 49.9,
     happyCenterPath: null,
   ),
   'havuc-1kg': MarketPriceRef(
@@ -444,6 +540,7 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Havuç Kg',
     sokPath: 'havuc-kg-p-36260',
+    sokPrice: 69.9,
     happyCenterPath: null,
   ),
   'biber-1kg': MarketPriceRef(
@@ -452,6 +549,7 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Çarliston Biber Kg',
     sokPath: 'carliston-biber-kg-p-34512',
+    sokPrice: 139.0,
     happyCenterPath: null,
   ),
   'patlican-1kg': MarketPriceRef(
@@ -460,6 +558,7 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Patlıcan Kemer Kg',
     sokPath: 'patlican-kemer-kg-p-36285',
+    sokPrice: 59.0,
     happyCenterPath: null,
   ),
   'kabak-1kg': MarketPriceRef(
@@ -468,6 +567,7 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Kabak Sakız Kg',
     sokPath: 'kabak-sakiz-kg-p-36315',
+    sokPrice: 69.5,
     happyCenterPath: null,
   ),
   'fasulye-1kg': MarketPriceRef(
@@ -476,7 +576,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Fasulye Ayşe Kadın Kg',
     sokPath: 'fasulye-ayse-kadin-kg-p-36036',
+    sokPrice: 99.5,
     happyCenterPath: 'Happy_Sweet_1000_Gr_Bkl_Fasulye_Erzincan_Dermason',
+    happyCenterPrice: 110.9,
   ),
   'sarimsak-250': MarketPriceRef(
     typeId: 'sarimsak-250',
@@ -484,6 +586,7 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Sarımsak 250 Gr',
     sokPath: 'sarimsak-250-gr-p-34665',
+    sokPrice: 59.9,
     happyCenterPath: null,
   ),
   'maydanoz': MarketPriceRef(
@@ -492,7 +595,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Maydanoz Demet',
     sokPath: 'maydanoz-demet-p-35790',
+    sokPrice: 24.9,
     happyCenterPath: 'maydanoz-demet',
+    happyCenterPrice: 15.65,
   ),
   'pilic-butun': MarketPriceRef(
     typeId: 'pilic-butun',
@@ -500,6 +605,7 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Aspiliç Bütün Piliç Kg',
     sokPath: 'aspilic-butun-pilic-kg-p-34169',
+    sokPrice: 94.9,
     happyCenterPath: null,
   ),
   'pilic-but': MarketPriceRef(
@@ -508,7 +614,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'happycenter.com.tr',
     sampleProduct: 'Etc.Ksp. Happy Piliç But Tab Kg',
     sokPath: 'tadpi-pilic-kalcali-but-kg-p-7505',
+    sokPrice: 125.0,
     happyCenterPath: 'etc-ksp--happy-pilic-but-tab-kg',
+    happyCenterPrice: 129.95,
   ),
   'tavuk-1kg': MarketPriceRef(
     typeId: 'tavuk-1kg',
@@ -516,7 +624,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'happycenter.com.tr',
     sampleProduct: 'Etc.Ksp. Happy Piliç Pirzola Tab Kg',
     sokPath: 'tadpi-pilic-pirzola-kg-p-6457',
+    sokPrice: 249.0,
     happyCenterPath: 'etc-ksp--happy-pilic-pirzola-tab-kg',
+    happyCenterPrice: 239.95,
   ),
   'kofte-500': MarketPriceRef(
     typeId: 'kofte-500',
@@ -524,7 +634,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'İnci Dana Kuzu Kasap Köfte 500 g',
     sokPath: 'inci-dana-kuzu-kasap-kofte-500-g-p-5378',
+    sokPrice: 349.0,
     happyCenterPath: 'S_fresh_13_Lu_Hamburger_Kofte',
+    happyCenterPrice: 793.55,
   ),
   'sucuk-250': MarketPriceRef(
     typeId: 'sucuk-250',
@@ -532,7 +644,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'happycenter.com.tr',
     sampleProduct: 'Coskun Isıl Islem Gormus Catal Sucuk Kuvet250 gr',
     sokPath: 'doyfarm-pilic-kangal-sucuk-250-g-p-681516',
+    sokPrice: 67.5,
     happyCenterPath: 'coskun-isil-islem-gormus-catal-sucuk-kuvet250-gr',
+    happyCenterPrice: 388.4,
   ),
   'salam-60': MarketPriceRef(
     typeId: 'salam-60',
@@ -540,7 +654,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'happycenter.com.tr',
     sampleProduct: 'Danet Hindi Salam Tadımlık 60 gr',
     sokPath: 'polonez-pilic-salam-60-g-p-1826',
+    sokPrice: 22.0,
     happyCenterPath: 'Danet_Hindi_Salam_Tadimlik_60_Gr',
+    happyCenterPrice: 33.2,
   ),
   'sosis-190': MarketPriceRef(
     typeId: 'sosis-190',
@@ -548,6 +664,7 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Aytaç Dana Sosis 190 g',
     sokPath: 'aytac-dana-sosis-190-g-p-256466',
+    sokPrice: 135.0,
     happyCenterPath: null,
   ),
   'kiyma-400': MarketPriceRef(
@@ -556,6 +673,7 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Lezzetlim Dana Kıyma 400 g',
     sokPath: 'lezzetlim-dana-kiyma-400-g-p-5443',
+    sokPrice: 330.0,
     happyCenterPath: null,
   ),
   'deterjan-1-5kg': MarketPriceRef(
@@ -564,7 +682,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Mintax Matik Renkliler İçin Toz Deterjan 1.5 Kg',
     sokPath: 'mintax-matik-renkliler-icin-toz-deterjan-1-5-kg-p-3600',
+    sokPrice: 99.9,
     happyCenterPath: 'Omo_Matik_1500_Gr_Active_Fresh',
+    happyCenterPrice: 177.5,
   ),
   'bulasik-1500': MarketPriceRef(
     typeId: 'bulasik-1500',
@@ -572,7 +692,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Fairy Gold Bulaşık Sıvısı 1500 Ml',
     sokPath: 'fairy-gold-bulasik-sivisi-1500-ml-p-513539',
+    sokPrice: 299.0,
     happyCenterPath: 'fairy-sivi-bulasik-deterjani-limon-1500-ml',
+    happyCenterPrice: 196.4,
   ),
   'yumusatici-1440': MarketPriceRef(
     typeId: 'yumusatici-1440',
@@ -580,7 +702,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Mintax Konsantre Yumuşatıcı Safran&Amber 1440 Ml',
     sokPath: 'mintax-konsantre-yumusatici-safran-amber-1440-ml-p-738841',
+    sokPrice: 119.0,
     happyCenterPath: 'Vernel_Max_1500_Ml_Gul',
+    happyCenterPrice: 133.1,
   ),
   'tuvalet-16': MarketPriceRef(
     typeId: 'tuvalet-16',
@@ -588,7 +712,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Confort Tuvalet Kağıdı 16\'lı',
     sokPath: 'confort-tuvalet-kagidi-16-li-p-541856',
+    sokPrice: 129.0,
     happyCenterPath: 'familia-parfumlu-kis-serisi-16-li-tuv-kagidi',
+    happyCenterPrice: 110.9,
   ),
   'cop-torbasi': MarketPriceRef(
     typeId: 'cop-torbasi',
@@ -596,7 +722,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Saroz Büzgülü Çöp Torbası Orta Boy 15\'li 55*60 Cm',
     sokPath: 'saroz-buzgulu-cop-torbasi-orta-boy-15-li-55-60-cm-p-1306',
+    sokPrice: 75.5,
     happyCenterPath: 'Koroplast_Cop_Dogada_Cozunur__Torbasi_Orta_',
+    happyCenterPrice: 99.8,
   ),
   'sampuan-400': MarketPriceRef(
     typeId: 'sampuan-400',
@@ -604,7 +732,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Pantene Onarıcı Bakım Şampuan 400 Ml',
     sokPath: 'pantene-onarici-bakim-sampuan-400-ml-p-468654',
+    sokPrice: 199.0,
     happyCenterPath: 'T_gliss_Samp_250ml_Ultimate_Repair',
+    happyCenterPrice: 177.45,
   ),
   'dis-macunu': MarketPriceRef(
     typeId: 'dis-macunu',
@@ -612,7 +742,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Sensodyne Beyazlatıcı Diş Macunu 75 ml',
     sokPath: 'sensodyne-beyazlatici-dis-macunu-75-ml-p-5336',
+    sokPrice: 215.0,
     happyCenterPath: 'Signal_Dis_Mac_75ml_White_Now_Gold21042355',
+    happyCenterPrice: 155.3,
   ),
   'sabun-4': MarketPriceRef(
     typeId: 'sabun-4',
@@ -620,6 +752,7 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Ebru Kalıp Sabun Zeytinyağlı 4*200 G',
     sokPath: 'ebru-kalip-sabun-zeytinyagli-4-200-g-p-362756',
+    sokPrice: 109.0,
     happyCenterPath: null,
   ),
   'dus-jeli': MarketPriceRef(
@@ -628,7 +761,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Palmolive Tangerine Duş Jeli 500 Ml',
     sokPath: 'palmolive-tangerine-dus-jeli-500-ml-p-640993',
+    sokPrice: 129.0,
     happyCenterPath: 'Palmolive_Dus_Jeli_500ml_At_anti_Stress',
+    happyCenterPrice: 299.55,
   ),
   'cips-150': MarketPriceRef(
     typeId: 'cips-150',
@@ -636,6 +771,7 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Amigo Düz Sade Patates Cipsi 150 g',
     sokPath: 'amigo-duz-sade-patates-cipsi-150-g-p-4767',
+    sokPrice: 46.5,
     happyCenterPath: null,
   ),
   'biskuvi-102': MarketPriceRef(
@@ -644,6 +780,7 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Karmen Çikolatalı Sütlü Bisküvi 102 g',
     sokPath: 'karmen-cikolatali-sutlu-biskuvi-102-g-p-3723',
+    sokPrice: 65.0,
     happyCenterPath: null,
   ),
   'cikolata-100': MarketPriceRef(
@@ -652,7 +789,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Milka Oreo Çikolata 100 g',
     sokPath: 'milka-oreo-cikolata-100-g-p-4916',
+    sokPrice: 89.9,
     happyCenterPath: 'Milka_C__100_Gr_Tablet_Cilekli-yogurtlu',
+    happyCenterPrice: 177.5,
   ),
   'gofret-350': MarketPriceRef(
     typeId: 'gofret-350',
@@ -660,6 +799,7 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Peki Muzlu Gofret 350 g',
     sokPath: 'peki-muzlu-gofret-350-g-p-3725',
+    sokPrice: 49.95,
     happyCenterPath: null,
   ),
   'kek-162': MarketPriceRef(
@@ -668,7 +808,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Ülker 8 Kek Orman Meyveli 162 g',
     sokPath: 'ulker-8-kek-orman-meyveli-162-g-p-489910',
+    sokPrice: 49.95,
     happyCenterPath: 'ulker-8-kek-mini-muzlu-kek-162-gr',
+    happyCenterPrice: 48.8,
   ),
   'kraker-82': MarketPriceRef(
     typeId: 'kraker-82',
@@ -676,7 +818,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Ülker Çiziviç Kraker Peynirli Sandviç 82 g',
     sokPath: 'ulker-cizivic-kraker-peynirli-sandvic-82-g-p-7091',
+    sokPrice: 22.5,
     happyCenterPath: 'Ulker_B__95_4_Cizivic_Peynir_Kremali_90_Gr',
+    happyCenterPrice: 24.95,
   ),
   'findik-ici': MarketPriceRef(
     typeId: 'findik-ici',
@@ -684,6 +828,7 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Amigo Fındık İçi 150 g',
     sokPath: 'amigo-findik-ici-150-g-p-8465',
+    sokPrice: 188.0,
     happyCenterPath: null,
   ),
   'dondurma-500': MarketPriceRef(
@@ -692,7 +837,9 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'sokmarket.com.tr',
     sampleProduct: 'Golf Maraşım %81 Sütlü Sade Dondurma 500 ml',
     sokPath: 'golf-marasim-81-sutlu-sade-dondurma-500-ml-p-8825',
+    sokPrice: 225.0,
     happyCenterPath: 'algida-dond-inh--almido-dondurma-500-ml',
+    happyCenterPrice: 150.0,
   ),
   'bebek-bezi': MarketPriceRef(
     typeId: 'bebek-bezi',
@@ -700,6 +847,8 @@ const marketPriceSnapshot = <String, MarketPriceRef>{
     source: 'happycenter.com.tr',
     sampleProduct: 'Happy Bebek Bezi 5 Junior 40 Ad',
     sokPath: 'babyone-bebek-bezi-yenidogan-40-li-p-4890',
+    sokPrice: 39.0,
     happyCenterPath: 'happy-bebek-bezi-5-junior-40-ad',
+    happyCenterPrice: 210.8,
   ),
 };
