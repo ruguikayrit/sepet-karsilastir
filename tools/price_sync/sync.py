@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -52,6 +53,14 @@ else:
 
 DEFAULT_OUT = REPO / 'lib' / 'data' / 'price_book.dart'
 DEFAULT_CACHE = REPO / '.price_sync_cache'
+
+#: Yeni defter, eskisinin bu oranından azını taşıyorsa yazılmaz.
+#:
+#: Günlük çalışan iş için güvenlik ağı: bir market kapı kapatınca ya da arama
+#: yanıtı değişince kullanıcı bir sabah fiyatların yarısını kaybetmesin.
+SHRINK_LIMIT = 0.7
+
+_OFFER_COUNT = re.compile(r'· (\d+) ürün fiyatı')
 
 
 class SearchCache:
@@ -212,6 +221,14 @@ def resolve(candidates: dict[str, dict[str, list[Offer]]],
     return book
 
 
+def previous_offer_count(path: Path) -> int:
+    """Yerinde duran defterin taşıdığı fiyat sayısı (yoksa 0)."""
+    if not path.exists():
+        return 0
+    match = _OFFER_COUNT.search(path.read_text(encoding='utf-8')[:2000])
+    return int(match.group(1)) if match else 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--markets', default=','.join(ADAPTERS),
@@ -229,6 +246,8 @@ def main() -> int:
                         help='istekler arası bekleme (saniye)')
     parser.add_argument('--fetched-at', default=None,
                         help='dosyaya yazılacak çekim tarihi (YYYY-MM-DD)')
+    parser.add_argument('--allow-shrink', action='store_true',
+                        help='defter belirgin küçülse de yaz')
     args = parser.parse_args()
 
     markets = [m.strip() for m in args.markets.split(',') if m.strip()]
@@ -259,14 +278,29 @@ def main() -> int:
               file=sys.stderr)
         return 1
 
+    # Fiyat veremeyen market deftere yazılmaz: uygulamada boş bir sütun olarak
+    # görünmesin.
+    active = [m for m in markets
+              if any(m in entry for entry in book.values())]
+    offers = sum(len(entry) for entry in book.values())
+
+    before = previous_offer_count(args.out)
+    if before and offers < before * SHRINK_LIMIT and not args.allow_shrink:
+        print(
+            f'defter {before} fiyattan {offers} fiyata düşüyor; muhtemelen bir '
+            'market yanıt vermedi. Dosya değiştirilmedi (--allow-shrink ile '
+            'yine de yazılır).',
+            file=sys.stderr,
+        )
+        return 1
+
     write_dart(
         args.out,
         book,
-        markets=markets,
-        labels={m: ADAPTERS[m].label for m in markets},
+        markets=active,
+        labels={m: ADAPTERS[m].label for m in active},
         fetched_at=args.fetched_at,
     )
-    offers = sum(len(entry) for entry in book.values())
     print(f'{args.out}: {len(book)} satır, {offers} market fiyatı')
     return 0
 
