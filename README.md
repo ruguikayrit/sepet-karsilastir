@@ -88,8 +88,12 @@ Tek market düşse bile diğerleri gösterilir. Aynı sepet teklifleri ~45 sn
 
 - 13 market, segment bazlı karşılaştırma
 - 80+ ürün tipi (süt, temel gıda, meyve-sebze, et, temizlik, bebek vb.)
-- Demo fiyatlar resmi market sitelerinden derlenir (Şok Market, Happy Center)
+- Demo fiyatlar resmi market yayınlarından derlenir (Şok Market, Happy Center
+  ürün sayfaları ve marketfiyati.org.tr fiyat indeksi)
+- Doğrulanmış fiyat / tahmini fiyat ayrımı: tahmini tutarlar `~` ile gösterilir
 - Marka seçimli sepet (aynı ürün tipi + farklı marka = ayrı satır)
+- Satır bağlantısı, fiyatı yazan ürünün market sayfasına ya da o ürünün
+  aramasına gider
 - Sepet kalıcılığı (uygulama kapanınca kaybolmaz)
 - Kayıtlı listeler ve karşılaştırma geçmişi
 - Açık / koyu / sistem teması
@@ -97,11 +101,21 @@ Tek market düşse bile diğerleri gösterilir. Aynı sepet teklifleri ~45 sn
 
 ## Demo fiyat kaynağı
 
-`lib/data/market_price_snapshot.dart` içindeki birim fiyatlar
-[Şok Market](https://www.sokmarket.com.tr) ve
-[Happy Center](https://happycenter.com.tr) vitrin/API verilerinden
-alınmıştır (çekim: 2026-07-26). Mock motor diğer marketleri bu tabana
-göre ölçekler; canlı modda backend teklifleri kullanılır.
+Çekim: 2026-07-26, İstanbul.
+
+| Dosya | Kaynak | İçerik |
+| --- | --- | --- |
+| `lib/data/market_price_snapshot.dart` | [Şok Market](https://www.sokmarket.com.tr), [Happy Center](https://happycenter.com.tr) | Ürün tipi başına referans fiyat; markasız satırların gittiği ürün sayfası |
+| `lib/data/market_product_snapshot.dart` | Şok Market, Happy Center | Marka + gramaj birebir eşleşen ürün sayfaları (fiyat ve stok) |
+| `lib/data/market_price_index.dart` | [marketfiyati.org.tr](https://marketfiyati.org.tr) (TÜBİTAK) | BİM, A101, Şok, Migros, CarrefourSA, Hakmar Express ve Tarım Kredi kasa fiyatları |
+
+Fiyat indeksindeki her kayıt **tek bir ürünün** zincirlere göre fiyatını tutar:
+satır her markette aynı marka, aynı gramaj ve aynı çeşidi gösterir. Gramaj,
+katalogdaki ürün tipinin gramajıyla birebir aynı olmak zorundadır.
+
+Bu kaynakların kapsamadığı market ve marka birleşimlerinde tutar referans
+fiyattan türetilir; o satırlar ekranda `~` ile "tahmini" işaretlenir. Canlı
+modda backend teklifleri kullanılır ve tüm satırlar doğrulanmış sayılır.
 
 ## Test
 
