@@ -48,7 +48,10 @@ class MockPriceService implements PriceService {
   };
 
   /// Marketin taşımadığı ürün tipleri.
-  static const _unavailableTypes = <MarketId, Set<String>>{
+  ///
+  /// Kürasyon: kimlikler katalogla birlikte güncel kalmalı, yoksa kural
+  /// sessizce etkisiz kalır (`catalog_snapshot_test.dart` denetler).
+  static const unavailableTypes = <MarketId, Set<String>>{
     MarketId.bim: {
       'domates-1kg',
       'patates-1kg',
@@ -75,7 +78,7 @@ class MockPriceService implements PriceService {
     MarketId.file: {'kofte-500', 'sucuk-250'},
   };
 
-  /// İndirim marketlerinde bulunmayan ulusal markalar.
+  /// Çeşidi sınırlı, ağırlıklı olarak kendi markasını satan marketler.
   static const _limitedAssortment = <MarketId>{
     MarketId.bim,
     MarketId.a101,
@@ -84,7 +87,8 @@ class MockPriceService implements PriceService {
     MarketId.tarimKredi,
   };
 
-  static const _premiumOnlyBrands = <String>{
+  /// Yalnızca geniş çeşitli marketlerde bulunan markalar.
+  static const premiumOnlyBrands = <String>{
     'Barilla',
     'Danone',
     'Head & Shoulders',
@@ -186,7 +190,7 @@ class MockPriceService implements PriceService {
   }
 
   bool _carries(MarketId marketId, Product product) {
-    final missingTypes = _unavailableTypes[marketId] ?? const <String>{};
+    final missingTypes = unavailableTypes[marketId] ?? const <String>{};
     if (missingTypes.contains(product.typeId)) return false;
     return !_brandMissing(marketId, product.brand);
   }
@@ -218,7 +222,7 @@ class MockPriceService implements PriceService {
   bool _brandMissing(MarketId marketId, String? brand) {
     if (brand == null || brand.isEmpty) return false;
     return _limitedAssortment.contains(marketId) &&
-        _premiumOnlyBrands.contains(brand);
+        premiumOnlyBrands.contains(brand);
   }
 
   /// Ürün bazlı ±4% deterministik sapma — her market farklı üründe öne çıkar.
@@ -231,7 +235,7 @@ class MockPriceService implements PriceService {
   static double _brandFactor(String? brand) {
     if (brand == null || brand.isEmpty) return 0.97;
     if (brand == 'Market markası') return 0.88;
-    if (_premiumOnlyBrands.contains(brand)) return 1.12;
+    if (premiumOnlyBrands.contains(brand)) return 1.12;
     final h = brand.hashCode.abs() % 9;
     return 0.96 + (h * 0.01);
   }

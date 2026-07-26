@@ -158,8 +158,7 @@ class ComparisonResult {
     return complete.last.total - complete.first.total;
   }
 
-  int get failedMarketCount =>
-      baskets.where((b) => b.fetchFailed).length;
+  int get failedMarketCount => baskets.where((b) => b.fetchFailed).length;
 
   /// Toplamlardan herhangi biri tahmini satır içeriyor mu?
   bool get hasEstimates => baskets.any((b) => b.hasEstimates);

@@ -390,7 +390,7 @@ class _NoCompleteBasketCard extends StatelessWidget {
             Text(
               'Listeye en yakın: ${closest.market.name} · '
               '${closest.availableCount}/${closest.lines.length} ürün '
-              '(${formatTry(closest.total)})',
+              '(${closest.hasEstimates ? '~' : ''}${formatTry(closest.total)})',
               style: TextStyle(
                 color: palette.ink,
                 fontWeight: FontWeight.w700,
@@ -455,9 +455,8 @@ class _MarketRankTile extends StatelessWidget {
         color: isBest ? palette.greenSoft : palette.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isBest
-              ? palette.green.withValues(alpha: 0.35)
-              : palette.border,
+          color:
+              isBest ? palette.green.withValues(alpha: 0.35) : palette.border,
         ),
       ),
       child: Row(
@@ -508,7 +507,10 @@ class _MarketRankTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                basket.fetchFailed ? '—' : formatTry(basket.total),
+                basket.fetchFailed
+                    ? '—'
+                    : '${basket.hasEstimates ? '~' : ''}'
+                        '${formatTry(basket.total)}',
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 17,
@@ -667,9 +669,8 @@ class _ProductPriceRow extends StatelessWidget {
                     decoration: line.available
                         ? (hasLink ? TextDecoration.underline : null)
                         : TextDecoration.lineThrough,
-                    decorationColor: hasLink
-                        ? palette.ink.withValues(alpha: 0.35)
-                        : null,
+                    decorationColor:
+                        hasLink ? palette.ink.withValues(alpha: 0.35) : null,
                   ),
                 ),
               ),

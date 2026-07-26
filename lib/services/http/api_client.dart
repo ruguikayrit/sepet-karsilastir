@@ -27,7 +27,8 @@ class ApiClient {
     String? apiKey,
     this.maxRetries = 2,
   })  : _http = httpClient ?? http.Client(),
-        _baseUrl = (baseUrl ?? AppConfig.apiBaseUrl).replaceAll(RegExp(r'/$'), ''),
+        _baseUrl =
+            (baseUrl ?? AppConfig.apiBaseUrl).replaceAll(RegExp(r'/$'), ''),
         _timeout = timeout ?? AppConfig.requestTimeout,
         _apiKey = apiKey ?? AppConfig.apiKey;
 

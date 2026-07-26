@@ -114,8 +114,8 @@ void main() {
     expect(find.text('EN KARLI'), findsOneWidget);
     expect(find.text('Şok'), findsWidgets);
     expect(find.text('kısmi toplam'), findsOneWidget);
-    expect(find.textContaining('1/2 market listeyi tamamlıyor'),
-        findsOneWidget);
+    expect(
+        find.textContaining('1/2 market listeyi tamamlıyor'), findsOneWidget);
 
     // Fiyat dökümünde eksik ürün sayısı da yazar.
     await _scrollTo(tester, find.text('1 ürün eksik'));
@@ -140,8 +140,8 @@ void main() {
     await _pumpCompare(tester, controller);
 
     expect(find.text('EN KARLI'), findsNothing);
-    expect(find.text('Listeyi tek başına tamamlayan market yok'),
-        findsOneWidget);
+    expect(
+        find.text('Listeyi tek başına tamamlayan market yok'), findsOneWidget);
     expect(
       find.textContaining('Hiçbir markette bulunamadı: Sütaş Kaşar Peynir'),
       findsOneWidget,
@@ -167,7 +167,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Sütaş Kaşar Peynir 500g ×1'), findsOneWidget);
-    expect(find.byTooltip('Ürün sayfası · www.sokmarket.com.tr · tahmini fiyat'),
+    expect(
+        find.byTooltip('Ürün sayfası · www.sokmarket.com.tr · tahmini fiyat'),
         findsOneWidget);
   });
 

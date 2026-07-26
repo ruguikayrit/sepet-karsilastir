@@ -9,12 +9,10 @@ import 'package:sepet_karsilastir/models/product.dart';
 /// Karşılaştırmanın kuralı: listeyi eksiksiz karşılamayan market "en ucuz"
 /// olamaz, toplamı da tam bir sepetin toplamıyla kıyaslanamaz.
 void main() {
-  final milk = productTypes
-      .firstWhere((t) => t.id == 'sut-1l')
-      .withBrand('İçim');
-  final cheese = productTypes
-      .firstWhere((t) => t.id == 'kasar-500')
-      .withBrand('Sütaş');
+  final milk =
+      productTypes.firstWhere((t) => t.id == 'sut-1l').withBrand('İçim');
+  final cheese =
+      productTypes.firstWhere((t) => t.id == 'kasar-500').withBrand('Sütaş');
 
   model.MarketBasketResult basket(
     MarketId marketId, {
@@ -94,9 +92,8 @@ void main() {
   });
 
   test('tam sepet yoksa listeye en yakın market gösterilir', () {
-    final bread = productTypes
-        .firstWhere((t) => t.id == 'ekmek-beyaz')
-        .withBrand(null);
+    final bread =
+        productTypes.firstWhere((t) => t.id == 'ekmek-beyaz').withBrand(null);
 
     final result = resultOf([
       basket(MarketId.bim, prices: {milk: 40, cheese: null, bread: null}),

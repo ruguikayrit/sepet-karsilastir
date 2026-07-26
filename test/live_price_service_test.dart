@@ -13,7 +13,8 @@ import 'package:sepet_karsilastir/services/markets/market_price_client.dart';
 import 'package:sepet_karsilastir/services/markets/quote_cache.dart';
 
 void main() {
-  final milk = productTypes.firstWhere((t) => t.id == 'sut-1l').withBrand('İçim');
+  final milk =
+      productTypes.firstWhere((t) => t.id == 'sut-1l').withBrand('İçim');
   final items = [ListItem(product: milk)];
   final skuMap = ProductSkuMap.seed();
 

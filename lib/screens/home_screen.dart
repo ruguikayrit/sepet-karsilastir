@@ -122,7 +122,8 @@ class HomeScreen extends StatelessWidget {
                     value: savings == null || savings <= 0
                         ? '—'
                         : formatTry(savings),
-                    hint: winner == null ? 'henüz yok' : winner.market.shortName,
+                    hint:
+                        winner == null ? 'henüz yok' : winner.market.shortName,
                     onTap: () => onOpenTab(2),
                   ),
                 ),
@@ -214,24 +215,21 @@ class HomeScreen extends StatelessWidget {
             const _InsightCard(
               icon: Icons.verified_rounded,
               title: 'Marka seçimi fark yaratır',
-              body:
-                  'Aynı süt tipi farklı markalarda fiyat değiştirebilir. '
+              body: 'Aynı süt tipi farklı markalarda fiyat değiştirebilir. '
                   'Sepete eklerken markayı net seç.',
             ),
             const SizedBox(height: 8),
             const _InsightCard(
               icon: Icons.storefront_rounded,
               title: 'Tek market yetmeyebilir',
-              body:
-                  'Bazı ürünler bir markette daha ucuz, bazılarında yok. '
+              body: 'Bazı ürünler bir markette daha ucuz, bazılarında yok. '
                   'Karşılaştırma eksik ürünü de gösterir.',
             ),
             const SizedBox(height: 8),
             const _InsightCard(
               icon: Icons.savings_rounded,
               title: 'Hedef: en düşük tamamlanmış sepet',
-              body:
-                  'Sadece en ucuz satıra değil, listenin tamamını '
+              body: 'Sadece en ucuz satıra değil, listenin tamamını '
                   'karşılayan markete bak.',
             ),
             const SizedBox(height: 20),

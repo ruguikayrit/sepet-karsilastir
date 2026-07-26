@@ -1,3 +1,4 @@
+import '../../data/market_price_index.dart';
 import '../../data/market_price_snapshot.dart';
 import '../../data/market_product_snapshot.dart';
 import '../../models/market.dart';
@@ -10,7 +11,9 @@ import '../../utils/text.dart';
 /// Sıra:
 /// 1. O markette marka + birim birebir eşleşen ürün sayfası ([marketProductSnapshot])
 /// 2. Markasız/market markası satırlarda tip seviyesindeki ürün sayfası
-/// 3. Market site içi arama sunuyorsa marka + birimli arama
+/// 3. Market site içi arama sunuyorsa arama; fiyat indeksten geliyorsa
+///    aramada indeksin ürün adı kullanılır, böylece link fiyatı yazan ürüne
+///    çıkar ([marketPriceIndex])
 /// 4. Aksi halde marketin kendi sitesi
 ///
 /// Bağlantı her zaman ilgili marketin kendi alan adına gider.
@@ -24,7 +27,7 @@ class ProductSourceUrl {
     required MarketId marketId,
     required Product product,
   }) {
-    final query = searchQuery(product);
+    final query = searchQuery(product, marketId: marketId);
     return switch (marketId) {
       MarketId.sok => _sok(product, query),
       MarketId.happyCenter => _happyCenter(product, query),
@@ -47,8 +50,18 @@ class ProductSourceUrl {
     };
   }
 
-  /// Marka + ürün adı; birim ürün adında sabittir (ör. 500g, 1L).
-  static String searchQuery(Product product) {
+  /// Aramaya gidecek metin; birim her zaman sorgunun içinde kalır.
+  ///
+  /// [marketId] verilir ve fiyat o market için indeksten geliyorsa indeksin
+  /// ürün adı kullanılır: satırda yazan tutar ile aramanın açtığı ürün aynı
+  /// olur. Aksi halde sepetteki marka + ürün adı aranır.
+  static String searchQuery(Product product, {MarketId? marketId}) {
+    if (marketId != null) {
+      final indexed = marketPriceIndex[product.id];
+      if (indexed != null && indexed.prices.containsKey(marketId)) {
+        return indexed.product;
+      }
+    }
     final brand = product.brand?.trim();
     if (brand == null || brand.isEmpty || isGenericBrand(brand)) {
       return product.name;

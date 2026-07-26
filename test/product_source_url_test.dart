@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sepet_karsilastir/data/brands.dart';
+import 'package:sepet_karsilastir/data/market_price_index.dart';
 import 'package:sepet_karsilastir/data/market_price_snapshot.dart';
 import 'package:sepet_karsilastir/data/market_product_snapshot.dart';
 import 'package:sepet_karsilastir/data/mock_catalog.dart';
@@ -59,6 +60,41 @@ void main() {
     expect(link.kind, ProductLinkKind.search);
     final query = Uri.parse(link.url).queryParameters['q'];
     expect(query, 'Bahçıvan Kaşar Peynir 500g');
+  });
+
+  test('fiyat indeksten gelen aramada indeksin ürün adı kullanılır', () {
+    // Migros araması, fiyatı yazan ürünün kendisine çıkmalı; sepetin genel
+    // ürün adı ("Sofra Tuzu 500g") başka bir ürünü öne çıkarabilir.
+    final entry = marketPriceIndex.entries.firstWhere(
+      (e) =>
+          e.value.prices.containsKey(MarketId.migros) &&
+          !marketProductSnapshot.containsKey(e.key),
+    );
+    final type =
+        productTypes.firstWhere((t) => t.id == entry.key.split('__').first);
+    final brandName = foodBrands
+        .firstWhere((b) => type.withBrand(b.name).id == entry.key)
+        .name;
+
+    final link = ProductSourceUrl.resolve(
+      marketId: MarketId.migros,
+      product: type.withBrand(brandName),
+    );
+    expect(link.kind, ProductLinkKind.search);
+    expect(
+      Uri.parse(link.url).queryParameters['q'],
+      entry.value.product,
+    );
+
+    // İndeksin kapsamadığı markette sepetteki marka + birim aranır.
+    final macro = ProductSourceUrl.resolve(
+      marketId: MarketId.macrocenter,
+      product: type.withBrand(brandName),
+    );
+    expect(
+      Uri.parse(macro.url).queryParameters['q'],
+      '$brandName ${type.name}',
+    );
   });
 
   test('site bağlantısı sunan marketlerde sorgu parametresi olmaz', () {
@@ -143,7 +179,8 @@ void main() {
       product: product,
     );
     expect(link.kind, ProductLinkKind.search);
-    expect(link.url, isNot(contains(marketPriceSnapshot['kasar-500']!.sokPath!)));
+    expect(
+        link.url, isNot(contains(marketPriceSnapshot['kasar-500']!.sokPath!)));
     expect(Uri.parse(link.url).queryParameters['q'], contains('Bahçıvan'));
   });
 

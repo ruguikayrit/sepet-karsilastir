@@ -18,8 +18,7 @@ Set<String> normalizedQuantities(String text) {
           .allMatches(folded);
   for (final match in matches) {
     final pack = int.tryParse(match.group(1) ?? '') ?? 1;
-    final amount =
-        double.parse(match.group(2)!.replaceAll(',', '.')) * pack;
+    final amount = double.parse(match.group(2)!.replaceAll(',', '.')) * pack;
     final unit = match.group(3)!;
     final (base, factor) = switch (unit) {
       'kg' => ('g', 1000),
@@ -28,7 +27,8 @@ Set<String> normalizedQuantities(String text) {
       _ => ('ml', 1),
     };
     final value = amount * factor;
-    found.add('$base:${value == value.roundToDouble() ? value.round() : value}');
+    found
+        .add('$base:${value == value.roundToDouble() ? value.round() : value}');
   }
   return found;
 }

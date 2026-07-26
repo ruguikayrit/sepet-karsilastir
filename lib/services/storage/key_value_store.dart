@@ -29,8 +29,7 @@ class PreferencesStore implements KeyValueStore {
 }
 
 class InMemoryStore implements KeyValueStore {
-  InMemoryStore([Map<String, String>? seed])
-      : _data = {...?seed};
+  InMemoryStore([Map<String, String>? seed]) : _data = {...?seed};
 
   final Map<String, String> _data;
 

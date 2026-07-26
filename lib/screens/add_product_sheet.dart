@@ -575,8 +575,7 @@ class _ProductRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color:
-                        hasFilter ? palette.onGreenSoft : palette.inkMuted,
+                    color: hasFilter ? palette.onGreenSoft : palette.inkMuted,
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
                   ),
@@ -591,10 +590,8 @@ class _ProductRow extends StatelessWidget {
               minimumSize: const Size(84, 40),
               padding: const EdgeInsets.symmetric(horizontal: 14),
               visualDensity: VisualDensity.compact,
-              backgroundColor:
-                  hasFilter ? palette.green : palette.orangeSoft,
-              foregroundColor:
-                  hasFilter ? palette.onAccent : palette.orange,
+              backgroundColor: hasFilter ? palette.green : palette.orangeSoft,
+              foregroundColor: hasFilter ? palette.onAccent : palette.orange,
               textStyle: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w800,
