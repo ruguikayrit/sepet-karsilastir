@@ -24,6 +24,7 @@ import argparse
 import json
 import re
 import sys
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
@@ -60,6 +61,13 @@ DEFAULT_CACHE = REPO / '.price_sync_cache'
 #: yanıtı değişince kullanıcı bir sabah fiyatların yarısını kaybetmesin.
 SHRINK_LIMIT = 0.7
 
+#: Üst üste bu kadar istek başarısız olursa market bırakılır.
+#:
+#: Kapısını kapatmış bir zincirde yüzlerce isteğin zaman aşımını beklemek
+#: günlük işi saatlere çıkarıyor; erken vazgeçip kalan marketlerle devam
+#: ediyoruz.
+FAILURE_LIMIT = 8
+
 _OFFER_COUNT = re.compile(r'· (\d+) ürün fiyatı')
 
 
@@ -88,30 +96,60 @@ class SearchCache:
         )
 
 
-def fetch(cache: SearchCache, market: str, term: str, page: int,
+class MarketHealth:
+    """Bir marketin üst üste kaç isteği düşürdüğünü sayar."""
+
+    def __init__(self, market: str, limit: int = FAILURE_LIMIT):
+        self.market = market
+        self.limit = limit
+        self._streak = 0
+        self._lock = threading.Lock()
+
+    @property
+    def gave_up(self) -> bool:
+        with self._lock:
+            return self._streak >= self.limit
+
+    def ok(self) -> None:
+        with self._lock:
+            self._streak = 0
+
+    def failed(self) -> None:
+        with self._lock:
+            self._streak += 1
+            if self._streak == self.limit:
+                print(f'  ! {self.market}: üst üste {self.limit} istek '
+                      'düştü, market bırakıldı', file=sys.stderr)
+
+
+def fetch(cache: SearchCache, health: MarketHealth, term: str, page: int,
           delay: float) -> list[Offer]:
+    market = health.market
     cached = cache.offers(market, term, page)
     if cached is not None:
         return cached
-    if cache.offline:
+    if cache.offline or health.gave_up:
         return []
     adapter = ADAPTERS[market]
     try:
         offers = adapter.search(term, page)
     except FetchError as exc:
+        health.failed()
         print(f'  ! {market} "{term}" sayfa {page}: {exc}', file=sys.stderr)
         return []
+    health.ok()
     cache.store(market, term, page, offers)
     if delay:
         time.sleep(delay)
     return offers
 
 
-def gather(cache: SearchCache, market: str, terms: list[tuple[str, int]],
-           jobs: int, delay: float) -> dict[tuple[str, int], list[Offer]]:
+def gather(cache: SearchCache, health: MarketHealth,
+           terms: list[tuple[str, int]], jobs: int,
+           delay: float) -> dict[tuple[str, int], list[Offer]]:
     with ThreadPoolExecutor(max_workers=jobs) as pool:
         results = pool.map(
-            lambda item: (item, fetch(cache, market, item[0], item[1], delay)),
+            lambda item: (item, fetch(cache, health, item[0], item[1], delay)),
             terms,
         )
         return dict(results)
@@ -135,10 +173,11 @@ def build_market(market: str, catalog, cache: SearchCache, jobs: int,
                  delay: float, targeted: bool) -> dict[str, list[Offer]]:
     """Bir marketin katalog satırlarına uyan ürünlerini toplar."""
     adapter = ADAPTERS[market]
+    health = MarketHealth(market)
     pages = [(RULES[t.id]['term'], page)
              for t in catalog.types
              for page in range(1, adapter.page_limit + 1)]
-    fetched = gather(cache, market, pages, jobs, delay)
+    fetched = gather(cache, health, pages, jobs, delay)
 
     found: dict[str, list[Offer]] = {}
     misses: list[tuple[str, str]] = []
@@ -179,10 +218,10 @@ def build_market(market: str, catalog, cache: SearchCache, jobs: int,
             if GENERIC_BRAND in brands:
                 found[product_id(type_.id, GENERIC_BRAND)] = plain
 
-    if targeted and misses:
+    if targeted and misses and not health.gave_up:
         extra = [(f'{brand} {RULES[type_id]["term"]}', 1)
                  for type_id, brand in misses]
-        fetched_extra = gather(cache, market, extra, jobs, delay)
+        fetched_extra = gather(cache, health, extra, jobs, delay)
         types_by_id = {t.id: t for t in catalog.types}
         for type_id, brand in misses:
             type_ = types_by_id[type_id]
