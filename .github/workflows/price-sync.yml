@@ -49,8 +49,10 @@ jobs:
         env:
           MARKETS: ${{ inputs.markets }}
           ALLOW_SHRINK: ${{ inputs.allow_shrink }}
+        # Yavaş ve az paralel: marketler istek yağmurunda kapıyı kapatıyor,
+        # yarısı eksik bir defter de yazılmıyor. Gece işi için hız önemsiz.
         run: |
-          args=(--fresh --jobs 8 --delay 0.2)
+          args=(--fresh --jobs 4 --delay 0.5)
           if [ -n "$MARKETS" ]; then args+=(--markets "$MARKETS"); fi
           if [ "$ALLOW_SHRINK" = "true" ]; then args+=(--allow-shrink); fi
           python3 tools/price_sync/sync.py "${args[@]}"

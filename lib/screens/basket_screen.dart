@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/market.dart';
+import '../services/price_book_service.dart';
 import '../state/basket_controller.dart';
 import '../theme/app_theme.dart';
 import '../widgets/name_prompt_dialog.dart';
@@ -165,6 +166,21 @@ class BasketScreen extends StatelessWidget {
                                             fontWeight: FontWeight.w600,
                                           ),
                                         ),
+                                        // Fiyatı hiçbir markette yayınlanmayan
+                                        // satır karşılaştırmada boş kalır;
+                                        // kullanıcı bunu sepette görsün.
+                                        if (PriceBookService.pricedMarketCount(
+                                              item.product.id,
+                                            ) ==
+                                            0)
+                                          Text(
+                                            'Fiyatı yayınlayan market yok',
+                                            style: TextStyle(
+                                              color: palette.danger,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
                                       ],
                                     ),
                                   ),

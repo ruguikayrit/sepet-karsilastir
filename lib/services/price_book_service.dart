@@ -77,4 +77,12 @@ class PriceBookService implements PriceService {
   /// Bu marketin bu ürün için yayınladığı kayıt.
   static MarketOffer? offerFor(MarketId marketId, Product product) =>
       priceBook[product.id]?[marketId];
+
+  /// Bu ürünü kaç market fiyatlıyor?
+  ///
+  /// Sepete eklerken işe yarar: hiçbir markette fiyatı olmayan bir marka
+  /// seçildiyse karşılaştırma o satır için boş kalacak, kullanıcı bunu
+  /// eklemeden önce görsün.
+  static int pricedMarketCount(String productId) =>
+      priceBook[productId]?.values.where((offer) => offer.inStock).length ?? 0;
 }
