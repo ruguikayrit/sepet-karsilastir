@@ -1,5 +1,4 @@
 import '../config/app_config.dart';
-import '../data/market_price_snapshot.dart';
 import '../data/mock_catalog.dart';
 import '../models/comparison_result.dart';
 import '../models/fetch_status.dart';
@@ -9,6 +8,7 @@ import '../models/market_quote.dart';
 import 'catalog/catalog_client.dart';
 import 'http/api_client.dart';
 import 'mapping/product_sku_map.dart';
+import 'mapping/product_source_url.dart';
 import 'markets/backend_market_price_client.dart';
 import 'markets/market_price_client.dart';
 import 'price_service.dart';
@@ -153,8 +153,10 @@ class LivePriceService implements PriceService {
 
     final lines = items.map((item) {
       final quote = byProduct[item.product.id];
-      final fallbackUrl =
-          marketPriceSnapshot[item.product.typeId]?.sourceUrl;
+      final fallbackUrl = ProductSourceUrl.resolve(
+        marketId: batch.marketId,
+        product: item.product,
+      );
       if (quote == null) {
         return LinePrice(
           product: item.product,

@@ -2,9 +2,9 @@ import '../models/product.dart';
 
 /// Markasız ürün tipi — kullanıcı eklerken marka seçer.
 ///
-/// Çeşit ve referans fiyatlar resmi market sitelerinden derlenmiştir:
-/// Şok Market (sokmarket.com.tr) ve Happy Center (happycenter.com.tr),
-/// çekim tarihi: 2026-07-26. Ayrıntılar için [marketPriceSnapshot].
+/// Çeşit ve referans fiyatlar resmi market sitelerinden derlenmiştir.
+/// Ürün adındaki birim (500g, 1L vb.) tüm market karşılaştırmalarında
+/// sabittir; farklı gramajlar ayrı ürün tipidir.
 class ProductType {
   const ProductType({
     required this.id,
@@ -19,9 +19,7 @@ class ProductType {
   final String unit;
 
   Product withBrand(String? brand) {
-    final brandKey = (brand ?? 'markasiz')
-        .toLowerCase()
-        .replaceAll(RegExp(r'[^a-z0-9]+'), '-');
+    final brandKey = _brandKey(brand);
     return Product(
       id: '${id}__$brandKey',
       typeId: id,
@@ -30,6 +28,25 @@ class ProductType {
       unit: unit,
       brand: brand,
     );
+  }
+
+  /// Türkçe karakterleri koruyarak kararlı marka anahtarı üretir.
+  static String _brandKey(String? brand) {
+    if (brand == null || brand.trim().isEmpty) return 'markasiz';
+    final lower = brand
+        .trim()
+        .toLowerCase()
+        .replaceAll('\u0307', '')
+        .replaceAll('ı', 'i')
+        .replaceAll('ğ', 'g')
+        .replaceAll('ü', 'u')
+        .replaceAll('ş', 's')
+        .replaceAll('ö', 'o')
+        .replaceAll('ç', 'c');
+    return lower
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+        .replaceAll(RegExp(r'-+'), '-')
+        .replaceAll(RegExp(r'^-|-$'), '');
   }
 }
 
@@ -174,7 +191,7 @@ const productTypes = <ProductType>[
   ),
   ProductType(
     id: 'tuz-750',
-    name: 'Sofra Tuzu 750g',
+    name: 'Sofra Tuzu 500g',
     category: 'Temel Gıda',
     unit: 'adet',
   ),
@@ -197,26 +214,26 @@ const productTypes = <ProductType>[
     unit: 'adet',
   ),
   ProductType(
-    id: 'salca-700',
+    id: 'salca-650',
     name: 'Biber Salçası 650g',
     category: 'Temel Gıda',
     unit: 'adet',
   ),
   ProductType(
-    id: 'ketcap-600',
-    name: 'Ketçap 600g',
+    id: 'ketcap-500',
+    name: 'Ketçap 500g',
     category: 'Temel Gıda',
     unit: 'adet',
   ),
   ProductType(
-    id: 'mayonez-550',
-    name: 'Mayonez 550g',
+    id: 'mayonez-430',
+    name: 'Mayonez 430g',
     category: 'Temel Gıda',
     unit: 'adet',
   ),
   ProductType(
-    id: 'ton-160',
-    name: 'Ton Balığı 160g',
+    id: 'ton-2x160',
+    name: 'Ton Balığı 2x160g',
     category: 'Konserve',
     unit: 'adet',
   ),
@@ -228,7 +245,7 @@ const productTypes = <ProductType>[
   ),
   ProductType(
     id: 'konserve-misir',
-    name: 'Mısır Konservesi',
+    name: 'Mısır Konservesi 3x200g',
     category: 'Konserve',
     unit: 'adet',
   ),
@@ -253,12 +270,6 @@ const productTypes = <ProductType>[
   ProductType(
     id: 'su-1-5l',
     name: 'Su 1.5L',
-    category: 'İçecek',
-    unit: 'adet',
-  ),
-  ProductType(
-    id: 'su-6x',
-    name: 'Su 6x1.5L',
     category: 'İçecek',
     unit: 'adet',
   ),
@@ -300,7 +311,7 @@ const productTypes = <ProductType>[
   ),
   ProductType(
     id: 'maden-6x',
-    name: 'Maden Suyu 6\'lı',
+    name: 'Maden Suyu 6x200ml',
     category: 'İçecek',
     unit: 'adet',
   ),
@@ -390,13 +401,13 @@ const productTypes = <ProductType>[
   ),
   ProductType(
     id: 'tavuk-1kg',
-    name: 'Tavuk Göğüs',
+    name: 'Piliç But Pirzola',
     category: 'Et & Tavuk',
     unit: 'kg',
   ),
   ProductType(
-    id: 'kofte-400',
-    name: 'Köfte 400g',
+    id: 'kofte-500',
+    name: 'Köfte 500g',
     category: 'Et & Tavuk',
     unit: 'adet',
   ),
@@ -407,8 +418,8 @@ const productTypes = <ProductType>[
     unit: 'adet',
   ),
   ProductType(
-    id: 'salam-200',
-    name: 'Salam 200g',
+    id: 'salam-60',
+    name: 'Salam 60g',
     category: 'Et & Tavuk',
     unit: 'adet',
   ),
@@ -425,20 +436,20 @@ const productTypes = <ProductType>[
     unit: 'adet',
   ),
   ProductType(
-    id: 'deterjan-3kg',
-    name: 'Çamaşır Deterjanı',
+    id: 'deterjan-1-5kg',
+    name: 'Çamaşır Deterjanı 1.5kg',
     category: 'Temizlik',
     unit: 'adet',
   ),
   ProductType(
-    id: 'bulasik-750',
-    name: 'Bulaşık Deterjanı',
+    id: 'bulasik-1500',
+    name: 'Bulaşık Deterjanı 1500ml',
     category: 'Temizlik',
     unit: 'adet',
   ),
   ProductType(
-    id: 'yumusatici-2l',
-    name: 'Yumuşatıcı',
+    id: 'yumusatici-1440',
+    name: 'Yumuşatıcı 1440ml',
     category: 'Temizlik',
     unit: 'adet',
   ),
@@ -449,14 +460,8 @@ const productTypes = <ProductType>[
     unit: 'adet',
   ),
   ProductType(
-    id: 'tuvalet-8',
-    name: 'Tuvalet Kağıdı 8\'li',
-    category: 'Temizlik',
-    unit: 'adet',
-  ),
-  ProductType(
     id: 'cop-torbasi',
-    name: 'Çöp Torbası',
+    name: 'Çöp Torbası 15\'li',
     category: 'Temizlik',
     unit: 'adet',
   ),
@@ -480,43 +485,43 @@ const productTypes = <ProductType>[
   ),
   ProductType(
     id: 'dus-jeli',
-    name: 'Duş Jeli 500ml',
+    name: 'Duş Jeli',
     category: 'Kişisel Bakım',
     unit: 'adet',
   ),
   ProductType(
-    id: 'cips-107',
-    name: 'Patates Cipsi',
+    id: 'cips-150',
+    name: 'Patates Cipsi 150g',
     category: 'Atıştırmalık',
     unit: 'adet',
   ),
   ProductType(
-    id: 'biskuvi',
-    name: 'Bisküvi',
+    id: 'biskuvi-102',
+    name: 'Bisküvi 102g',
     category: 'Atıştırmalık',
     unit: 'adet',
   ),
   ProductType(
-    id: 'cikolata',
-    name: 'Sütlü Çikolata',
+    id: 'cikolata-100',
+    name: 'Sütlü Çikolata 100g',
     category: 'Atıştırmalık',
     unit: 'adet',
   ),
   ProductType(
-    id: 'gofret',
-    name: 'Gofret',
+    id: 'gofret-350',
+    name: 'Gofret 350g',
     category: 'Atıştırmalık',
     unit: 'adet',
   ),
   ProductType(
-    id: 'kek',
-    name: 'Kek',
+    id: 'kek-162',
+    name: 'Kek 162g',
     category: 'Atıştırmalık',
     unit: 'adet',
   ),
   ProductType(
-    id: 'kraker',
-    name: 'Kraker',
+    id: 'kraker-82',
+    name: 'Kraker 82g',
     category: 'Atıştırmalık',
     unit: 'adet',
   ),
@@ -534,7 +539,7 @@ const productTypes = <ProductType>[
   ),
   ProductType(
     id: 'bebek-bezi',
-    name: 'Bebek Bezi',
+    name: 'Bebek Bezi 40\'lı',
     category: 'Bebek',
     unit: 'adet',
   ),

@@ -4,6 +4,7 @@ import '../models/comparison_result.dart';
 import '../models/fetch_status.dart';
 import '../models/list_item.dart';
 import '../models/market.dart';
+import 'mapping/product_source_url.dart';
 import 'price_service.dart';
 
 /// Demo / geliştirme: market sitelerinden derlenen referans fiyatlara göre
@@ -12,7 +13,7 @@ import 'price_service.dart';
 /// Taban fiyatlar [marketPriceSnapshot] içindeki resmi site verileridir
 /// (Şok Market + Happy Center, 2026-07-26). Her market için tek bir fiyat
 /// seviyesi (index) tutulur; ürün bazlı küçük sapma deterministik hash ile
-/// üretilir.
+/// üretilir. Satır linkleri [ProductSourceUrl] ile o marketin sitesine gider.
 class MockPriceService implements PriceService {
   /// Snapshot’taki Şok/Happy Center birim fiyatları — diğer marketler index ile sapar.
   static final Map<String, double> _basePrices = {
@@ -54,15 +55,15 @@ class MockPriceService implements PriceService {
       'filtre-kahve',
     },
     MarketId.tarimKredi: {
-      'cips-107',
+      'cips-150',
       'sampuan-400',
       'dondurma-500',
       'bebek-bezi',
       'dus-jeli',
     },
     MarketId.metro: {'ekmek-250', 'ekmek-beyaz', 'maydanoz'},
-    MarketId.getir: {'kofte-400', 'kiyma-400', 'un-5kg'},
-    MarketId.file: {'kofte-400', 'sucuk-250'},
+    MarketId.getir: {'kofte-500', 'kiyma-400', 'un-5kg'},
+    MarketId.file: {'kofte-500', 'sucuk-250'},
   };
 
   /// İndirim marketlerinde bulunmayan ulusal markalar.
@@ -116,7 +117,10 @@ class MockPriceService implements PriceService {
           quantity: item.quantity,
           unitPrice: price,
           available: available,
-          sourceUrl: marketPriceSnapshot[typeId]?.sourceUrl,
+          sourceUrl: ProductSourceUrl.resolve(
+            marketId: market.id,
+            product: item.product,
+          ),
         );
       }).toList();
 
