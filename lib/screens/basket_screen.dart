@@ -172,41 +172,44 @@ class BasketScreen extends StatelessWidget {
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-          child: FilledButton(
-            onPressed: basket.isEmpty || basket.comparing
-                ? null
-                : () async {
-                    final messenger = ScaffoldMessenger.of(context);
-                    final controller = context.read<BasketController>();
-                    final ok = await controller.compare();
-                    if (!context.mounted) return;
-                    if (ok == null) {
-                      messenger.showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            controller.error ?? 'Fiyatlar alınamadı.',
+          child: SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: basket.isEmpty || basket.comparing
+                  ? null
+                  : () async {
+                      final messenger = ScaffoldMessenger.of(context);
+                      final controller = context.read<BasketController>();
+                      final ok = await controller.compare();
+                      if (!context.mounted) return;
+                      if (ok == null) {
+                        messenger.showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              controller.error ?? 'Fiyatlar alınamadı.',
+                            ),
+                            behavior: SnackBarBehavior.floating,
                           ),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                      return;
-                    }
-                    onOpenCompareTab();
-                  },
-            child: basket.comparing
-                ? const SizedBox(
-                    height: 22,
-                    width: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.4,
-                      color: Colors.white,
+                        );
+                        return;
+                      }
+                      onOpenCompareTab();
+                    },
+              child: basket.comparing
+                  ? const SizedBox(
+                      height: 22,
+                      width: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.4,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text(
+                      basket.isEmpty
+                          ? 'Önce ürün ekleyin'
+                          : 'Marketleri karşılaştır',
                     ),
-                  )
-                : Text(
-                    basket.isEmpty
-                        ? 'Önce ürün ekleyin'
-                        : 'Marketleri karşılaştır',
-                  ),
+            ),
           ),
         ),
       ),
