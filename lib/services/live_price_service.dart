@@ -51,14 +51,31 @@ class LivePriceService implements PriceService {
 
   /// Backend yokken entegrasyon akışını test etmek için.
   factory LivePriceService.stubbed() {
+    const factors = <MarketId, double>{
+      MarketId.tarimKredi: 0.89,
+      MarketId.bim: 0.91,
+      MarketId.hakmar: 0.92,
+      MarketId.a101: 0.93,
+      MarketId.sok: 0.94,
+      MarketId.metro: 0.95,
+      MarketId.onur: 0.98,
+      MarketId.file: 0.99,
+      MarketId.happyCenter: 1.00,
+      MarketId.migros: 1.05,
+      MarketId.carrefour: 1.06,
+      MarketId.getir: 1.12,
+      MarketId.macrocenter: 1.24,
+    };
+
     return LivePriceService(
-      marketClients: [
-        StubMarketPriceClient(marketId: MarketId.migros, priceFactor: 1.05),
-        StubMarketPriceClient(marketId: MarketId.a101, priceFactor: 0.94),
-        StubMarketPriceClient(marketId: MarketId.sok, priceFactor: 0.96),
-        StubMarketPriceClient(marketId: MarketId.carrefour, priceFactor: 1.06),
-        StubMarketPriceClient(marketId: MarketId.file, priceFactor: 0.98),
-      ],
+      marketClients: Market.all
+          .map(
+            (market) => StubMarketPriceClient(
+              marketId: market.id,
+              priceFactor: factors[market.id] ?? 1.0,
+            ),
+          )
+          .toList(),
       catalogClient: LocalCatalogClient(),
     );
   }

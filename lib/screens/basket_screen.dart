@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../models/market.dart';
 import '../state/basket_controller.dart';
 import '../theme/app_theme.dart';
 import '../widgets/quantity_stepper.dart';
@@ -70,7 +71,7 @@ class BasketScreen extends StatelessWidget {
                     Expanded(
                       child: Text(
                         basket.isEmpty
-                            ? 'Ürün ekle, 5 marketten en düşük toplamı anında gör.'
+                            ? 'Ürün ekle, ${Market.all.length} marketten en düşük toplamı anında gör.'
                             : 'Hazır olduğunda Karşılaştır sekmesine geç.',
                         style: const TextStyle(
                           fontWeight: FontWeight.w700,
@@ -245,10 +246,10 @@ class _EmptyState extends StatelessWidget {
                   ),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Alışveriş listeni oluştur.\nMigros, A101, Şok, Carrefour ve File\nfiyatlarını tek bakışta karşılaştır.',
+            Text(
+              'Alışveriş listeni oluştur.\nMigros, BİM, A101, Şok, Macrocenter ve\n${Market.all.length} markette fiyatları karşılaştır.',
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 color: AppColors.inkMuted,
                 height: 1.45,
                 fontWeight: FontWeight.w600,

@@ -75,7 +75,7 @@ class HomeScreen extends StatelessWidget {
                 title: 'Sepetin hazır — karşılaştır',
                 body:
                     '${basket.totalQuantity} ürün · ${basket.uniqueBrandCount} marka. '
-                    '5 marketten en düşük toplamı şimdi gör.',
+                    '${Market.all.length} marketten en düşük toplamı şimdi gör.',
                 cta: 'Sonucu gör',
                 onTap: () => onOpenTab(2),
               )
@@ -83,8 +83,9 @@ class HomeScreen extends StatelessWidget {
               _ActionHero(
                 title: 'Markanı seç, sepetini kur',
                 body:
-                    'Her ürün için marka seçerek gerçekçi bir liste oluştur. '
-                    'Sonra Migros, A101, Şok, Carrefour ve File fiyatlarını kıyasla.',
+                    'Her ürün için bir veya birden fazla marka seç. '
+                    'Sonra indirim, ulusal ve premium ${Market.all.length} marketin '
+                    'fiyatlarını tek ekranda kıyasla.',
                 cta: 'Sepete ürün ekle',
                 onTap: () => onOpenTab(1),
               ),
@@ -229,17 +230,40 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             Text(
-              'Karşılaştırılan marketler',
+              'Karşılaştırılan ${Market.all.length} market',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
             ),
             const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: Market.all.map((m) => MarketBadge(market: m)).toList(),
-            ),
+            ...MarketSegment.values.map((segment) {
+              final markets = Market.bySegment(segment);
+              if (markets.isEmpty) return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      segment.label,
+                      style: const TextStyle(
+                        color: AppColors.inkMuted,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: markets
+                          .map((m) => MarketBadge(market: m))
+                          .toList(),
+                    ),
+                  ],
+                ),
+              );
+            }),
           ],
         ),
       ),

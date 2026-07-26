@@ -1,67 +1,56 @@
+import '../../data/mock_catalog.dart';
 import '../../models/market.dart';
 
-/// Bizim ürün id ↔ market SKU eşlemesi.
+/// Bizim ürün tipi ↔ market SKU eşlemesi.
 ///
 /// Canlı sistemde bu tablo backend DB'den gelir; burada iskelet / offline fallback.
 class ProductSkuMap {
   const ProductSkuMap(this._map);
 
-  /// marketId -> (productId -> externalSku)
+  /// marketId -> (typeId -> externalSku)
   final Map<MarketId, Map<String, String>> _map;
 
-  /// Başlangıç eşlemeleri — backend hazır olunca kaldırılabilir.
+  static const _prefixes = <MarketId, String>{
+    MarketId.migros: 'MIG',
+    MarketId.macrocenter: 'MACRO',
+    MarketId.a101: 'A101',
+    MarketId.bim: 'BIM',
+    MarketId.sok: 'SOK',
+    MarketId.carrefour: 'CRF',
+    MarketId.file: 'FILE',
+    MarketId.tarimKredi: 'TKM',
+    MarketId.hakmar: 'HAK',
+    MarketId.onur: 'ONUR',
+    MarketId.happyCenter: 'HAPPY',
+    MarketId.metro: 'METRO',
+    MarketId.getir: 'GETIR',
+  };
+
+  /// Katalogdaki tüm ürün tipleri için placeholder SKU üretir.
   factory ProductSkuMap.seed() {
-    return const ProductSkuMap({
-      MarketId.migros: {
-        'sut-1l': 'MIG-SUT-1L',
-        'yumurta-30': 'MIG-YUM-30',
-        'ekmek-250': 'MIG-EKM-250',
-        'pirinc-1kg': 'MIG-PIR-1KG',
-        'aycicek-1l': 'MIG-YAG-1L',
-      },
-      MarketId.a101: {
-        'sut-1l': 'A101-SUT-1L',
-        'yumurta-30': 'A101-YUM-30',
-        'ekmek-250': 'A101-EKM-250',
-        'pirinc-1kg': 'A101-PIR-1KG',
-        'aycicek-1l': 'A101-YAG-1L',
-      },
-      MarketId.sok: {
-        'sut-1l': 'SOK-SUT-1L',
-        'yumurta-30': 'SOK-YUM-30',
-        'ekmek-250': 'SOK-EKM-250',
-        'pirinc-1kg': 'SOK-PIR-1KG',
-        'aycicek-1l': 'SOK-YAG-1L',
-      },
-      MarketId.carrefour: {
-        'sut-1l': 'CRF-SUT-1L',
-        'yumurta-30': 'CRF-YUM-30',
-        'ekmek-250': 'CRF-EKM-250',
-        'pirinc-1kg': 'CRF-PIR-1KG',
-        'aycicek-1l': 'CRF-YAG-1L',
-      },
-      MarketId.file: {
-        'sut-1l': 'FILE-SUT-1L',
-        'yumurta-30': 'FILE-YUM-30',
-        'ekmek-250': 'FILE-EKM-250',
-        'pirinc-1kg': 'FILE-PIR-1KG',
-        'aycicek-1l': 'FILE-YAG-1L',
-      },
-    });
+    final map = <MarketId, Map<String, String>>{};
+    for (final market in Market.all) {
+      final prefix = _prefixes[market.id] ?? market.id.name.toUpperCase();
+      map[market.id] = {
+        for (final type in productTypes)
+          type.id: '$prefix-${type.id.toUpperCase()}',
+      };
+    }
+    return ProductSkuMap(map);
   }
 
-  String? skuFor(MarketId marketId, String productId) {
-    return _map[marketId]?[productId];
+  String? skuFor(MarketId marketId, String typeId) {
+    return _map[marketId]?[typeId];
   }
 
   List<SkuLookup> lookupsFor(
     MarketId marketId,
-    Iterable<String> productIds,
+    Iterable<String> typeIds,
   ) {
-    return productIds
+    return typeIds
         .map(
           (id) => SkuLookup(
-            productId: id,
+            typeId: id,
             externalSku: skuFor(marketId, id),
           ),
         )
@@ -70,8 +59,8 @@ class ProductSkuMap {
 }
 
 class SkuLookup {
-  const SkuLookup({required this.productId, this.externalSku});
+  const SkuLookup({required this.typeId, this.externalSku});
 
-  final String productId;
+  final String typeId;
   final String? externalSku;
 }

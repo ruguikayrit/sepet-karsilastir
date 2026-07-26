@@ -100,20 +100,33 @@ class BackendMarketPriceClient implements MarketPriceClient {
 class MarketClients {
   const MarketClients._();
 
-  static List<MarketPriceClient> all(ApiClient api) => [
-        BackendMarketPriceClient(marketId: MarketId.migros, apiClient: api),
-        BackendMarketPriceClient(marketId: MarketId.a101, apiClient: api),
-        BackendMarketPriceClient(
-          marketId: MarketId.sok,
-          apiClient: api,
-          slug: 'sok',
-        ),
-        BackendMarketPriceClient(
-          marketId: MarketId.carrefour,
-          apiClient: api,
-        ),
-        BackendMarketPriceClient(marketId: MarketId.file, apiClient: api),
-      ];
+  static const slugs = <MarketId, String>{
+    MarketId.migros: 'migros',
+    MarketId.macrocenter: 'macrocenter',
+    MarketId.a101: 'a101',
+    MarketId.bim: 'bim',
+    MarketId.sok: 'sok',
+    MarketId.carrefour: 'carrefour',
+    MarketId.file: 'file',
+    MarketId.tarimKredi: 'tarim-kredi',
+    MarketId.hakmar: 'hakmar',
+    MarketId.onur: 'onur',
+    MarketId.happyCenter: 'happy-center',
+    MarketId.metro: 'metro',
+    MarketId.getir: 'getir',
+  };
+
+  static List<MarketPriceClient> all(ApiClient api) {
+    return Market.all
+        .map(
+          (market) => BackendMarketPriceClient(
+            marketId: market.id,
+            apiClient: api,
+            slug: slugs[market.id] ?? market.id.name,
+          ),
+        )
+        .toList();
+  }
 }
 
 /// Backend yokken iskeleti doğrulamak için sabit yanıt üreten istemci.

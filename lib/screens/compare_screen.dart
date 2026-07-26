@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/comparison_result.dart';
+import '../models/market.dart';
 import '../state/basket_controller.dart';
 import '../theme/app_theme.dart';
 import '../utils/money.dart';
@@ -109,9 +110,9 @@ class _LoadingView extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 6),
-          const Text(
-            'Migros · A101 · Şok · Carrefour · File',
-            style: TextStyle(color: AppColors.inkMuted),
+          Text(
+            '${Market.all.length} market taranıyor',
+            style: const TextStyle(color: AppColors.inkMuted),
           ),
         ],
       ),
@@ -348,8 +349,8 @@ class _MarketRankTile extends StatelessWidget {
                   basket.fetchFailed
                       ? (basket.errorMessage ?? 'Fiyat alınamadı')
                       : basket.isComplete
-                          ? '${basket.availableCount} ürün tamam'
-                          : '${basket.missingCount} ürün yok',
+                          ? '${basket.market.segment.label} · ${basket.availableCount} ürün tamam'
+                          : '${basket.market.segment.label} · ${basket.missingCount} ürün yok',
                   style: TextStyle(
                     color: basket.fetchFailed || !basket.isComplete
                         ? AppColors.danger

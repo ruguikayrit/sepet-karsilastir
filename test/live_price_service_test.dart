@@ -16,15 +16,15 @@ void main() {
     unit: 'adet',
   );
 
-  test('stubbed canlı servis 5 market sonucu döner', () async {
+  test('stubbed canlı servis tüm marketler için sonuç döner', () async {
     final service = LivePriceService.stubbed();
     final result = await service.compareBasket([
       const ListItem(product: milk, quantity: 2),
     ]);
 
-    expect(result.baskets, hasLength(5));
+    expect(result.baskets, hasLength(Market.all.length));
     expect(result.cheapestComplete, isNotNull);
-    expect(result.cheapestComplete!.market.id, MarketId.a101);
+    expect(result.cheapestComplete!.market.id, MarketId.tarimKredi);
     expect(result.failedMarketCount, 0);
   });
 
