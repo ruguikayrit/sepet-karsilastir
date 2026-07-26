@@ -26,12 +26,15 @@ IconData categoryIcon(String category) => switch (category) {
       'Süt & Kahvaltı' => Icons.egg_alt_outlined,
       'Fırın' => Icons.bakery_dining_outlined,
       'Temel Gıda' => Icons.rice_bowl_outlined,
+      'Konserve' => Icons.inventory_outlined,
       'İçecek' => Icons.local_drink_outlined,
       'Meyve & Sebze' => Icons.eco_outlined,
       'Et & Tavuk' => Icons.set_meal_outlined,
       'Temizlik' => Icons.cleaning_services_outlined,
       'Kişisel Bakım' => Icons.spa_outlined,
       'Atıştırmalık' => Icons.cookie_outlined,
+      'Dondurma' => Icons.icecream_outlined,
+      'Bebek' => Icons.baby_changing_station_outlined,
       _ => Icons.inventory_2_outlined,
     };
 

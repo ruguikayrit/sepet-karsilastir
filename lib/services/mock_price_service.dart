@@ -1,3 +1,4 @@
+import '../data/market_price_snapshot.dart';
 import '../data/mock_catalog.dart';
 import '../models/comparison_result.dart';
 import '../models/fetch_status.dart';
@@ -5,60 +6,63 @@ import '../models/list_item.dart';
 import '../models/market.dart';
 import 'price_service.dart';
 
-/// Demo / geliştirme: marketlere göre değişen güncel-benzer fiyatlar.
+/// Demo / geliştirme: market sitelerinden derlenen referans fiyatlara göre
+/// market bazlı karşılaştırma üretir.
 ///
-/// Her market için tek bir fiyat seviyesi (index) tutulur; ürün bazlı küçük
-/// sapma deterministik hash ile üretilir. Böylece market sayısı arttıkça
-/// tablo büyümez ve farklı marketler farklı üründe öne çıkar.
+/// Taban fiyatlar [marketPriceSnapshot] içindeki resmi site verileridir
+/// (Şok Market + Happy Center, 2026-07-26). Her market için tek bir fiyat
+/// seviyesi (index) tutulur; ürün bazlı küçük sapma deterministik hash ile
+/// üretilir.
 class MockPriceService implements PriceService {
-  static const _basePrices = <String, double>{
-    'sut-1l': 42.90,
-    'yumurta-30': 149.90,
-    'ekmek-250': 28.50,
-    'pirinc-1kg': 89.90,
-    'makarna-500': 32.50,
-    'aycicek-1l': 89.90,
-    'seker-1kg': 54.90,
-    'cay-500': 178.00,
-    'su-6x': 79.90,
-    'domates-1kg': 39.90,
-    'patates-1kg': 24.90,
-    'muz-1kg': 69.90,
-    'tavuk-1kg': 189.90,
-    'kofte-400': 129.90,
-    'peynir-500': 159.90,
-    'yogurt-1kg': 69.90,
-    'deterjan-3kg': 289.90,
-    'sampuan-400': 94.90,
-    'tuvalet-8': 119.90,
-    'cips-107': 45.90,
+  /// Snapshot’taki Şok/Happy Center birim fiyatları — diğer marketler index ile sapar.
+  static final Map<String, double> _basePrices = {
+    for (final entry in marketPriceSnapshot.entries)
+      entry.key: entry.value.unitPrice,
   };
 
-  /// Marketin genel fiyat seviyesi.
+  /// Marketin genel fiyat seviyesi (1.0 ≈ snapshot kaynak marketleri).
   static const _marketIndex = <MarketId, double>{
-    MarketId.bim: 0.91,
-    MarketId.a101: 0.93,
-    MarketId.sok: 0.94,
-    MarketId.hakmar: 0.92,
-    MarketId.tarimKredi: 0.89,
-    MarketId.metro: 0.95,
-    MarketId.file: 0.99,
-    MarketId.onur: 0.98,
+    MarketId.bim: 0.97,
+    MarketId.a101: 0.99,
+    MarketId.sok: 1.00,
+    MarketId.hakmar: 0.98,
+    MarketId.tarimKredi: 0.95,
+    MarketId.metro: 1.01,
+    MarketId.file: 1.05,
+    MarketId.onur: 1.04,
     MarketId.happyCenter: 1.00,
-    MarketId.migros: 1.05,
-    MarketId.carrefour: 1.06,
-    MarketId.getir: 1.12,
-    MarketId.macrocenter: 1.24,
+    MarketId.migros: 1.12,
+    MarketId.carrefour: 1.13,
+    MarketId.getir: 1.19,
+    MarketId.macrocenter: 1.32,
   };
 
   /// Marketin taşımadığı ürün tipleri.
   static const _unavailableTypes = <MarketId, Set<String>>{
-    MarketId.bim: {'domates-1kg', 'patates-1kg', 'tavuk-1kg'},
-    MarketId.hakmar: {'tavuk-1kg', 'muz-1kg'},
-    MarketId.tarimKredi: {'cips-107', 'sampuan-400'},
-    MarketId.metro: {'ekmek-250'},
-    MarketId.getir: {'kofte-400'},
-    MarketId.file: {'kofte-400'},
+    MarketId.bim: {
+      'domates-1kg',
+      'patates-1kg',
+      'tavuk-1kg',
+      'pilic-butun',
+      'biber-1kg',
+      'fasulye-1kg',
+    },
+    MarketId.hakmar: {
+      'tavuk-1kg',
+      'muz-1kg',
+      'pilic-but',
+      'filtre-kahve',
+    },
+    MarketId.tarimKredi: {
+      'cips-107',
+      'sampuan-400',
+      'dondurma-500',
+      'bebek-bezi',
+      'dus-jeli',
+    },
+    MarketId.metro: {'ekmek-250', 'ekmek-beyaz', 'maydanoz'},
+    MarketId.getir: {'kofte-400', 'kiyma-400', 'un-5kg'},
+    MarketId.file: {'kofte-400', 'sucuk-250'},
   };
 
   /// İndirim marketlerinde bulunmayan ulusal markalar.
@@ -76,6 +80,8 @@ class MockPriceService implements PriceService {
     'Head & Shoulders',
     'Dove',
     'Doritos',
+    "Kellogg's",
+    'Mehmet Efendi',
   };
 
   @override
