@@ -1,0 +1,40 @@
+name: Market reachability probe
+
+on:
+  push:
+    branches: [cursor/verified-prices-only-7558]
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe market endpoints
+        run: |
+          UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'
+          probe() {
+            printf '%-72s ' "$1"
+            curl -sS -m 25 -A "$UA" \
+              -H 'accept: application/json, text/plain, */*' \
+              -H 'accept-language: tr-TR,tr;q=0.9' \
+              -o /tmp/out.bin -w '%{http_code} %{size_download}\n' "$1" || echo "FAILED"
+          }
+          probe "https://www.migros.com.tr/rest/products/search?q=s%C3%BCt"
+          probe "https://www.migros.com.tr/rest/search/screens/one-column-flat?q=s%C3%BCt"
+          probe "https://www.a101.com.tr/arama?k=s%C3%BCt"
+          probe "https://www.a101.com.tr/"
+          probe "https://www.carrefoursa.com/search/?text=s%C3%BCt"
+          probe "https://www.metro-tr.com/"
+          probe "https://www.tkkoop.com.tr/"
+          probe "https://getir.com/buyuk/"
+          probe "https://www.file.com.tr/"
+          probe "https://www.sokmarket.com.tr/"
+          probe "https://happycenter.com.tr/"
+          probe "https://api.hakmarexpress.com.tr/api/home/suggest?q=s%C3%BCt"
+          probe "https://www.macrocenter.com.tr/rest/products/search?q=s%C3%BCt"
+          probe "https://api.marketfiyati.org.tr/api/v2/search"
+          echo "--- migros body head ---"
+          curl -sS -m 25 -A "$UA" "https://www.migros.com.tr/rest/products/search?q=s%C3%BCt" | head -c 300 || true
+          echo
+          echo "--- a101 body head ---"
+          curl -sS -m 25 -A "$UA" "https://www.a101.com.tr/arama?k=s%C3%BCt" | head -c 300 || true
