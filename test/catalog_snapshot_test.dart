@@ -69,6 +69,82 @@ void main() {
     }
   });
 
+  test('market yolu ürün adıyla birlikte tutulur ve gramajı uyar', () {
+    for (final type in productTypes) {
+      final ref = marketPriceSnapshot[type.id]!;
+      final expected = normalizedQuantities(type.name);
+
+      final links = [
+        ('Şok', ref.sokPath, ref.sokProduct, ref.sokPrice),
+        (
+          'Happy Center',
+          ref.happyCenterPath,
+          ref.happyCenterProduct,
+          ref.happyCenterPrice,
+        ),
+      ];
+
+      for (final (market, path, product, price) in links) {
+        if (path == null) {
+          expect(product, isNull, reason: '${type.id}: $market yolu yok');
+          expect(price, isNull, reason: '${type.id}: $market yolu yok');
+          continue;
+        }
+        expect(product, isNotNull,
+            reason: '${type.id}: $market ürün adı eksik, gramaj denetlenemez');
+        expect(price, isNotNull, reason: '${type.id}: $market fiyatı eksik');
+        expect(price!, greaterThan(0), reason: '${type.id} · $market');
+        if (expected.isEmpty) continue;
+        expect(
+          normalizedQuantities(product!),
+          containsAll(expected),
+          reason: '${type.id}: $market ürünü "$product" ${type.name} '
+              'birimiyle aynı gramajda değil',
+        );
+      }
+    }
+  });
+
+  test('referans fiyat kaynak marketin gösterdiği ürünün fiyatıdır', () {
+    for (final type in productTypes) {
+      final ref = marketPriceSnapshot[type.id]!;
+      if (ref.source == 'sokmarket.com.tr') {
+        expect(ref.sokProduct, ref.sampleProduct, reason: type.id);
+        expect(ref.sokPrice, ref.unitPrice, reason: type.id);
+      } else {
+        expect(ref.happyCenterProduct, ref.sampleProduct, reason: type.id);
+        expect(ref.happyCenterPrice, ref.unitPrice, reason: type.id);
+      }
+    }
+  });
+
+  test('markasız satırda fiyat ile link aynı ürünü gösterir', () async {
+    final type = productTypes.firstWhere((t) =>
+        marketPriceSnapshot[t.id]!.sokPath != null &&
+        marketPriceSnapshot[t.id]!.happyCenterPath != null);
+    final ref = marketPriceSnapshot[type.id]!;
+
+    final result = await MockPriceService().compareBasket([
+      ListItem(product: type.withBrand(null)),
+    ]);
+
+    final sok = result.baskets
+        .firstWhere((b) => b.market.id == MarketId.sok)
+        .lines
+        .single;
+    expect(sok.unitPrice, ref.sokPrice);
+    expect(sok.sourceUrl, ref.sokUrl);
+    expect(sok.verified, isTrue);
+
+    final happy = result.baskets
+        .firstWhere((b) => b.market.id == MarketId.happyCenter)
+        .lines
+        .single;
+    expect(happy.unitPrice, ref.happyCenterPrice);
+    expect(happy.sourceUrl, ref.happyCenterUrl);
+    expect(happy.verified, isTrue);
+  });
+
   test('referans kaynağı ile yolu tutarlı', () {
     for (final ref in marketPriceSnapshot.values) {
       expect(
