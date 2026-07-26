@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
-import 'screens/home_screen.dart';
+import 'screens/main_shell.dart';
 import 'services/price_service.dart';
 import 'state/basket_controller.dart';
 import 'theme/app_theme.dart';
@@ -34,7 +34,7 @@ class SepetApp extends StatelessWidget {
         title: 'Sepet',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light(),
-        home: const HomeScreen(),
+        home: const MainShell(),
       ),
     );
   }

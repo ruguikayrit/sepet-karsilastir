@@ -1,224 +1,238 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../models/market.dart';
 import '../state/basket_controller.dart';
 import '../theme/app_theme.dart';
-import '../widgets/quantity_stepper.dart';
-import 'add_product_sheet.dart';
-import 'compare_screen.dart';
+import '../widgets/market_badge.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, required this.onOpenTab});
+
+  final ValueChanged<int> onOpenTab;
 
   @override
   Widget build(BuildContext context) {
     final basket = context.watch<BasketController>();
+    final result = basket.lastResult;
 
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-              child: Row(
+            Row(
+              children: [
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: AppColors.green,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(
+                    Icons.shopping_basket_rounded,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Sepet',
+                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
+                      ),
+                      const Text(
+                        'En karlı marketi hızlıca bul',
+                        style: TextStyle(
+                          color: AppColors.inkMuted,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [AppColors.green, AppColors.greenDark],
+                ),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: AppColors.green,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.shopping_basket_rounded,
+                  const Text(
+                    'Alışveriş listeni oluştur',
+                    style: TextStyle(
                       color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Sepet',
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineSmall
-                              ?.copyWith(fontWeight: FontWeight.w800),
-                        ),
-                        const Text(
-                          'Listeyi ekle · marketleri karşılaştır',
-                          style: TextStyle(
-                            color: AppColors.inkMuted,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+                  const SizedBox(height: 8),
+                  Text(
+                    'Migros, A101, Şok, Carrefour ve File fiyatlarını tek bakışta karşılaştır.',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.92),
+                      height: 1.4,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  if (!basket.isEmpty)
-                    TextButton(
-                      onPressed: basket.clear,
-                      child: const Text('Temizle'),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    onPressed: () => onOpenTab(1),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: AppColors.greenDark,
+                      minimumSize: const Size(160, 46),
                     ),
+                    child: Text(
+                      basket.isEmpty ? 'Sepete git' : 'Sepeti düzenle',
+                    ),
+                  ),
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppColors.orangeSoft,
-                  borderRadius: BorderRadius.circular(16),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Expanded(
+                  child: _StatCard(
+                    label: 'Sepette',
+                    value: '${basket.totalQuantity}',
+                    hint: 'ürün',
+                    onTap: () => onOpenTab(1),
+                  ),
                 ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.bolt_rounded, color: AppColors.orange),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        basket.isEmpty
-                            ? 'Ürün ekle, 5 marketten en düşük toplamı anında gör.'
-                            : '${basket.totalQuantity} ürün hazır · karşılaştırınca en karlı market öne çıkar.',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.ink,
-                          height: 1.3,
-                        ),
-                      ),
-                    ),
-                  ],
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _StatCard(
+                    label: 'Son sonuç',
+                    value: result?.cheapestComplete?.market.shortName ?? '—',
+                    hint: result == null ? 'henüz yok' : 'en karlı',
+                    onTap: () => onOpenTab(2),
+                  ),
                 ),
-              ),
+              ],
             ),
-            Expanded(
-              child: basket.isEmpty
-                  ? const _EmptyState()
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
-                      itemCount: basket.items.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 8),
-                      itemBuilder: (context, index) {
-                        final item = basket.items[index];
-                        return Container(
-                          padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 44,
-                                height: 44,
-                                decoration: BoxDecoration(
-                                  color: AppColors.greenSoft,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Icon(
-                                  Icons.inventory_2_outlined,
-                                  color: AppColors.greenDark,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      item.product.displayName,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 15,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      item.product.category,
-                                      style: const TextStyle(
-                                        color: AppColors.inkMuted,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              QuantityStepper(
-                                value: item.quantity,
-                                onChanged: (q) => basket.setQuantity(
-                                  item.product.id,
-                                  q,
-                                ),
-                              ),
-                              IconButton(
-                                onPressed: () =>
-                                    basket.removeProduct(item.product.id),
-                                icon: const Icon(
-                                  Icons.close_rounded,
-                                  color: AppColors.inkMuted,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+            const SizedBox(height: 22),
+            Text(
+              'Marketler',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: Market.all
+                  .map((m) => MarketBadge(market: m))
+                  .toList(),
+            ),
+            const SizedBox(height: 22),
+            Text(
+              'Hızlı işlemler',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
+            const SizedBox(height: 10),
+            _QuickTile(
+              icon: Icons.add_shopping_cart_rounded,
+              title: 'Ürün ekle',
+              subtitle: 'Sepetine ürün ekleyerek başla',
+              onTap: () => onOpenTab(1),
+            ),
+            const SizedBox(height: 8),
+            _QuickTile(
+              icon: Icons.compare_arrows_rounded,
+              title: 'Karşılaştır',
+              subtitle: 'En düşük toplamı gör',
+              onTap: () => onOpenTab(2),
+            ),
+            const SizedBox(height: 8),
+            _QuickTile(
+              icon: Icons.settings_rounded,
+              title: 'Ayarlar',
+              subtitle: 'Bölge ve fiyat kaynağı',
+              onTap: () => onOpenTab(3),
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => showAddProductSheet(context),
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Ürün ekle'),
-      ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-          child: FilledButton(
-            onPressed: basket.isEmpty || basket.comparing
-                ? null
-                : () async {
-                    final nav = Navigator.of(context);
-                    final messenger = ScaffoldMessenger.of(context);
-                    final controller = context.read<BasketController>();
-                    final ok = await controller.compare();
-                    if (!context.mounted) return;
-                    if (ok == null) {
-                      messenger.showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            controller.error ?? 'Fiyatlar alınamadı.',
-                          ),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                      return;
-                    }
-                    await nav.push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => const CompareScreen(),
-                      ),
-                    );
-                  },
-            child: basket.comparing
-                ? const SizedBox(
-                    height: 22,
-                    width: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.4,
-                      color: Colors.white,
-                    ),
-                  )
-                : Text(
-                    basket.isEmpty
-                        ? 'Önce ürün ekleyin'
-                        : 'Marketleri karşılaştır',
-                  ),
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  const _StatCard({
+    required this.label,
+    required this.value,
+    required this.hint,
+    required this.onTap,
+  });
+
+  final String label;
+  final String value;
+  final String hint;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  color: AppColors.inkMuted,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 26,
+                  height: 1,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                hint,
+                style: const TextStyle(
+                  color: AppColors.inkMuted,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -226,48 +240,67 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
+class _QuickTile extends StatelessWidget {
+  const _QuickTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 88,
-              height: 88,
-              decoration: BoxDecoration(
-                color: AppColors.greenSoft,
-                borderRadius: BorderRadius.circular(28),
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: AppColors.greenSoft,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: AppColors.greenDark),
               ),
-              child: const Icon(
-                Icons.playlist_add_rounded,
-                size: 44,
-                color: AppColors.green,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        color: AppColors.inkMuted,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 18),
-            Text(
-              'Listen boş',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Alışveriş listeni oluştur.\nMigros, A101, Şok, Carrefour ve File\nfiyatlarını tek bakışta karşılaştır.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppColors.inkMuted,
-                height: 1.45,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
+              const Icon(Icons.chevron_right_rounded, color: AppColors.inkMuted),
+            ],
+          ),
         ),
       ),
     );

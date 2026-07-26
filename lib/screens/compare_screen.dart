@@ -32,8 +32,56 @@ class CompareScreen extends StatelessWidget {
       body: basket.comparing && result == null
           ? const _LoadingView()
           : result == null
-              ? const Center(child: Text('Henüz sonuç yok.'))
+              ? const _EmptyCompare()
               : _ResultBody(result: result, refreshing: basket.comparing),
+    );
+  }
+}
+
+class _EmptyCompare extends StatelessWidget {
+  const _EmptyCompare();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 88,
+              height: 88,
+              decoration: BoxDecoration(
+                color: AppColors.greenSoft,
+                borderRadius: BorderRadius.circular(28),
+              ),
+              child: const Icon(
+                Icons.compare_arrows_rounded,
+                size: 44,
+                color: AppColors.green,
+              ),
+            ),
+            const SizedBox(height: 18),
+            Text(
+              'Henüz karşılaştırma yok',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Sepete ürün ekleyip “Marketleri karşılaştır”\nbutonuna basarak sonucu burada gör.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppColors.inkMuted,
+                height: 1.45,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
