@@ -87,11 +87,21 @@ Tek market düşse bile diğerleri gösterilir. Aynı sepet teklifleri ~45 sn
 ## Özellikler
 
 - 13 market, segment bazlı karşılaştırma
+- 80+ ürün tipi (süt, temel gıda, meyve-sebze, et, temizlik, bebek vb.)
+- Demo fiyatlar resmi market sitelerinden derlenir (Şok Market, Happy Center)
 - Marka seçimli sepet (aynı ürün tipi + farklı marka = ayrı satır)
 - Sepet kalıcılığı (uygulama kapanınca kaybolmaz)
 - Kayıtlı listeler ve karşılaştırma geçmişi
 - Açık / koyu / sistem teması
 - Demo veya canlı fiyat kaynağı
+
+## Demo fiyat kaynağı
+
+`lib/data/market_price_snapshot.dart` içindeki birim fiyatlar
+[Şok Market](https://www.sokmarket.com.tr) ve
+[Happy Center](https://happycenter.com.tr) vitrin/API verilerinden
+alınmıştır (çekim: 2026-07-26). Mock motor diğer marketleri bu tabana
+göre ölçekler; canlı modda backend teklifleri kullanılır.
 
 ## Test
 
