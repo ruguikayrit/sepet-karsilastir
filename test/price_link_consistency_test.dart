@@ -3,6 +3,7 @@ import 'package:sepet_karsilastir/data/brands.dart';
 import 'package:sepet_karsilastir/data/mock_catalog.dart';
 import 'package:sepet_karsilastir/data/price_book.dart';
 import 'package:sepet_karsilastir/models/list_item.dart';
+import 'package:sepet_karsilastir/models/market.dart';
 import 'package:sepet_karsilastir/models/product.dart';
 import 'package:sepet_karsilastir/models/product_link.dart';
 import 'package:sepet_karsilastir/services/mapping/product_source_url.dart';
@@ -41,10 +42,7 @@ void main() {
     final result = await const PriceBookService().compareBasket([
       for (final product in products) ListItem(product: product),
     ]);
-    expect(
-      result.baskets.map((b) => b.market.id),
-      PriceBookService.compared.map((m) => m.id),
-    );
+    expect(result.baskets.map((b) => b.market.id), Market.all.map((m) => m.id));
 
     var priced = 0;
     for (final basket in result.baskets) {

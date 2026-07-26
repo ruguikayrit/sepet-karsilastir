@@ -79,8 +79,8 @@ class BasketScreen extends StatelessWidget {
                     Expanded(
                       child: Text(
                         basket.isEmpty
-                            ? 'Ürün ekle, ${Market.priced.length} marketin yayınladığı '
-                                'fiyatlarla en düşük toplamı gör.'
+                            ? 'Ürün ekle, ${Market.all.length} marketin ürün '
+                                'sayfasındaki fiyatlarla en düşük toplamı gör.'
                             : 'Hazır olduğunda Karşılaştır sekmesine geç veya sepetini kaydet.',
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
@@ -174,7 +174,7 @@ class BasketScreen extends StatelessWidget {
                                             ) ==
                                             0)
                                           Text(
-                                            'Fiyatı yayınlayan market yok',
+                                            'Hiçbir markette fiyatı bulunamadı',
                                             style: TextStyle(
                                               color: palette.danger,
                                               fontSize: 12,
@@ -313,8 +313,8 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Alışveriş listeni oluştur.\nŞok, Migros, Hakmar Express, Happy Center ve '
-              'Macrocenter\nürün sayfalarındaki fiyatları karşılaştır.',
+              'Alışveriş listeni oluştur.\nMarketlerin kendi ürün '
+              'sayfalarındaki fiyatları\nyan yana gör.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: palette.inkMuted,

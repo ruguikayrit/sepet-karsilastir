@@ -72,6 +72,13 @@ class MarketBasketResult {
 
   bool get fetchFailed => status.isFailed;
 
+  /// Bu markette listeden tek bir ürün bile bulunamadı.
+  ///
+  /// Toplamı sıfır çıkar ama bu "bedava" demek değil; ekranda tutar yerine
+  /// "Ürün bulunamadı" yazar ve market sıralamanın sonuna düşer.
+  bool get foundNothing =>
+      status.isOk && lines.isNotEmpty && availableCount == 0;
+
   /// Fiyat geldi ama liste tamamlanmıyor: toplam kısmi, market "en ucuz" sayılamaz.
   bool get isPartial => status.isOk && missingCount > 0;
 
@@ -95,12 +102,21 @@ class ComparisonResult {
   final PriceSource source;
 
   /// Önce listeyi tamamlayanlar (en düşük toplam), sonra eksiği az olanlar,
-  /// en sonda fiyat alınamayan marketler.
+  /// sonra hiçbir ürünü bulunamayanlar, en sonda yanıt vermeyen marketler.
+  ///
+  /// Ürünü bulunamayan market en sona düşer: toplamı sıfır olduğu için sayısal
+  /// sıralamada başa geçer ve "en ucuz" gibi okunurdu.
   List<MarketBasketResult> get ranked {
     final sorted = [...baskets];
     sorted.sort((a, b) {
       if (a.fetchFailed != b.fetchFailed) {
         return a.fetchFailed ? 1 : -1;
+      }
+      if (a.foundNothing != b.foundNothing) {
+        return a.foundNothing ? 1 : -1;
+      }
+      if (a.foundNothing && b.foundNothing) {
+        return a.market.name.compareTo(b.market.name);
       }
       if (a.isComplete != b.isComplete) {
         return a.isComplete ? -1 : 1;
@@ -124,7 +140,8 @@ class ComparisonResult {
 
   /// Tam sepet yoksa listeye en çok yaklaşan market.
   MarketBasketResult? get closestToComplete {
-    final candidates = baskets.where((b) => !b.fetchFailed).toList();
+    final candidates =
+        baskets.where((b) => !b.fetchFailed && !b.foundNothing).toList();
     if (candidates.isEmpty) return null;
     candidates.sort((a, b) {
       if (a.missingCount != b.missingCount) {

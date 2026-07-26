@@ -79,8 +79,8 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 _InfoRow(
                   label: 'Market',
-                  value: '${Market.priced.length}/${Market.all.length} zincir '
-                      'fiyat yayınlıyor',
+                  value: '${Market.all.length} zincir karşılaştırılıyor · '
+                      '${priceBookMarkets.length} zincirde fiyat okunuyor',
                 ),
               ],
             ),
@@ -109,7 +109,9 @@ class SettingsScreen extends StatelessWidget {
                         'sonuçlar gösterilir.'
                     : 'Fiyatlar her gün marketlerin kendi ürün sayfalarından '
                         'yeniden okunuyor. Bir satıra dokunduğunda o fiyatın '
-                        'okunduğu sayfa açılır; tutarı orada doğrulayabilirsin.',
+                        'okunduğu sayfa açılır; tutarı orada doğrulayabilirsin. '
+                        'Fiyatı okunamayan satırda tahmin üretmiyoruz, '
+                        '“ürün bulunamadı” yazıyoruz.',
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   height: 1.4,

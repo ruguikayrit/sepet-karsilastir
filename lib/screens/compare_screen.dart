@@ -127,7 +127,7 @@ class _LoadingView extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            '${PriceBookService.compared.length} market taranıyor',
+            '${Market.all.length} market taranıyor',
             style: TextStyle(color: palette.inkMuted),
           ),
         ],
@@ -187,6 +187,19 @@ class _ResultBody extends StatelessWidget {
                 ),
               ),
             ],
+            if (_staleDays(result) != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Fiyatlar ${_staleDays(result)} gündür yenilenmedi. '
+                'Satıra dokunup market sayfasındaki güncel tutarı gör.',
+                style: TextStyle(
+                  color: palette.danger,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  height: 1.35,
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
             ...ranked.asMap().entries.map((entry) {
               final index = entry.key;
@@ -216,15 +229,16 @@ class _ResultBody extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               'Her tutar, satıra dokununca açılan ürün sayfasındaki fiyattır; '
-              'tıklayıp doğrulayabilirsin. Fiyatı yayınlanmayan satır boş '
-              'kalır ve toplama eklenmez.',
+              'tıklayıp doğrulayabilirsin. Fiyatı o sayfadan okunamayan satırda '
+              '“Ürün bulunamadı” yazar ve toplama eklenmez — tahmini tutar '
+              'göstermiyoruz.',
               style: TextStyle(color: palette.inkMuted, fontSize: 13),
             ),
             const SizedBox(height: 10),
             ...ranked.map((b) => _MarketBreakdown(basket: b)),
-            if (_absentMarkets.isNotEmpty) ...[
+            if (PriceBookService.withoutPrices.isNotEmpty) ...[
               const SizedBox(height: 8),
-              const _UnpricedMarketsCard(),
+              const _NoPriceReasonsCard(),
             ],
           ],
         ),
@@ -239,6 +253,18 @@ class _ResultBody extends StatelessWidget {
     );
   }
 
+  /// Fiyatlar kaç gündür yenilenmedi? Günceller için `null`.
+  ///
+  /// Günlük çekim aksarsa kullanıcı bunu bilmeli: eski bir fiyat, yanlış bir
+  /// fiyattan daha az zararlı değil.
+  static int? _staleDays(ComparisonResult result) {
+    final fetchedAt = result.pricesFetchedAt;
+    final parsed = fetchedAt == null ? null : DateTime.tryParse(fetchedAt);
+    if (parsed == null) return null;
+    final days = DateTime.now().difference(parsed).inDays;
+    return days > 2 ? days : null;
+  }
+
   static String _priceDate(ComparisonResult result) {
     final fetchedAt = result.pricesFetchedAt;
     final parsed = fetchedAt == null ? null : DateTime.tryParse(fetchedAt);
@@ -247,23 +273,18 @@ class _ResultBody extends StatelessWidget {
   }
 }
 
-/// Karşılaştırmaya girmeyen marketler ve sebepleri.
+/// Hiç fiyat gösterilemeyen marketler ve sebepleri.
 ///
-/// İki grup var: kendi sitesinde hiç ürün fiyatı yayınlamayanlar ve son
-/// çekimde sitesi yanıt vermeyenler. İkisinde de uygulama tahmin üretmez.
-Map<String, String> get _absentMarkets => {
-      for (final market in Market.unpriced) market.name: market.noPriceReason!,
-      for (final market in PriceBookService.missing)
-        market.name: 'son çekimde sitesinden fiyat alınamadı',
-    };
-
-class _UnpricedMarketsCard extends StatelessWidget {
-  const _UnpricedMarketsCard();
+/// Market listede kalır ama tutar yerine "Ürün bulunamadı" yazar. Sebebi
+/// burada yazmak şart: aksi halde satır, ürünün o marketin rafında olmadığı
+/// gibi okunur.
+class _NoPriceReasonsCard extends StatelessWidget {
+  const _NoPriceReasonsCard();
 
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    final markets = _absentMarkets;
+    final markets = PriceBookService.withoutPrices;
 
     return Container(
       width: double.infinity,
@@ -277,13 +298,14 @@ class _UnpricedMarketsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Karşılaştırmaya girmeyen ${markets.length} market',
+            'Fiyat gösterilemeyen ${markets.length} market',
             style: const TextStyle(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 6),
           Text(
-            'Fiyatı kendi sitesinden okunamayan market için tutar '
-            'göstermiyoruz; tahmin yerine boş bırakıyoruz.',
+            'Bu marketler listede kalır ama tutar yazmaz: fiyatı kendi ürün '
+            'sayfasından okuyamadığımız yerde tahmin üretmiyoruz. Ürünün o '
+            'marketin rafında olmadığı anlamına gelmez.',
             style: TextStyle(
               color: palette.inkMuted,
               fontSize: 13,
@@ -295,7 +317,7 @@ class _UnpricedMarketsCard extends StatelessWidget {
             (market) => Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: Text(
-                '${market.key} — ${market.value}',
+                '${market.key.name} — ${market.value}',
                 style: TextStyle(
                   color: palette.ink,
                   fontSize: 13,
@@ -448,7 +470,7 @@ class _NoCompleteBasketCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Fiyatı eksik olan market “en ucuz” sayılmaz. Aşağıdaki toplamlar '
+            'Ürünü bulunamayan market “en ucuz” sayılmaz. Aşağıdaki toplamlar '
             'yalnızca o marketin sayfasından okunan ürünleri kapsar.',
             style: TextStyle(
               color: palette.ink,
@@ -469,7 +491,7 @@ class _NoCompleteBasketCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Eksik: ${_names(closest.missingProducts)}',
+              'Bulunamadı: ${_names(closest.missingProducts)}',
               style: TextStyle(
                 color: palette.inkMuted,
                 fontWeight: FontWeight.w600,
@@ -516,6 +538,25 @@ class _MarketRankTile extends StatelessWidget {
   final bool isBest;
   final double? delta;
 
+  /// Marketin durumu tek satırda: tamam, eksik, ürün bulunamadı ya da yanıt yok.
+  static String _subtitle(MarketBasketResult basket) {
+    if (basket.fetchFailed) {
+      return basket.errorMessage ?? 'Market yanıt vermedi';
+    }
+    if (basket.foundNothing) {
+      final reason = PriceBookService.noPriceReasonFor(basket.market.id);
+      return reason == null
+          ? 'Ürün bulunamadı'
+          : 'Ürün bulunamadı — $reason';
+    }
+    if (basket.isComplete) {
+      return '${basket.market.segment.label} · '
+          '${basket.availableCount} ürün tamam';
+    }
+    return '${basket.market.segment.label} · ürün bulunamadı: '
+        '${_NoCompleteBasketCard._names(basket.missingProducts)}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
@@ -556,12 +597,7 @@ class _MarketRankTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  basket.fetchFailed
-                      ? (basket.errorMessage ?? 'Fiyat alınamadı')
-                      : basket.isComplete
-                          ? '${basket.market.segment.label} · ${basket.availableCount} ürün tamam'
-                          : '${basket.market.segment.label} · fiyatı yok: '
-                              '${_NoCompleteBasketCard._names(basket.missingProducts)}',
+                  _subtitle(basket),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -578,8 +614,12 @@ class _MarketRankTile extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
+              // Ürünü bulunamayan markette tutar yazmıyoruz: sıfır lira,
+              // "bu market bedava" diye okunabilecek bir yanlış.
               Text(
-                basket.fetchFailed ? '—' : formatTry(basket.total),
+                basket.fetchFailed || basket.foundNothing
+                    ? '—'
+                    : formatTry(basket.total),
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 17,
@@ -590,7 +630,9 @@ class _MarketRankTile extends StatelessWidget {
                           : palette.ink,
                 ),
               ),
-              if (basket.isPartial)
+              if (basket.foundNothing)
+                const SizedBox.shrink()
+              else if (basket.isPartial)
                 Text(
                   'kısmi toplam',
                   style: TextStyle(
@@ -651,12 +693,21 @@ class _MarketBreakdown extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    formatTry(basket.total),
+                    basket.foundNothing ? '—' : formatTry(basket.total),
                     style: const TextStyle(fontWeight: FontWeight.w800),
                   ),
-                  if (basket.isPartial)
+                  if (basket.foundNothing)
                     Text(
-                      '${basket.missingCount} ürünün fiyatı yok',
+                      'Ürün bulunamadı',
+                      style: TextStyle(
+                        color: palette.danger,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    )
+                  else if (basket.isPartial)
+                    Text(
+                      '${basket.missingCount} ürün bulunamadı',
                       style: TextStyle(
                         color: palette.danger,
                         fontSize: 11,
@@ -765,7 +816,7 @@ class _ProductPriceRow extends StatelessWidget {
                 const SizedBox(width: 6),
               ],
               Text(
-                line.available ? formatTry(line.lineTotal) : 'Fiyat yok',
+                line.available ? formatTry(line.lineTotal) : 'Ürün bulunamadı',
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   color: line.available ? palette.ink : palette.danger,

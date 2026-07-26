@@ -14,11 +14,11 @@ import 'price_service.dart';
 /// Tek kural: bir satır ancak o marketin kendi ürün sayfasından okunmuş fiyatı
 /// varsa fiyatlanır ([priceBook]). Fiyat, satıra dokununca açılan sayfanın
 /// fiyatıdır; kullanıcı tıklayıp doğrulayabilir. Fiyat yoksa tahmin
-/// üretilmez — satır o markette fiyatsız kalır ve toplama girmez.
+/// üretilmez — satırda "ürün bulunamadı" yazar ve toplama girmez.
 ///
-/// Karşılaştırma yalnızca defterde fiyatı olan marketleri kapsar: kendi
-/// sitesinde ürün fiyatı yayınlamayan zincir (BİM gibi) ve son çekimde yanıt
-/// vermeyen market hiç görünmez.
+/// Karşılaştırma bütün marketleri kapsar. Fiyatı okunamayan market listeden
+/// düşmez, sebebiyle birlikte listede kalır: kullanıcı hangi marketin
+/// bakıldığını ve neden tutar yazmadığını görsün.
 class PriceBookService implements PriceService {
   const PriceBookService();
 
@@ -28,24 +28,33 @@ class PriceBookService implements PriceService {
     return searchProductTypesLocal(query);
   }
 
-  /// Bugünün defterinde fiyatı olan marketler — karşılaştırma bunları kapsar.
-  static List<Market> get compared =>
-      Market.priced.where((m) => priceBookMarkets.contains(m.id)).toList();
-
-  /// Fiyat yayınlıyor ama son çekimde fiyatı alınamayan marketler.
+  /// Bu markette bir ürünün fiyatı neden bulunamıyor? Bulunabiliyorsa `null`.
   ///
-  /// Sitesi o gün yanıt vermediyse market karşılaştırmaya girmez: her satırı
-  /// "fiyat yok" olan bir sütun göstermek, marketi ucuz/pahalı diye yanlış
-  /// okumaya davet eder.
-  static List<Market> get missing =>
-      Market.priced.where((m) => !priceBookMarkets.contains(m.id)).toList();
+  /// İki sebep var: market fiyatını kendi sitesinde hiç yayınlamıyor ya da son
+  /// çekimde sitesinden fiyat okunamadı. İkisi de kullanıcıya yazılır —
+  /// "ürün bulunamadı" tek başına, marketin rafında o ürün yok gibi okunabilir.
+  static String? noPriceReasonFor(MarketId marketId) {
+    final market = Market.byId(marketId);
+    if (market.noPriceReason != null) return market.noPriceReason;
+    if (!priceBookMarkets.contains(marketId)) {
+      return 'son çekimde sitesinden fiyat okunamadı';
+    }
+    return null;
+  }
+
+  /// Hiç fiyat gösterilemeyen marketler ve sebepleri.
+  static Map<Market, String> get withoutPrices => {
+        for (final market in Market.all)
+          if (noPriceReasonFor(market.id) != null)
+            market: noPriceReasonFor(market.id)!,
+      };
 
   @override
   Future<ComparisonResult> compareBasket(List<ListItem> items) async {
     await Future<void>.delayed(const Duration(milliseconds: 250));
     final now = DateTime.now();
 
-    final baskets = compared.map((market) {
+    final baskets = Market.all.map((market) {
       return MarketBasketResult(
         market: market,
         lines: items

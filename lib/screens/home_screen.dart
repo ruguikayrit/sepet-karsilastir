@@ -80,8 +80,8 @@ class HomeScreen extends StatelessWidget {
                           title: 'Sepetin hazır — karşılaştır',
                           body:
                               '${basket.totalQuantity} ürün · ${basket.uniqueBrandCount} marka. '
-                              '${Market.priced.length} marketin yayınladığı fiyatlarla '
-                              'en düşük toplamı şimdi gör.',
+                              'Marketlerin kendi ürün sayfalarından okunan '
+                              'fiyatlarla en düşük toplamı şimdi gör.',
                           cta: 'Sonucu gör',
                           onTap: () => onOpenTab(2),
                         )
@@ -90,8 +90,8 @@ class HomeScreen extends StatelessWidget {
                           title: 'Markanı seç, sepetini kur',
                           body:
                               'Her ürün için bir veya birden fazla marka seç. '
-                              'Sonra fiyatını kendi sitesinde yayınlayan '
-                              '${Market.priced.length} marketi tek ekranda kıyasla.',
+                              'Sonra ${Market.all.length} marketi tek ekranda '
+                              'kıyasla.',
                           cta: 'Sepete ürün ekle',
                           onTap: () => onOpenTab(1),
                         ),
@@ -237,18 +237,25 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             Text(
-              'Karşılaştırılan ${Market.priced.length} market',
+              'Karşılaştırılan ${Market.all.length} market',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
             ),
+            const SizedBox(height: 4),
+            Text(
+              'Fiyat, yalnızca marketin kendi ürün sayfasından okunabildiğinde '
+              'yazar. Okunamayan markette satır “ürün bulunamadı” kalır; '
+              'tahmini tutar göstermiyoruz.',
+              style: TextStyle(
+                color: palette.inkMuted,
+                fontSize: 13,
+                height: 1.35,
+              ),
+            ),
             const SizedBox(height: 10),
             ...MarketSegment.values.map((segment) {
-              // Yalnızca fiyatını yayınlayanlar: rozetler karşılaştırmaya
-              // giren marketleri göstermeli.
-              final markets = Market.bySegment(segment)
-                  .where((m) => m.publishesPrices)
-                  .toList();
+              final markets = Market.bySegment(segment);
               if (markets.isEmpty) return const SizedBox.shrink();
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12),

@@ -29,24 +29,31 @@ void main() {
     expect(dairy, isNot(contains('Ariel')));
   });
 
-  test('karşılaştırma yalnızca fiyat yayınlayan marketleri kapsar', () async {
+  test('karşılaştırma bütün marketleri listeler, fiyatı olmayan da', () async {
     final result = await const PriceBookService().compareBasket([
       ListItem(product: milkType.withBrand('İçim')),
       ListItem(product: milkType.withBrand('Sütaş')),
     ]);
 
-    expect(
-      result.baskets.map((b) => b.market.id),
-      PriceBookService.compared.map((m) => m.id),
-    );
-    // Fiyatını kendi sitesinde yayınlamayan zincir hiç görünmez: uygulama o
-    // market için tutar uyduramaz.
+    expect(result.baskets.map((b) => b.market.id), Market.all.map((m) => m.id));
+
+    // Fiyatını kendi sitesinde yayınlamayan zincir listede kalır ama tutar
+    // göstermez: kullanıcı marketin bakıldığını görür, uydurma fiyat görmez.
     for (final market in Market.unpriced) {
+      final basket =
+          result.baskets.firstWhere((b) => b.market.id == market.id);
+      expect(basket.foundNothing, isTrue, reason: market.name);
+      expect(basket.availableCount, 0, reason: market.name);
+      expect(basket.total, 0, reason: market.name);
       expect(
-        result.baskets.map((b) => b.market.id),
-        isNot(contains(market.id)),
-        reason: '${market.name}: ${market.noPriceReason}',
+        PriceBookService.noPriceReasonFor(market.id),
+        market.noPriceReason,
+        reason: market.name,
       );
     }
+
+    // Sıfır toplamlı market sıralamada en ucuz gibi görünmez.
+    expect(result.ranked.last.foundNothing, isTrue);
+    expect(result.ranked.first.foundNothing, isFalse);
   });
 }

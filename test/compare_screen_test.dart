@@ -31,10 +31,13 @@ class _Found {
 /// okunduğu ürün sayfasıdır, fiyat yoksa satır fiyatsız kalır ve bağlantı
 /// yalnızca marketin aramasına gider.
 class _ScriptedPriceService implements PriceService {
-  _ScriptedPriceService(this.found);
+  _ScriptedPriceService(this.found, {this.pricesFetchedAt = '2026-07-26'});
 
   /// marketId -> (ürün kimliği -> markette bulunan ürün; `null` ise fiyat yok)
   final Map<MarketId, Map<String, _Found?>> found;
+
+  /// Fiyatların çekildiği gün (ISO 8601).
+  final String pricesFetchedAt;
 
   @override
   Future<List<ProductType>> searchProductTypes(String query) async =>
@@ -59,7 +62,7 @@ class _ScriptedPriceService implements PriceService {
     return model.ComparisonResult(
       baskets: baskets,
       comparedAt: DateTime(2026, 7, 26),
-      pricesFetchedAt: '2026-07-26',
+      pricesFetchedAt: pricesFetchedAt,
     );
   }
 
@@ -158,8 +161,8 @@ void main() {
     // Fiyatın hangi gün marketin sayfasından okunduğu yazar.
     expect(find.textContaining('Fiyatlar 26 Tem 2026'), findsOneWidget);
 
-    await _scrollTo(tester, find.text('1 ürünün fiyatı yok'));
-    expect(find.text('1 ürünün fiyatı yok'), findsOneWidget);
+    await _scrollTo(tester, find.text('1 ürün bulunamadı'));
+    expect(find.text('1 ürün bulunamadı'), findsOneWidget);
   });
 
   testWidgets('hiçbir market listeyi tamamlamıyorsa uyarı gösterilir',
@@ -218,7 +221,7 @@ void main() {
     );
   });
 
-  testWidgets('fiyatı olmayan satırda tutar yerine “Fiyat yok” yazar',
+  testWidgets('fiyatı olmayan satırda tutar yerine “Ürün bulunamadı” yazar',
       (tester) async {
     final sutas = cheeseOf('Sütaş');
 
@@ -236,12 +239,61 @@ void main() {
     await tester.tap(find.byType(ExpansionTile).first);
     await tester.pumpAndSettle();
 
-    expect(find.text('Fiyat yok'), findsOneWidget);
+    expect(find.text('Ürün bulunamadı'), findsWidgets);
     // Tahmini tutar üretilmez: ne satırda ne toplamda sayı çıkar.
     expect(find.textContaining('~'), findsNothing);
     // Bağlantı ürün sayfası değil, marketin kendi araması.
     expect(
       find.byTooltip('Site içi arama · www.sokmarket.com.tr'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('hiçbir ürünü bulunamayan market tutar yerine sebebini yazar',
+      (tester) async {
+    final sutas = cheeseOf('Sütaş');
+
+    final controller = BasketController(
+      _ScriptedPriceService({
+        MarketId.sok: {sutas.id: sokCheese},
+        // Fiyatını kendi sitesinde yayınlamayan zincir: listede kalır.
+        MarketId.bim: {sutas.id: null},
+      }),
+    );
+    controller.addProduct(sutas);
+    await controller.compare();
+
+    await _pumpCompare(tester, controller);
+
+    final bim = Market.byId(MarketId.bim);
+    final subtitle = find.text('Ürün bulunamadı — ${bim.noPriceReason}');
+    await _scrollTo(tester, subtitle);
+    expect(subtitle, findsOneWidget);
+    // Sıfır lira yazılmaz: "bedava" diye okunacak bir tutar göstermiyoruz.
+    expect(find.textContaining('0,00'), findsNothing);
+    expect(find.text('—'), findsWidgets);
+  });
+
+  testWidgets('fiyatlar eskimişse uyarı çıkar', (tester) async {
+    final sutas = cheeseOf('Sütaş');
+    final old = DateTime.now().subtract(const Duration(days: 5));
+
+    final controller = BasketController(
+      _ScriptedPriceService(
+        {
+          MarketId.sok: {sutas.id: sokCheese},
+        },
+        pricesFetchedAt: '${old.year}-${old.month.toString().padLeft(2, '0')}'
+            '-${old.day.toString().padLeft(2, '0')}',
+      ),
+    );
+    controller.addProduct(sutas);
+    await controller.compare();
+
+    await _pumpCompare(tester, controller);
+
+    expect(
+      find.textContaining('Fiyatlar 5 gündür yenilenmedi'),
       findsOneWidget,
     );
   });
@@ -265,10 +317,11 @@ void main() {
     await _scrollTo(tester, card);
     expect(card, findsOneWidget);
     // Kart iki grubu birlikte anlatır: hiç fiyat yayınlamayanlar ve son
-    // çekimde sitesinden fiyat alınamayanlar.
-    final absent = Market.unpriced.length + PriceBookService.missing.length;
+    // çekimde sitesinden fiyat okunamayanlar.
     expect(
-      find.text('Karşılaştırmaya girmeyen $absent market'),
+      find.text(
+        'Fiyat gösterilemeyen ${PriceBookService.withoutPrices.length} market',
+      ),
       findsOneWidget,
     );
   });

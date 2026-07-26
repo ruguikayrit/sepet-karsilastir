@@ -122,6 +122,24 @@ void main() {
     expect(result.ranked.first.market.id, MarketId.hakmar);
   });
 
+  test('hiçbir ürünü bulunamayan market sıfır toplamla öne geçmez', () {
+    final result = resultOf([
+      basket(MarketId.sok, prices: {milk: 45, cheese: 300}),
+      // Fiyatı okunamayan market: toplamı sıfır ama "en ucuz" değil.
+      basket(MarketId.bim, prices: {milk: null, cheese: null}),
+      basket(MarketId.happyCenter, prices: {milk: 50, cheese: null}),
+    ]);
+
+    final bim = result.baskets[1];
+    expect(bim.foundNothing, isTrue);
+    expect(bim.total, 0);
+    expect(result.ranked.map((b) => b.market.id),
+        [MarketId.sok, MarketId.happyCenter, MarketId.bim]);
+    expect(result.cheapestComplete!.market.id, MarketId.sok);
+    // "Listeye en yakın" önerisi de hiçbir şey bulamayan markete gitmez.
+    expect(result.closestToComplete!.market.id, MarketId.sok);
+  });
+
   test('hiç ürün eklenmemişse her market tam sayılır', () {
     final result = resultOf([
       basket(MarketId.hakmar, prices: const {}),
