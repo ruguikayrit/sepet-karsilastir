@@ -15,7 +15,6 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    if: ${{ secrets.RENDER_API_KEY != '' && secrets.RENDER_OWNER_ID != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,11 +23,16 @@ jobs:
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
           RENDER_OWNER_ID: ${{ secrets.RENDER_OWNER_ID }}
-        run: python3 tools/price_api/deploy_render.py
-
-  deploy-hook:
-    runs-on: ubuntu-latest
-    if: ${{ secrets.RENDER_DEPLOY_HOOK_URL != '' }}
-    steps:
-      - name: Trigger Render deploy hook
-        run: curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -n "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "Deploy hook tetikleniyor..."
+            curl -fsS -X POST "$RENDER_DEPLOY_HOOK_URL"
+            exit 0
+          fi
+          if [ -z "$RENDER_API_KEY" ] || [ -z "$RENDER_OWNER_ID" ]; then
+            echo "Render secret'ları tanımlı değil; deploy atlandı."
+            echo "Dashboard: https://dashboard.render.com/blueprint/new"
+            exit 0
+          fi
+          python3 tools/price_api/deploy_render.py
