@@ -82,7 +82,7 @@ class LivePriceService implements PriceService {
     }
 
     final baskets = batches.map((batch) {
-      return _toBasketResult(batch, items);
+      return toBasketResult(batch, items);
     }).toList();
 
     return ComparisonResult(
@@ -92,7 +92,7 @@ class LivePriceService implements PriceService {
     );
   }
 
-  MarketBasketResult _toBasketResult(
+  static MarketBasketResult toBasketResult(
     MarketQuoteBatch batch,
     List<ListItem> items,
   ) {

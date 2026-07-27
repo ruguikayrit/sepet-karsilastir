@@ -11,7 +11,7 @@ import 'package:sepet_karsilastir/services/live_price_service.dart';
 import 'package:sepet_karsilastir/services/mapping/product_sku_map.dart';
 import 'package:sepet_karsilastir/services/markets/market_price_client.dart';
 import 'package:sepet_karsilastir/services/markets/quote_cache.dart';
-import 'package:sepet_karsilastir/services/price_book_service.dart';
+import 'package:sepet_karsilastir/services/hybrid_price_service.dart';
 import 'package:sepet_karsilastir/services/price_service.dart';
 
 /// Backend yerine sabit teklif döndüren istemci.
@@ -189,8 +189,9 @@ void main() {
     );
   });
 
-  test('backend adresi verilmediyse fiyat defteri kullanılır', () {
-    // Uydurma fiyat üreten taklit servis yok: canlı kaynak yoksa defter.
-    expect(createPriceService(useLive: true), isA<PriceBookService>());
+  test('backend adresi verilmediyse hibrit servis yalnızca defter kullanır', () {
+    expect(createPriceService(useLive: true), isA<HybridPriceService>());
+    final service = createPriceService(useLive: true) as HybridPriceService;
+    expect(service.canStreamLive, isFalse);
   });
 }

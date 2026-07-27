@@ -42,9 +42,9 @@ class CompareScreen extends StatelessWidget {
             : result == null
                 ? const _EmptyCompare(key: ValueKey('empty'))
                 : _ResultBody(
-                    key: const ValueKey('result'),
+                    key: ValueKey('result-${result.comparedAt.millisecondsSinceEpoch}'),
                     result: result,
-                    refreshing: basket.comparing,
+                    refreshing: basket.comparing || result.refreshing,
                   ),
       ),
     );
@@ -173,7 +173,8 @@ class _ResultBody extends StatelessWidget {
             Text(
               'Fiyatlar ${_priceDate(result)} · marketlerin kendi ürün '
               'sayfalarından · ${result.completeCount}/${result.baskets.length}'
-              ' market listeyi tamamlıyor',
+              ' market listeyi tamamlıyor'
+              '${result.refreshing ? ' · canlı yenileniyor' : ''}',
               style: TextStyle(color: palette.inkMuted, fontSize: 13),
             ),
             if (result.failedMarketCount > 0) ...[

@@ -6,6 +6,7 @@ import '../models/comparison_snapshot.dart';
 import '../models/list_item.dart';
 import '../models/product.dart';
 import '../models/saved_list.dart';
+import '../services/hybrid_price_service.dart';
 import '../services/price_service.dart';
 import '../services/storage/basket_repository.dart';
 import '../services/storage/key_value_store.dart';
@@ -100,6 +101,21 @@ class BasketController extends ChangeNotifier {
     _error = null;
     notifyListeners();
     try {
+      final service = _priceService;
+      if (service is HybridPriceService && service.canStreamLive) {
+        ComparisonResult? finalResult;
+        await for (final snapshot in service.watchBasketComparison(_items)) {
+          _lastResult = snapshot;
+          _comparing = snapshot.refreshing;
+          finalResult = snapshot;
+          notifyListeners();
+        }
+        if (finalResult != null) {
+          _recordHistory(finalResult);
+        }
+        return finalResult;
+      }
+
       final result = await _priceService.compareBasket(_items);
       _lastResult = result;
       _recordHistory(result);

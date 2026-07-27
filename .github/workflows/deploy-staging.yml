@@ -36,7 +36,17 @@ jobs:
         run: flutter test
 
       - name: Build web (staging)
-        run: flutter build web --release --base-href "/sepet-karsilastir/"
+        env:
+          PRICE_API_URL: ${{ secrets.PRICE_API_URL }}
+        run: |
+          ARGS=(--release --base-href "/sepet-karsilastir/")
+          if [ -n "$PRICE_API_URL" ]; then
+            ARGS+=(
+              --dart-define=USE_LIVE_PRICES=true
+              --dart-define=API_BASE_URL="$PRICE_API_URL"
+            )
+          fi
+          flutter build web "${ARGS[@]}"
 
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v4

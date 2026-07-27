@@ -72,6 +72,33 @@ class ApiClient {
     );
   }
 
+  /// Her satır ayrı JSON olan akış yanıtı (canlı karşılaştırma).
+  Stream<Map<String, dynamic>> postNdjsonStream(
+    String path,
+    Map<String, dynamic> body,
+  ) async* {
+    final request = http.Request('POST', _uri(path));
+    request.headers.addAll(_headers);
+    request.body = jsonEncode(body);
+
+    final streamed = await _http.send(request).timeout(_timeout);
+    if (streamed.statusCode < 200 || streamed.statusCode >= 300) {
+      throw ApiException(
+        'HTTP ${streamed.statusCode}',
+        statusCode: streamed.statusCode,
+      );
+    }
+    final lines = streamed.stream
+        .transform(utf8.decoder)
+        .transform(const LineSplitter());
+    await for (final line in lines) {
+      final trimmed = line.trim();
+      if (trimmed.isEmpty) continue;
+      final decoded = jsonDecode(trimmed);
+      if (decoded is Map<String, dynamic>) yield decoded;
+    }
+  }
+
   Future<Map<String, dynamic>> _withRetry(
     Future<http.Response> Function() request,
   ) async {
