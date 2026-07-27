@@ -60,9 +60,34 @@ docker build -f Dockerfile.price-api -t sepet-price-api .
 docker run --rm -p 8080:8080 sepet-price-api
 ```
 
-[Render](https://render.com) için `render.yaml` hazırdır. Deploy sonrası
-GitHub repo ayarlarında `PRICE_API_URL` secret'ını API kök adresine ayarlayın;
-staging build otomatik canlı moda geçer.
+### Render deploy
+
+**Seçenek A — Dashboard (tek seferlik, ~2 dk)**
+
+1. [Render Blueprint](https://dashboard.render.com/blueprint/new) → GitHub repo `ruguikayrit/sepet-karsilastir`
+2. `render.yaml` otomatik okunur → **Deploy Blueprint**
+3. Servis URL'si (ör. `https://sepet-price-api.onrender.com`) → GitHub repo **Settings → Secrets → Actions** → `PRICE_API_URL`
+4. Staging workflow bir sonraki `master` push'unda canlı moda geçer (veya Deploy Staging workflow'unu manuel tetikleyin)
+
+**Seçenek B — API (CI otomasyonu)**
+
+GitHub secrets:
+
+| Secret | Açıklama |
+| --- | --- |
+| `RENDER_API_KEY` | [Render API key](https://dashboard.render.com/u/settings#api-keys) |
+| `RENDER_OWNER_ID` | Workspace Settings → ID |
+| `PRICE_API_URL` | Deploy sonrası servis kök URL'si |
+
+`master`'a push sonrası `.github/workflows/deploy-price-api.yml` servisi oluşturur veya yeniden deploy eder.
+
+Yerelde:
+
+```bash
+export RENDER_API_KEY=rnd_...
+export RENDER_OWNER_ID=tea-...
+python3 tools/price_api/deploy_render.py
+```
 
 ### Backend sözleşmesi
 

@@ -2,9 +2,13 @@ services:
   - type: web
     name: sepet-price-api
     runtime: docker
+    repo: https://github.com/ruguikayrit/sepet-karsilastir
+    branch: master
     dockerfilePath: ./Dockerfile.price-api
     plan: free
+    region: frankfurt
     healthCheckPath: /health
+    autoDeployTrigger: commit
     envVars:
       - key: PYTHONUNBUFFERED
         value: "1"
