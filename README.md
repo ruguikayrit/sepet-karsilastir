@@ -133,11 +133,18 @@ ve gramajını taşıdığını denetler. Geçemeyen kayıt deftere girmez — b
 | A101, CarrefourSA, Metro, Getir | site otomatik erişimi engelliyor |
 | File, Onur | sitesinde ürün fiyatı yayınlanmıyor |
 
-Karşılaştırma, o günün defterinde fiyatı olan marketleri kapsar. Fiyat
-yayınlamayan zincir de, o gün sitesi yanıt vermeyen market de listeye girmez;
-uygulama ikisini de sebebiyle birlikte ekranda yazar. Nedenler
-`lib/models/market.dart` içindeki `noPriceReason` alanında ve
-`tools/price_sync/markets.py` içindeki `UNSUPPORTED` listesinde tutulur.
+Karşılaştırma bütün marketleri kapsar. Fiyatı okunamayan market listeden
+düşmez: tutar yerine "Ürün bulunamadı" ve sebebi yazar (site fiyat
+yayınlamıyor / son çekimde okunamadı). Hiçbir ürünü bulunamayan market tutar
+yerine "—" gösterir ve sıralamanın sonuna düşer — sıfır lira, sayısal
+sıralamada en ucuz gibi görünürdü. Nedenler `lib/models/market.dart` içindeki
+`noPriceReason` alanında ve `tools/price_sync/markets.py` içindeki
+`UNSUPPORTED` listesinde tutulur.
+
+Markasız satırda her market o gramajdaki **en ucuz** ürününü gösterir ve hangi
+ürün olduğu satırın altında yazar. Ötekilerin katbekat üstünde kalan hücre
+gösterilmez: o markette sade ürünü bulamamış olma ihtimali, gerçekten o kadar
+pahalı olmasından yüksek.
 
 Migros'un arama servisi yalnızca bazı ağlardan yanıt veriyor: GitHub
 runner'ından çalışıyor, geliştirme makinelerinin çoğundan 403 dönüyor. Bu yüzden
@@ -151,9 +158,13 @@ python3 tools/price_sync/sync.py --markets sok
 python3 tools/price_sync/sync.py --offline    # ağa çıkmadan yeniden eşleştir
 python3 tools/price_sync/sync.py --no-verify  # sayfa doğrulamasını atla (hızlı)
 
-# Tek marketi yenile, ötekilerin kayıtlarını aynı günün defterinden devral
+# Tek marketi yenile, ötekilerin kayıtlarını eski defterden devral
 python3 tools/price_sync/sync.py --markets sok --merge-from lib/data/price_book.dart
 ```
+
+Devralınan kayıtlar iki günden eski olamaz ve defterin tarihi en eski kaydın
+günü olur: uygulama fiyatları olduğundan taze göstermemeli. Fiyatlar iki
+günden eskiyse karşılaştırma ekranı kaç gündür yenilenmediğini yazar.
 
 Yeni defter eskisinin %70'inden azını taşıyorsa araç yazmayı reddeder: bir
 market yanıt vermediğinde kullanıcı fiyatların yarısını kaybetmesin.

@@ -122,13 +122,18 @@ def pick(offers: list[Offer], rule: dict | None = None,
          brand: str | None = None) -> Offer | None:
     """Aynı satır için birden fazla ürün varsa hangisi?
 
-    Sıra: stokta olan, çeşit olarak en sade olan, en ucuz olan. "En sade"
-    kuralı markasız satırı korur: `Domates Kg` seçilir, `Kabak Çekirdeği
-    Tuzlu Kg` değil.
+    Marka seçilmişse aynı markanın en sade çeşidi alınır: kullanıcı markayı
+    söylemiş, geriye çeşit kalmış.
+
+    Marka seçilmemişse en ucuzu alınır. Markasız satırın sorusu "bu gramajı
+    burada en aza kaça alırım?"; oraya marketin gurme çeşidini yazmak marketi
+    haksız yere pahalı gösterir.
     """
     if not offers:
         return None
     if rule is None:
+        return min(offers, key=lambda o: (not o.in_stock, o.price, len(o.name)))
+    if brand is None:
         return min(offers, key=lambda o: (not o.in_stock, o.price, len(o.name)))
     return min(
         offers,
@@ -173,9 +178,18 @@ def choose_shared_variant(
     markette bu çeşit yoksa marketin en sade ve en ucuz eşleşmesi kullanılır.
 
     Marka verilmişse (aynı marka, aynı gramaj) fiyatlar birbirine yakın
-    olmalıdır; aşırı sapan hücre yanlış çeşittir ve düşürülür. Markasız
-    satırda her market kendi ürününü gösterdiği için fiyat farkı gerçektir.
+    olmalıdır; aşırı sapan hücre yanlış çeşittir ve düşürülür.
+
+    Markasız satırda çeşit hizalaması yapılmaz: kullanıcı marka söylemediği
+    için her market kendi en uygun ürününü gösterir, kural her markette aynı
+    olduğu sürece karşılaştırma dürüsttür.
     """
+    if brand is None:
+        return drop_overpriced({
+            market: best
+            for market, offers in per_market.items()
+            if (best := pick(offers, rule, None)) is not None
+        })
     signatures: dict[frozenset[str], set[str]] = {}
     for market, offers in per_market.items():
         for offer in offers:
@@ -204,6 +218,31 @@ def choose_shared_variant(
 # Aynı satırdaki fiyatlar bu kattan fazla açıldıysa ürünlerden biri aslında
 # başka bir çeşittir; o hücre gösterilmez.
 OUTLIER_FACTOR = 3.0
+
+
+#: Markasız satırda medyanın bu katından pahalı hücre gösterilmez.
+OVERPRICED_FACTOR = 3.5
+
+
+def drop_overpriced(chosen: dict[str, Offer]) -> dict[str, Offer]:
+    """Markasız satırda medyandan aşırı pahalı hücreleri çıkarır.
+
+    Markasız satırda her market kendi en uygun ürününü gösterir, fiyat farkı
+    da gerçektir: bir markette Selpak ucuz değildir. Ama ötekilerin katbekat
+    üstünde bir tutar, çoğu zaman o markette sade ürünü bulamamış olmamızdır —
+    "en ucuz 150 g cips" diye trüflü cips yazmak marketi haksız yere pahalı
+    gösterir. Ucuz taraf kırpılmaz: gerçek bir ucuzluk, kullanıcının tam da
+    aradığı şeydir.
+    """
+    if len(chosen) < 3:
+        return chosen
+    prices = sorted(offer.price for offer in chosen.values())
+    median = prices[len(prices) // 2]
+    return {
+        market: offer
+        for market, offer in chosen.items()
+        if offer.price <= median * OVERPRICED_FACTOR
+    }
 
 
 def drop_outliers(chosen: dict[str, Offer]) -> dict[str, Offer]:

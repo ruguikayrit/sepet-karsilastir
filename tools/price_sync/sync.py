@@ -72,6 +72,12 @@ SHRINK_LIMIT = 0.7
 #: ediyoruz.
 FAILURE_LIMIT = 8
 
+#: `--merge-from` ile en fazla bu kadar günlük fiyat devralınır.
+#:
+#: Devralma tek bir marketi yenilemek için; ötekilerin fiyatı birkaç günü
+#: geçtiyse artık "bugünün fiyatı" değildir, uygulama da öyle göstermemeli.
+MERGE_MAX_AGE = 2
+
 _OFFER_COUNT = re.compile(r'· (\d+) ürün fiyatı')
 
 
@@ -209,12 +215,15 @@ def build_market(market: str, catalog, cache: SearchCache, jobs: int,
             else:
                 misses.append((type_.id, brand))
 
-        # Markasız satırda market kendi ürününü gösterir, ama ürün adı sade
-        # olmalı: "Domates Kg" girer, "Kabak Çekirdeği Tuzlu Kg" girmez. Aksi
-        # halde marketler birbirinden apayrı çeşitleri karşılaştırır.
+        # Markasız satırda market kendi ürününü gösterir. Kiloyla satılan
+        # üründe her fazla kelime başka bir ürüne işaret eder — "Kabak
+        # Çekirdeği Tuzlu Kg", "Kabak Kg" değildir — o yüzden ad sade olmalı.
+        # Gramajı adında yazan pakette ise fazla kelimeler markanın ve çeşidin
+        # kendisidir: "Boltane Çilek Reçeli 380 g" bir 380 g reçeldir.
+        limit = 1 if weight_based else 3
         plain = [
             o for o in matched
-            if len(variant_tokens(o.name, rule, None)) <= 1
+            if len(variant_tokens(o.name, rule, None)) <= limit
         ]
         if plain:
             found[product_id(type_.id, None)] = plain
@@ -335,21 +344,28 @@ def confirm_book(book: dict[str, dict[str, Offer]], catalog, jobs: int,
 
 def merge(book: dict[str, dict[str, Offer]], source: Path, *,
           fetched: list[str],
-          fetched_at: str) -> dict[str, dict[str, Offer]] | None:
+          fetched_at: str) -> tuple[dict[str, dict[str, Offer]], str] | None:
     """Bu çekimde sorulmayan marketlerin kayıtlarını eski defterden devralır.
 
     Tek bir marketi yenilemek için var: ötekiler yeniden çekilmez ama deftere
-    girmeye devam eder. Devralınan kayıtlar aynı günün çekiminden olmalı — bir
-    marketin fiyatını dün, ötekini bugün göstermek karşılaştırmayı bozar.
+    girmeye devam eder. Devralınan kayıtlar [MERGE_MAX_AGE] günden eski
+    olamaz ve defterin tarihi en eski kaydın günü olur — uygulama fiyatları
+    olduğundan taze göstermemeli.
     """
     if not source.exists():
         print(f'devralınacak defter yok: {source}', file=sys.stderr)
         return None
 
     source_date, previous = read_dart(source)
-    if source_date != fetched_at:
-        print(f'{source} {source_date} tarihli, bu çekim {fetched_at}; farklı '
-              'günlerin fiyatları karıştırılmaz', file=sys.stderr)
+    try:
+        age = (date.fromisoformat(fetched_at)
+               - date.fromisoformat(source_date)).days
+    except ValueError:
+        print(f'{source} tarihi okunamadı: {source_date!r}', file=sys.stderr)
+        return None
+    if age < 0 or age > MERGE_MAX_AGE:
+        print(f'{source} {source_date} tarihli, bu çekim {fetched_at}; '
+              f'{MERGE_MAX_AGE} günden eski fiyat devralınmaz', file=sys.stderr)
         return None
 
     carried = 0
@@ -359,8 +375,11 @@ def merge(book: dict[str, dict[str, Offer]], source: Path, *,
                 continue
             book.setdefault(product, {}).setdefault(market, offer)
             carried += 1
-    print(f'  {source} defterinden {carried} kayıt devralındı')
-    return book
+    print(f'  {source} defterinden {carried} kayıt devralındı'
+          + (f' ({age} gün önceki çekim)' if age else ''))
+    # Defterin tarihi en eski kaydınki: kullanıcıya vaat edilen tazelik,
+    # kayıtların en eskisi kadardır.
+    return book, min(fetched_at, source_date) if carried else fetched_at
 
 
 def previous_offer_count(path: Path) -> int:
@@ -434,7 +453,7 @@ def main() -> int:
                        fetched_at=fetched_at)
         if merged is None:
             return 1
-        book = merged
+        book, fetched_at = merged
 
     # Fiyat veremeyen market deftere yazılmaz: uygulamada boş bir sütun olarak
     # görünmesin.
