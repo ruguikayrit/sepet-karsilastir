@@ -29,14 +29,52 @@ flutter run \
 `API_BASE_URL` verilmezse veya `example.com` içeriyorsa uygulama fiyat
 defterine düşer. Uydurma fiyat üreten bir taklit servis yok.
 
+### Canlı fiyat API (Python)
+
+Repoda hazır bir backend vardır: market sayfalarından okunan, doğrulanmış
+fiyatları sunar. Uygulama önce fiyat defterini anında gösterir; API
+yapılandırıldıysa marketler kademeli canlı yenilenir.
+
+```bash
+# Yerelde (repo kökünden)
+PYTHONPATH=tools python3 -m price_api.server --port 8080
+
+# Sağlık kontrolü
+curl -s http://localhost:8080/health
+
+# Tek market
+curl -s -X POST http://localhost:8080/v1/markets/sok/quotes \
+  -H 'Content-Type: application/json' \
+  -d '{"items":[{"productId":"aycicek-1l__evin","quantity":1}]}'
+
+# Tüm marketler (NDJSON — market market satır)
+curl -N -X POST http://localhost:8080/v1/compare/stream \
+  -H 'Content-Type: application/json' \
+  -d '{"items":[{"productId":"aycicek-1l__evin","quantity":1}]}'
+```
+
+Docker:
+
+```bash
+docker build -f Dockerfile.price-api -t sepet-price-api .
+docker run --rm -p 8080:8080 sepet-price-api
+```
+
+[Render](https://render.com) için `render.yaml` hazırdır. Deploy sonrası
+GitHub repo ayarlarında `PRICE_API_URL` secret'ını API kök adresine ayarlayın;
+staging build otomatik canlı moda geçer.
+
 ### Backend sözleşmesi
 
 Uygulama market sitelerine doğrudan gitmez; kendi backend'inize istek atar.
 
 | Endpoint | Açıklama |
 | --- | --- |
+| `GET /health` | Sağlık kontrolü |
 | `GET /v1/catalog/search?q=` | Ürün tipi arama |
 | `POST /v1/markets/{slug}/quotes` | Tek market sepet teklifi |
+| `POST /v1/compare` | Tüm marketler (bloklayan) |
+| `POST /v1/compare/stream` | Tüm marketler (NDJSON, market market) |
 
 `POST` gövdesi:
 

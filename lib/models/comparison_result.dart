@@ -92,6 +92,7 @@ class ComparisonResult {
     required this.comparedAt,
     this.source = PriceSource.priceBook,
     this.pricesFetchedAt,
+    this.refreshing = false,
   });
 
   /// Fiyatların market sitelerinden çekildiği gün (ISO 8601).
@@ -100,6 +101,9 @@ class ComparisonResult {
   final List<MarketBasketResult> baskets;
   final DateTime comparedAt;
   final PriceSource source;
+
+  /// Canlı yenileme sürüyor mu? (defter önizlemesi gösterilirken true olabilir)
+  final bool refreshing;
 
   /// Önce listeyi tamamlayanlar (en düşük toplam), sonra eksiği az olanlar,
   /// sonra hiçbir ürünü bulunamayanlar, en sonda yanıt vermeyen marketler.
@@ -181,4 +185,20 @@ class ComparisonResult {
   }
 
   int get failedMarketCount => baskets.where((b) => b.fetchFailed).length;
+
+  ComparisonResult copyWith({
+    List<MarketBasketResult>? baskets,
+    DateTime? comparedAt,
+    PriceSource? source,
+    String? pricesFetchedAt,
+    bool? refreshing,
+  }) {
+    return ComparisonResult(
+      baskets: baskets ?? this.baskets,
+      comparedAt: comparedAt ?? this.comparedAt,
+      source: source ?? this.source,
+      pricesFetchedAt: pricesFetchedAt ?? this.pricesFetchedAt,
+      refreshing: refreshing ?? this.refreshing,
+    );
+  }
 }

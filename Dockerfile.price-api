@@ -1,0 +1,12 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+COPY tools/ /app/tools/
+COPY lib/data/price_book.dart /app/lib/data/price_book.dart
+COPY lib/data/mock_catalog.dart /app/lib/data/mock_catalog.dart
+COPY lib/data/brands.dart /app/lib/data/brands.dart
+
+ENV PYTHONPATH=/app/tools
+EXPOSE 8080
+
+CMD ["python3", "-m", "price_api.server", "--host", "0.0.0.0", "--port", "8080"]

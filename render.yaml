@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: sepet-price-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile.price-api
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
