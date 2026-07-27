@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../config/app_config.dart';
+import '../data/price_book.dart';
 import '../models/market.dart';
 import '../state/settings_controller.dart';
 import '../theme/app_theme.dart';
+import '../utils/dates.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -63,11 +65,13 @@ class SettingsScreen extends StatelessWidget {
               children: [
                 _InfoRow(
                   label: 'Mod',
-                  value: AppConfig.useLivePrices ? 'Canlı' : 'Demo',
+                  value: AppConfig.useLivePrices
+                      ? 'Canlı'
+                      : 'Market sayfalarından okunan fiyatlar',
                 ),
                 _InfoRow(
-                  label: 'API',
-                  value: AppConfig.apiBaseUrl,
+                  label: 'Son çekim',
+                  value: _fetchedAt,
                 ),
                 _InfoRow(
                   label: 'Bölge',
@@ -75,7 +79,8 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 _InfoRow(
                   label: 'Market',
-                  value: '${Market.all.length} zincir',
+                  value: '${Market.all.length} zincir karşılaştırılıyor · '
+                      '${priceBookMarkets.length} zincirde fiyat okunuyor',
                 ),
               ],
             ),
@@ -102,9 +107,11 @@ class SettingsScreen extends StatelessWidget {
                 AppConfig.useLivePrices
                     ? 'Canlı fiyat modu açık. Backend yanıt vermezse kısmi '
                         'sonuçlar gösterilir.'
-                    : 'Şu an demo fiyatlar kullanılıyor. Canlı fiyat için '
-                        '--dart-define=USE_LIVE_PRICES=true ve API_BASE_URL '
-                        'ile çalıştırın.',
+                    : 'Fiyatlar her gün marketlerin kendi ürün sayfalarından '
+                        'yeniden okunuyor. Bir satıra dokunduğunda o fiyatın '
+                        'okunduğu sayfa açılır; tutarı orada doğrulayabilirsin. '
+                        'Fiyatı okunamayan satırda tahmin üretmiyoruz, '
+                        '“ürün bulunamadı” yazıyoruz.',
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   height: 1.4,
@@ -116,6 +123,12 @@ class SettingsScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Fiyat defterinin çekildiği gün.
+  static String get _fetchedAt {
+    final parsed = DateTime.tryParse(priceBookFetchedAt);
+    return parsed == null ? priceBookFetchedAt : formatDateTr(parsed);
   }
 }
 

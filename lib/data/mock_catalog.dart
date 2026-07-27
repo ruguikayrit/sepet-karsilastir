@@ -1,4 +1,5 @@
 import '../models/product.dart';
+import '../utils/text.dart';
 
 /// Markasız ürün tipi — kullanıcı eklerken marka seçer.
 ///
@@ -19,34 +20,14 @@ class ProductType {
   final String unit;
 
   Product withBrand(String? brand) {
-    final brandKey = _brandKey(brand);
     return Product(
-      id: '${id}__$brandKey',
+      id: '${id}__${Product.brandKeyOf(brand)}',
       typeId: id,
       name: name,
       category: category,
       unit: unit,
       brand: brand,
     );
-  }
-
-  /// Türkçe karakterleri koruyarak kararlı marka anahtarı üretir.
-  static String _brandKey(String? brand) {
-    if (brand == null || brand.trim().isEmpty) return 'markasiz';
-    final lower = brand
-        .trim()
-        .toLowerCase()
-        .replaceAll('\u0307', '')
-        .replaceAll('ı', 'i')
-        .replaceAll('ğ', 'g')
-        .replaceAll('ü', 'u')
-        .replaceAll('ş', 's')
-        .replaceAll('ö', 'o')
-        .replaceAll('ç', 'c');
-    return lower
-        .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
-        .replaceAll(RegExp(r'-+'), '-')
-        .replaceAll(RegExp(r'^-|-$'), '');
   }
 }
 
@@ -124,7 +105,7 @@ const productTypes = <ProductType>[
     unit: 'adet',
   ),
   ProductType(
-    id: 'ekmek-250',
+    id: 'ekmek-tam-bugday',
     name: 'Tam Buğday Ekmek',
     category: 'Fırın',
     unit: 'adet',
@@ -190,7 +171,7 @@ const productTypes = <ProductType>[
     unit: 'adet',
   ),
   ProductType(
-    id: 'tuz-750',
+    id: 'tuz-500',
     name: 'Sofra Tuzu 500g',
     category: 'Temel Gıda',
     unit: 'adet',
@@ -485,7 +466,7 @@ const productTypes = <ProductType>[
   ),
   ProductType(
     id: 'dus-jeli',
-    name: 'Duş Jeli',
+    name: 'Duş Jeli 500ml',
     category: 'Kişisel Bakım',
     unit: 'adet',
   ),
@@ -545,11 +526,16 @@ const productTypes = <ProductType>[
   ),
 ];
 
+/// Katlanmış arama: "sut", "yogurt", "cay" gibi ASCII yazımlar da eşleşir.
+/// Boşlukla ayrılan her kelime ürün adında veya kategorisinde bulunmalıdır.
 List<ProductType> searchProductTypesLocal(String query) {
-  final q = query.trim().toLowerCase();
-  if (q.isEmpty) return productTypes;
+  final words = foldTurkish(query.trim())
+      .split(RegExp(r'\s+'))
+      .where((w) => w.isNotEmpty)
+      .toList();
+  if (words.isEmpty) return productTypes;
   return productTypes.where((p) {
-    return p.name.toLowerCase().contains(q) ||
-        p.category.toLowerCase().contains(q);
+    final haystack = foldTurkish('${p.name} ${p.category} ${p.unit}');
+    return words.every(haystack.contains);
   }).toList();
 }

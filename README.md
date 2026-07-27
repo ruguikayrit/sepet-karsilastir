@@ -26,8 +26,8 @@ flutter run \
   --dart-define=DEFAULT_REGION=istanbul
 ```
 
-`API_BASE_URL` verilmezse veya `example.com` içeriyorsa uygulama stub
-istemcilerle çalışır (ağ çağrısı yok, entegrasyon akışı test edilir).
+`API_BASE_URL` verilmezse veya `example.com` içeriyorsa uygulama fiyat
+defterine düşer. Uydurma fiyat üreten bir taklit servis yok.
 
 ### Backend sözleşmesi
 
@@ -71,11 +71,17 @@ Yanıt:
       "externalSku": "MIG-SUT-1L",
       "unitPrice": 41.5,
       "available": true,
-      "currency": "TRY"
+      "currency": "TRY",
+      "marketProduct": "İçim Süt Tam Yağlı 1 L",
+      "sourceUrl": "https://www.migros.com.tr/icim-sut-tam-yagli-1-l-p-1a2b3c"
     }
   ]
 }
 ```
+
+`sourceUrl` zorunludur. Fiyatın okunduğu ürün sayfası gelmezse uygulama o
+satırı fiyatsız gösterir: kullanıcı tıklayıp doğrulayamayacağı bir tutarı
+görmemeli.
 
 Market slug'ları: `migros`, `macrocenter`, `a101`, `bim`, `sok`,
 `carrefour`, `file`, `tarim-kredi`, `hakmar`, `onur`, `happy-center`,
@@ -86,22 +92,87 @@ Tek market düşse bile diğerleri gösterilir. Aynı sepet teklifleri ~45 sn
 
 ## Özellikler
 
-- 13 market, segment bazlı karşılaştırma
+- Marka ve gramajı seçilmiş liste, marketlerin kendi sayfalarındaki fiyatlarla
+  karşılaştırılır
 - 80+ ürün tipi (süt, temel gıda, meyve-sebze, et, temizlik, bebek vb.)
-- Demo fiyatlar resmi market sitelerinden derlenir (Şok Market, Happy Center)
-- Marka seçimli sepet (aynı ürün tipi + farklı marka = ayrı satır)
-- Sepet kalıcılığı (uygulama kapanınca kaybolmaz)
-- Kayıtlı listeler ve karşılaştırma geçmişi
+- Her tutar, satıra dokununca açılan ürün sayfasından okunmuştur: kullanıcı
+  tıklayıp doğrulayabilir
+- Fiyatı okunamayan satır "Fiyat yok" kalır; tahmin üretilmez ve toplama
+  eklenmez
+- Listeyi eksiksiz karşılamayan market "en ucuz" sayılmaz
+- Marka seçimli sepet (aynı ürün tipi + farklı marka = ayrı satır); marka
+  listesinde her markanın kaç markette fiyatlandığı yazar
+- "Markasız" satırda her market o gramajdaki kendi ürününü gösterir; hangi ürün
+  olduğu satırın altında görünür
+- Sepet kalıcılığı, kayıtlı listeler ve karşılaştırma geçmişi
 - Açık / koyu / sistem teması
-- Demo veya canlı fiyat kaynağı
 
-## Demo fiyat kaynağı
+## Fiyat kaynağı
 
-`lib/data/market_price_snapshot.dart` içindeki birim fiyatlar
-[Şok Market](https://www.sokmarket.com.tr) ve
-[Happy Center](https://happycenter.com.tr) vitrin/API verilerinden
-alınmıştır (çekim: 2026-07-26). Mock motor diğer marketleri bu tabana
-göre ölçekler; canlı modda backend teklifleri kullanılır.
+Tek kaynak `lib/data/price_book.dart`: marketlerin kendi sayfalarından okunmuş
+ürün adı, ürün sayfası adresi ve raf fiyatı. Dosya elle düzenlenmez,
+`tools/price_sync/sync.py` üretir.
+
+Bir kayıt yalnızca üçü birlikte doğrulandığında oluşur — ad, adres, fiyat — ve
+marka, çeşit, gramaj katalogdaki satırla birebir aynı olmak zorundadır. Kaydı
+olmayan satır uygulamada fiyatsız görünür.
+
+Son adım ürünün kendi sayfasında geçer: araç adresi açar, ürün adını sayfadan
+okur, tutarın o sayfada yazdığını görür ve adın hâlâ katalog satırının çeşidini
+ve gramajını taşıdığını denetler. Geçemeyen kayıt deftere girmez — böylece
+"satıra dokun, aynı fiyatı gör" sözü her çekimde sınanmış olur.
+
+| Market | Durum |
+| --- | --- |
+| [Şok](https://www.sokmarket.com.tr) | ürün sayfası + fiyat okunuyor |
+| [Migros](https://www.migros.com.tr) | ürün sayfası + fiyat okunuyor |
+| [Macrocenter](https://www.macrocenter.com.tr) | ürün sayfası + fiyat okunuyor |
+| [Hakmar Express](https://www.hakmarexpress.com.tr) | ürün sayfası + fiyat okunuyor |
+| [Happy Center](https://happycenter.com.tr) | ürün sayfası + fiyat okunuyor |
+| BİM | online satış yapmıyor, raf fiyatı yayınlamıyor |
+| A101, CarrefourSA, Metro, Getir | site otomatik erişimi engelliyor |
+| File, Onur | sitesinde ürün fiyatı yayınlanmıyor |
+
+Karşılaştırma bütün marketleri kapsar. Fiyatı okunamayan market listeden
+düşmez: tutar yerine "Ürün bulunamadı" ve sebebi yazar (site fiyat
+yayınlamıyor / son çekimde okunamadı). Hiçbir ürünü bulunamayan market tutar
+yerine "—" gösterir ve sıralamanın sonuna düşer — sıfır lira, sayısal
+sıralamada en ucuz gibi görünürdü. Nedenler `lib/models/market.dart` içindeki
+`noPriceReason` alanında ve `tools/price_sync/markets.py` içindeki
+`UNSUPPORTED` listesinde tutulur.
+
+Markasız satırda her market o gramajdaki **en ucuz** ürününü gösterir ve hangi
+ürün olduğu satırın altında yazar. Ötekilerin katbekat üstünde kalan hücre
+gösterilmez: o markette sade ürünü bulamamış olma ihtimali, gerçekten o kadar
+pahalı olmasından yüksek.
+
+Migros'un arama servisi yalnızca bazı ağlardan yanıt veriyor: GitHub
+runner'ından çalışıyor, geliştirme makinelerinin çoğundan 403 dönüyor. Bu yüzden
+günlük iş CI'da koşar.
+
+### Fiyatları yenile
+
+```bash
+python3 tools/price_sync/sync.py              # bütün marketler
+python3 tools/price_sync/sync.py --markets sok
+python3 tools/price_sync/sync.py --offline    # ağa çıkmadan yeniden eşleştir
+python3 tools/price_sync/sync.py --no-verify  # sayfa doğrulamasını atla (hızlı)
+
+# Tek marketi yenile, ötekilerin kayıtlarını eski defterden devral
+python3 tools/price_sync/sync.py --markets sok --merge-from lib/data/price_book.dart
+```
+
+Devralınan kayıtlar iki günden eski olamaz ve defterin tarihi en eski kaydın
+günü olur: uygulama fiyatları olduğundan taze göstermemeli. Fiyatlar iki
+günden eskiyse karşılaştırma ekranı kaç gündür yenilenmediğini yazar.
+
+Yeni defter eskisinin %70'inden azını taşıyorsa araç yazmayı reddeder: bir
+market yanıt vermediğinde kullanıcı fiyatların yarısını kaybetmesin.
+`--allow-shrink` bu kontrolü kapatır.
+
+`.github/workflows/price-sync.yml` her gün 07:10 TRT'de aynı işi yapar:
+fiyatları çeker, testleri koşar, defter değiştiyse commit'ler ve staging'i
+yeniden yayınlar.
 
 ## Test
 

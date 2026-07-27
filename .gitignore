@@ -43,3 +43,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Fiyat senkronu önbelleği (tools/price_sync)
+.price_sync_cache/

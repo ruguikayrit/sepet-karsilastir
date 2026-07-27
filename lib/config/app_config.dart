@@ -9,7 +9,8 @@
 class AppConfig {
   const AppConfig._();
 
-  /// `true` ise [LivePriceService], aksi halde [MockPriceService].
+  /// `true` ve gerçek bir [apiBaseUrl] varsa canlı backend, aksi halde
+  /// marketlerin sayfalarından okunmuş fiyat defteri kullanılır.
   static const useLivePrices = bool.fromEnvironment(
     'USE_LIVE_PRICES',
     defaultValue: false,

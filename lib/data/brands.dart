@@ -16,6 +16,14 @@ class FoodBrand {
   final List<String> categories;
 }
 
+/// Marka belirtmeyen satır.
+///
+/// Kullanıcı marka seçmediğinde her market o gramajdaki kendi en uygun
+/// ürününü gösterir; satırın altında hangi ürün olduğu yazar. Zincirin kendi
+/// markası diye bir seçenek yok: hangi ürünün "market markası" olduğunu
+/// marketler tutarlı yayınlamıyor, uydurmak da karşılaştırmayı bozar.
+const genericBrand = 'Markasız';
+
 const foodBrands = <FoodBrand>[
   // Süt & Kahvaltı
   FoodBrand(id: 'icim', name: 'İçim', categories: ['Süt & Kahvaltı']),
@@ -158,7 +166,7 @@ const foodBrands = <FoodBrand>[
 
   // Fırın / genel
   FoodBrand(id: 'uno', name: 'Uno', categories: ['Fırın']),
-  FoodBrand(id: 'market', name: 'Market markası', categories: [
+  FoodBrand(id: 'markasiz', name: genericBrand, categories: [
     'Süt & Kahvaltı',
     'Temel Gıda',
     'İçecek',

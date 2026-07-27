@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../data/brands.dart';
 import '../data/mock_catalog.dart';
+import '../services/price_book_service.dart';
 import '../state/basket_controller.dart';
 import '../theme/app_theme.dart';
 
@@ -85,6 +86,12 @@ class _AddProductSheetState extends State<AddProductSheet> {
     return list;
   }
 
+  /// Bu marka bu gramajda kaç markette fiyatlanıyor?
+  static int _pricedMarkets(ProductType type, String brand) =>
+      PriceBookService.pricedMarketCount(
+        type.withBrand(brand == genericBrand ? null : brand).id,
+      );
+
   List<String> _applicableBrands(ProductType type) {
     final allowed = brandsForCategory(type.category).map((b) => b.name).toSet();
     return _selectedBrands.where(allowed.contains).toList()..sort();
@@ -101,7 +108,11 @@ class _AddProductSheetState extends State<AddProductSheet> {
     }
 
     for (final brand in brands) {
-      basket.addProduct(type.withBrand(brand));
+      // "Markasız" bir marka değil: satır markasız kalır, her market kendi
+      // uygun ürününü gösterir.
+      basket.addProduct(
+        type.withBrand(brand == genericBrand ? null : brand),
+      );
     }
 
     if (!mounted) return;
@@ -165,7 +176,9 @@ class _AddProductSheetState extends State<AddProductSheet> {
                     Padding(
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
                       child: Text(
-                        'Bir veya birden fazla marka seç; her biri sepete ayrı satır olarak eklenir.',
+                        'Bir veya birden fazla marka seç; her biri sepete ayrı '
+                        'satır olarak eklenir. Altındaki not, o markanın kaç '
+                        'markette fiyatlandığını söyler.',
                         style: TextStyle(
                           color: sheetPalette.inkMuted,
                           fontWeight: FontWeight.w600,
@@ -183,6 +196,7 @@ class _AddProductSheetState extends State<AddProductSheet> {
                         itemBuilder: (_, index) {
                           final brand = brands[index];
                           final selected = chosen.contains(brand.name);
+                          final marketCount = _pricedMarkets(type, brand.name);
                           return InkWell(
                             borderRadius: BorderRadius.circular(12),
                             onTap: () {
@@ -211,11 +225,30 @@ class _AddProductSheetState extends State<AddProductSheet> {
                               child: Row(
                                 children: [
                                   Expanded(
-                                    child: Text(
-                                      brand.name,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                      ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          brand.name,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                        Text(
+                                          marketCount == 0
+                                              ? 'Hiçbir markette fiyatı yok'
+                                              : '$marketCount markette fiyatı '
+                                                  'var',
+                                          style: TextStyle(
+                                            color: marketCount == 0
+                                                ? sheetPalette.danger
+                                                : sheetPalette.inkMuted,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                   Icon(

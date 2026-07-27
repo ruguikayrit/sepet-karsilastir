@@ -1,0 +1,486 @@
+#!/usr/bin/env python3
+"""Market fiyatlarını çeker ve `lib/data/price_book.dart` dosyasını üretir.
+
+Akış:
+
+1. Katalogdaki her ürün tipi için marketin kendi aramasını çağırır.
+2. Dönen ürünlerden marka + çeşit + gramaj birebir tutanları seçer.
+3. Aynı satırda birden fazla ürün varsa stokta olan ve en ucuz olanı alır.
+4. Kalan (tip, marka) satırları için markanın adıyla hedefli arama yapar.
+5. Seçilen her ürünü kendi sayfasında doğrular: sayfadaki ad ve tutar.
+6. Sonucu Dart fiyat defterine yazar.
+
+Örnek::
+
+    python3 tools/price_sync/sync.py                 # bütün marketler
+    python3 tools/price_sync/sync.py --markets sok   # tek market
+    python3 tools/price_sync/sync.py --offline       # yalnızca önbellek
+
+Ağ erişimi olmayan marketler otomatik atlanır; önceki fiyat defteri korunur.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import sys
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import asdict, replace
+from datetime import date
+from pathlib import Path
+
+if __package__ in (None, ''):  # doğrudan `python3 tools/price_sync/sync.py`
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from price_sync.catalog import (  # noqa: E402
+        GENERIC_BRAND, REPO, load_catalog, product_id, slug,
+    )
+    from price_sync.emit import read_dart, write_dart  # noqa: E402
+    from price_sync.markets import (  # noqa: E402
+        ADAPTERS, FetchError, price_on_page,
+    )
+    from price_sync.matching import (  # noqa: E402
+        Offer, brand_of, brand_position, choose_shared_variant, matches_rule,
+        variant_tokens,
+    )
+    from price_sync.rules import RULES  # noqa: E402
+else:
+    from .catalog import GENERIC_BRAND, REPO, load_catalog, product_id, slug
+    from .emit import read_dart, write_dart
+    from .markets import ADAPTERS, FetchError, price_on_page
+    from .matching import (
+        Offer, brand_of, brand_position, choose_shared_variant, matches_rule,
+        variant_tokens,
+    )
+    from .rules import RULES
+
+DEFAULT_OUT = REPO / 'lib' / 'data' / 'price_book.dart'
+DEFAULT_CACHE = REPO / '.price_sync_cache'
+
+#: Yeni defter, eskisinin bu oranından azını taşıyorsa yazılmaz.
+#:
+#: Günlük çalışan iş için güvenlik ağı: bir market kapı kapatınca ya da arama
+#: yanıtı değişince kullanıcı bir sabah fiyatların yarısını kaybetmesin.
+SHRINK_LIMIT = 0.7
+
+#: Üst üste bu kadar istek başarısız olursa market bırakılır.
+#:
+#: Kapısını kapatmış bir zincirde yüzlerce isteğin zaman aşımını beklemek
+#: günlük işi saatlere çıkarıyor; erken vazgeçip kalan marketlerle devam
+#: ediyoruz.
+FAILURE_LIMIT = 8
+
+#: `--merge-from` ile en fazla bu kadar günlük fiyat devralınır.
+#:
+#: Devralma tek bir marketi yenilemek için; ötekilerin fiyatı birkaç günü
+#: geçtiyse artık "bugünün fiyatı" değildir, uygulama da öyle göstermemeli.
+MERGE_MAX_AGE = 2
+
+_OFFER_COUNT = re.compile(r'· (\d+) ürün fiyatı')
+
+
+class SearchCache:
+    """Arama sonuçlarını diske yazar: eşleştirmeyi yeniden ağ olmadan denerken."""
+
+    def __init__(self, directory: Path, offline: bool = False):
+        self.directory = directory
+        self.offline = offline
+        directory.mkdir(parents=True, exist_ok=True)
+
+    def _path(self, market: str, term: str, page: int) -> Path:
+        return self.directory / f'{market}__{slug(term)}__{page}.json'
+
+    def offers(self, market: str, term: str, page: int) -> list[Offer] | None:
+        path = self._path(market, term, page)
+        if not path.exists():
+            return None
+        raw = json.loads(path.read_text(encoding='utf-8'))
+        return [Offer(**item) for item in raw]
+
+    def store(self, market: str, term: str, page: int, offers: list[Offer]) -> None:
+        self._path(market, term, page).write_text(
+            json.dumps([asdict(o) for o in offers], ensure_ascii=False),
+            encoding='utf-8',
+        )
+
+
+class MarketHealth:
+    """Bir marketin üst üste kaç isteği düşürdüğünü sayar."""
+
+    def __init__(self, market: str, limit: int = FAILURE_LIMIT):
+        self.market = market
+        self.limit = limit
+        self._streak = 0
+        self._lock = threading.Lock()
+
+    @property
+    def gave_up(self) -> bool:
+        with self._lock:
+            return self._streak >= self.limit
+
+    def ok(self) -> None:
+        with self._lock:
+            self._streak = 0
+
+    def failed(self) -> None:
+        with self._lock:
+            self._streak += 1
+            if self._streak == self.limit:
+                print(f'  ! {self.market}: üst üste {self.limit} istek '
+                      'düştü, market bırakıldı', file=sys.stderr)
+
+
+def fetch(cache: SearchCache, health: MarketHealth, term: str, page: int,
+          delay: float) -> list[Offer]:
+    market = health.market
+    cached = cache.offers(market, term, page)
+    if cached is not None:
+        return cached
+    if cache.offline or health.gave_up:
+        return []
+    adapter = ADAPTERS[market]
+    try:
+        offers = adapter.search(term, page)
+    except FetchError as exc:
+        health.failed()
+        print(f'  ! {market} "{term}" sayfa {page}: {exc}', file=sys.stderr)
+        return []
+    health.ok()
+    cache.store(market, term, page, offers)
+    if delay:
+        time.sleep(delay)
+    return offers
+
+
+def gather(cache: SearchCache, health: MarketHealth,
+           terms: list[tuple[str, int]], jobs: int,
+           delay: float) -> dict[tuple[str, int], list[Offer]]:
+    with ThreadPoolExecutor(max_workers=jobs) as pool:
+        results = pool.map(
+            lambda item: (item, fetch(cache, health, item[0], item[1], delay)),
+            terms,
+        )
+        return dict(results)
+
+
+def brand_candidates(offers: list[Offer], brand: str,
+                     brands: list[str]) -> list[Offer]:
+    """Ürün adı bu markayı gösteren teklifler.
+
+    Marka adı ürün adında geçmeli ve adda daha uzun bir marka adı bulunmamalı:
+    "Nuh'un Ankara Makarna" satırı `Ankara` markasına yazılmaz.
+    """
+    return [
+        o for o in offers
+        if brand_position(o.name, brand) >= 0
+        and (brand_of(o.name, brands) or brand) == brand
+    ]
+
+
+def build_market(market: str, catalog, cache: SearchCache, jobs: int,
+                 delay: float, targeted: bool) -> dict[str, list[Offer]]:
+    """Bir marketin katalog satırlarına uyan ürünlerini toplar."""
+    adapter = ADAPTERS[market]
+    health = MarketHealth(market)
+    pages = [(RULES[t.id]['term'], page)
+             for t in catalog.types
+             for page in range(1, adapter.page_limit + 1)]
+    fetched = gather(cache, health, pages, jobs, delay)
+
+    found: dict[str, list[Offer]] = {}
+    misses: list[tuple[str, str]] = []
+
+    for type_ in catalog.types:
+        rule = RULES[type_.id]
+        weight_based = type_.unit == 'kg'
+        seen: set[str] = set()
+        candidates: list[Offer] = []
+        for page in range(1, adapter.page_limit + 1):
+            for offer in fetched.get((rule['term'], page), []):
+                if offer.url in seen:
+                    continue
+                seen.add(offer.url)
+                candidates.append(offer)
+        matched = [o for o in candidates if matches_rule(rule, o, weight_based)]
+
+        brands = catalog.brands_for(type_)
+        for brand in brands:
+            if brand == GENERIC_BRAND:
+                continue
+            hits = brand_candidates(matched, brand, brands)
+            if hits:
+                found[product_id(type_.id, brand)] = hits
+            else:
+                misses.append((type_.id, brand))
+
+        # Markasız satırda market kendi ürününü gösterir. Kiloyla satılan
+        # üründe her fazla kelime başka bir ürüne işaret eder — "Kabak
+        # Çekirdeği Tuzlu Kg", "Kabak Kg" değildir — o yüzden ad sade olmalı.
+        # Gramajı adında yazan pakette ise fazla kelimeler markanın ve çeşidin
+        # kendisidir: "Boltane Çilek Reçeli 380 g" bir 380 g reçeldir.
+        limit = 1 if weight_based else 3
+        plain = [
+            o for o in matched
+            if len(variant_tokens(o.name, rule, None)) <= limit
+        ]
+        if plain:
+            found[product_id(type_.id, None)] = plain
+
+    if targeted and misses and not health.gave_up:
+        extra = [(f'{brand} {RULES[type_id]["term"]}', 1)
+                 for type_id, brand in misses]
+        fetched_extra = gather(cache, health, extra, jobs, delay)
+        types_by_id = {t.id: t for t in catalog.types}
+        for type_id, brand in misses:
+            type_ = types_by_id[type_id]
+            rule = RULES[type_id]
+            offers = fetched_extra.get((f'{brand} {rule["term"]}', 1), [])
+            hits = brand_candidates(
+                [o for o in offers if matches_rule(rule, o, type_.unit == 'kg')],
+                brand,
+                catalog.brands_for(type_),
+            )
+            if hits:
+                found[product_id(type_id, brand)] = hits
+
+    return found
+
+
+def brand_index(catalog) -> dict[str, str | None]:
+    """`ürün kimliği` -> katalogdaki marka adı (markasız satırda `None`)."""
+    return {
+        product_id(t.id, brand): brand
+        for t in catalog.types
+        for brand in [*catalog.brands_for(t), None]
+        if brand != GENERIC_BRAND
+    }
+
+
+def resolve(candidates: dict[str, dict[str, list[Offer]]],
+            catalog) -> dict[str, dict[str, Offer]]:
+    """Her satır için marketlerde mümkün olduğunca aynı çeşidi seçer."""
+    brand_names = brand_index(catalog)
+    book: dict[str, dict[str, Offer]] = {}
+    for product, per_market in candidates.items():
+        type_id = product.split('__')[0]
+        brand = brand_names.get(product)
+        chosen = choose_shared_variant(per_market, RULES[type_id], brand)
+        if chosen:
+            book[product] = chosen
+    return book
+
+
+def confirm(product: str, market: str, offer: Offer, rule: dict,
+            brand: str | None, weight_based: bool) -> Offer | None:
+    """Ürünü kendi sayfasında doğrular.
+
+    Uygulamanın sözü şu: satıra dokununca açılan sayfada aynı ürün ve aynı
+    tutar yazar. Bunu varsaymak yerine sayfayı açıp okuyoruz — ürün adı
+    sayfadan alınır, tutarın sayfada yazdığı görülür, ad hâlâ katalog satırının
+    çeşit ve gramajını taşıyor mu diye yeniden bakılır. Geçmeyen kayıt deftere
+    girmez.
+    """
+    adapter = ADAPTERS[market]
+    try:
+        title, text = adapter.page(offer.url)
+    except FetchError as exc:
+        print(f'  ? {product} · {market}: sayfa açılmadı ({exc})',
+              file=sys.stderr)
+        return None
+
+    if not title:
+        print(f'  ? {product} · {market}: sayfada ürün adı yok', file=sys.stderr)
+        return None
+    if not price_on_page(text, offer.price):
+        print(f'  ? {product} · {market}: {offer.price} sayfada yazmıyor '
+              f'({offer.url})', file=sys.stderr)
+        return None
+
+    # Ad sayfadan geliyor: ekranda yazan ürün, açılan sayfadaki üründür.
+    confirmed = replace(offer, name=title)
+    if not matches_rule(rule, confirmed, weight_based):
+        print(f'  ? {product} · {market}: sayfadaki ürün "{title}" satıra '
+              'uymuyor', file=sys.stderr)
+        return None
+    if brand and brand_position(title, brand) < 0:
+        print(f'  ? {product} · {market}: sayfadaki ürün "{title}" {brand} '
+              'göstermiyor', file=sys.stderr)
+        return None
+    return confirmed
+
+
+def confirm_book(book: dict[str, dict[str, Offer]], catalog, jobs: int,
+                 brand_names: dict[str, str | None]) -> dict[str, dict[str, Offer]]:
+    """Defterdeki her kaydı kendi ürün sayfasında doğrular."""
+    types_by_id = {t.id: t for t in catalog.types}
+    tasks = [
+        (product, market, offer)
+        for product, per_market in book.items()
+        for market, offer in per_market.items()
+    ]
+
+    def run(task):
+        product, market, offer = task
+        type_ = types_by_id[product.split('__')[0]]
+        brand = brand_names.get(product)
+        return task, confirm(
+            product, market, offer, RULES[type_.id], brand,
+            type_.unit == 'kg',
+        )
+
+    with ThreadPoolExecutor(max_workers=jobs) as pool:
+        results = list(pool.map(run, tasks))
+
+    confirmed: dict[str, dict[str, Offer]] = {}
+    for (product, market, _), offer in results:
+        if offer is not None:
+            confirmed.setdefault(product, {})[market] = offer
+    dropped = len(tasks) - sum(len(e) for e in confirmed.values())
+    print(f'  sayfada doğrulanmayan {dropped} kayıt düşürüldü')
+    return confirmed
+
+
+def merge(book: dict[str, dict[str, Offer]], source: Path, *,
+          fetched: list[str],
+          fetched_at: str) -> tuple[dict[str, dict[str, Offer]], str] | None:
+    """Bu çekimde sorulmayan marketlerin kayıtlarını eski defterden devralır.
+
+    Tek bir marketi yenilemek için var: ötekiler yeniden çekilmez ama deftere
+    girmeye devam eder. Devralınan kayıtlar [MERGE_MAX_AGE] günden eski
+    olamaz ve defterin tarihi en eski kaydın günü olur — uygulama fiyatları
+    olduğundan taze göstermemeli.
+    """
+    if not source.exists():
+        print(f'devralınacak defter yok: {source}', file=sys.stderr)
+        return None
+
+    source_date, previous = read_dart(source)
+    try:
+        age = (date.fromisoformat(fetched_at)
+               - date.fromisoformat(source_date)).days
+    except ValueError:
+        print(f'{source} tarihi okunamadı: {source_date!r}', file=sys.stderr)
+        return None
+    if age < 0 or age > MERGE_MAX_AGE:
+        print(f'{source} {source_date} tarihli, bu çekim {fetched_at}; '
+              f'{MERGE_MAX_AGE} günden eski fiyat devralınmaz', file=sys.stderr)
+        return None
+
+    carried = 0
+    for product, per_market in previous.items():
+        for market, offer in per_market.items():
+            if market in fetched:
+                continue
+            book.setdefault(product, {}).setdefault(market, offer)
+            carried += 1
+    print(f'  {source} defterinden {carried} kayıt devralındı'
+          + (f' ({age} gün önceki çekim)' if age else ''))
+    # Defterin tarihi en eski kaydınki: kullanıcıya vaat edilen tazelik,
+    # kayıtların en eskisi kadardır.
+    return book, min(fetched_at, source_date) if carried else fetched_at
+
+
+def previous_offer_count(path: Path) -> int:
+    """Yerinde duran defterin taşıdığı fiyat sayısı (yoksa 0)."""
+    if not path.exists():
+        return 0
+    match = _OFFER_COUNT.search(path.read_text(encoding='utf-8')[:2000])
+    return int(match.group(1)) if match else 0
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--markets', default=','.join(ADAPTERS),
+                        help='virgülle ayrılmış market listesi')
+    parser.add_argument('--out', type=Path, default=DEFAULT_OUT)
+    parser.add_argument('--cache-dir', type=Path, default=DEFAULT_CACHE)
+    parser.add_argument('--offline', action='store_true',
+                        help='ağa çıkmaz, yalnızca önbellekten eşleştirir')
+    parser.add_argument('--fresh', action='store_true',
+                        help='önbelleği yok sayıp yeniden çeker')
+    parser.add_argument('--no-targeted', action='store_true',
+                        help='eksik markalar için hedefli arama yapmaz')
+    parser.add_argument('--jobs', type=int, default=6)
+    parser.add_argument('--delay', type=float, default=0.0,
+                        help='istekler arası bekleme (saniye)')
+    parser.add_argument('--fetched-at', default=None,
+                        help='dosyaya yazılacak çekim tarihi (YYYY-MM-DD)')
+    parser.add_argument('--allow-shrink', action='store_true',
+                        help='defter belirgin küçülse de yaz')
+    parser.add_argument('--no-verify', action='store_true',
+                        help='kayıtları ürün sayfasında doğrulamaz (hızlı)')
+    parser.add_argument('--merge-from', type=Path, default=None,
+                        help='çekilmeyen marketlerin kayıtlarını bu defterden '
+                             'devralır (aynı gün çekilmiş olmalı)')
+    args = parser.parse_args()
+
+    markets = [m.strip() for m in args.markets.split(',') if m.strip()]
+    unknown = [m for m in markets if m not in ADAPTERS]
+    if unknown:
+        parser.error(f'bilinmeyen market: {", ".join(unknown)}')
+
+    if args.fresh and args.cache_dir.exists():
+        for path in args.cache_dir.glob('*.json'):
+            path.unlink()
+
+    catalog = load_catalog()
+    cache = SearchCache(args.cache_dir, offline=args.offline)
+    print(f'{len(catalog.types)} ürün tipi · {len(markets)} market')
+
+    candidates: dict[str, dict[str, list[Offer]]] = {}
+    for market in markets:
+        found = build_market(market, catalog, cache, args.jobs, args.delay,
+                             targeted=not args.no_targeted)
+        for product, offers in found.items():
+            candidates.setdefault(product, {})[market] = offers
+        print(f'  {ADAPTERS[market].label}: {len(found)} satır eşleşti')
+
+    book = resolve(candidates, catalog)
+
+    if not args.no_verify and not args.offline:
+        book = confirm_book(book, catalog, args.jobs, brand_index(catalog))
+
+    if not book:
+        print('hiçbir markette fiyat bulunamadı; dosya değiştirilmedi',
+              file=sys.stderr)
+        return 1
+
+    fetched_at = args.fetched_at or date.today().isoformat()
+    if args.merge_from:
+        merged = merge(book, args.merge_from, fetched=markets,
+                       fetched_at=fetched_at)
+        if merged is None:
+            return 1
+        book, fetched_at = merged
+
+    # Fiyat veremeyen market deftere yazılmaz: uygulamada boş bir sütun olarak
+    # görünmesin.
+    active = [m for m in ADAPTERS
+              if any(m in entry for entry in book.values())]
+    offers = sum(len(entry) for entry in book.values())
+
+    before = previous_offer_count(args.out)
+    if before and offers < before * SHRINK_LIMIT and not args.allow_shrink:
+        print(
+            f'defter {before} fiyattan {offers} fiyata düşüyor; muhtemelen bir '
+            'market yanıt vermedi. Dosya değiştirilmedi (--allow-shrink ile '
+            'yine de yazılır).',
+            file=sys.stderr,
+        )
+        return 1
+
+    write_dart(
+        args.out,
+        book,
+        markets=active,
+        labels={m: ADAPTERS[m].label for m in active},
+        fetched_at=fetched_at,
+    )
+    print(f'{args.out}: {len(book)} satır, {offers} market fiyatı')
+    return 0
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())

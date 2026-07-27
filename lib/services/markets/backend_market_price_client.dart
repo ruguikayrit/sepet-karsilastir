@@ -1,5 +1,4 @@
 import '../../config/app_config.dart';
-import '../../models/fetch_status.dart';
 import '../../models/list_item.dart';
 import '../../models/market.dart';
 import '../../models/market_quote.dart';
@@ -37,11 +36,16 @@ import 'quote_cache.dart';
 ///       "externalSku": "MIG-SUT-1L",
 ///       "unitPrice": 41.5,
 ///       "available": true,
-///       "currency": "TRY"
+///       "currency": "TRY",
+///       "marketProduct": "İçim Süt Tam Yağlı 1 L",
+///       "sourceUrl": "https://www.migros.com.tr/icim-sut-tam-yagli-1-l-p-1a2b3c"
 ///     }
 ///   ]
 /// }
 /// ```
+///
+/// `sourceUrl` zorunludur: fiyatın okunduğu ürün sayfası gelmezse uygulama o
+/// satırı fiyatsız gösterir, çünkü kullanıcı tutarı tıklayıp doğrulayamaz.
 class BackendMarketPriceClient implements MarketPriceClient {
   BackendMarketPriceClient({
     required this.marketId,
@@ -135,7 +139,8 @@ class MarketClients {
 
   static List<MarketPriceClient> all(ApiClient api, {QuoteCache? cache}) {
     final sharedCache = cache ?? QuoteCache(ttl: AppConfig.quoteCacheTtl);
-    return Market.all
+    // Fiyatını kendi sitesinde yayınlamayan zincir için teklif istenmez.
+    return Market.priced
         .map(
           (market) => BackendMarketPriceClient(
             marketId: market.id,
@@ -145,51 +150,5 @@ class MarketClients {
           ),
         )
         .toList();
-  }
-}
-
-/// Backend yokken iskeleti doğrulamak için sabit yanıt üreten istemci.
-class StubMarketPriceClient implements MarketPriceClient {
-  StubMarketPriceClient({
-    required this.marketId,
-    this.priceFactor = 1.0,
-    this.shouldFail = false,
-  });
-
-  @override
-  final MarketId marketId;
-  final double priceFactor;
-  final bool shouldFail;
-
-  @override
-  Future<MarketQuoteBatch> fetchBasketQuotes({
-    required List<ListItem> items,
-    required ProductSkuMap skuMap,
-    String? region,
-    String? storeId,
-  }) async {
-    await Future<void>.delayed(const Duration(milliseconds: 120));
-    if (shouldFail) {
-      return MarketQuoteBatch.failed(
-        marketId: marketId,
-        message: '${marketId.name} stub failure',
-      );
-    }
-
-    return MarketQuoteBatch(
-      marketId: marketId,
-      status: FetchStatus.ok,
-      fetchedAt: DateTime.now(),
-      storeId: storeId ?? 'stub-store',
-      quotes: items.map((item) {
-        final base = 50.0 + item.product.typeId.hashCode % 40;
-        return ProductQuote(
-          productId: item.product.id,
-          externalSku: skuMap.skuFor(marketId, item.product.typeId),
-          unitPrice: double.parse((base * priceFactor).toStringAsFixed(2)),
-          available: true,
-        );
-      }).toList(),
-    );
   }
 }

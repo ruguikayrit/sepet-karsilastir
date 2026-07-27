@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/market.dart';
+import '../services/price_book_service.dart';
 import '../state/basket_controller.dart';
 import '../theme/app_theme.dart';
 import '../widgets/name_prompt_dialog.dart';
@@ -78,7 +79,8 @@ class BasketScreen extends StatelessWidget {
                     Expanded(
                       child: Text(
                         basket.isEmpty
-                            ? 'Ürün ekle, ${Market.all.length} marketten en düşük toplamı anında gör.'
+                            ? 'Ürün ekle, ${Market.all.length} marketin ürün '
+                                'sayfasındaki fiyatlarla en düşük toplamı gör.'
                             : 'Hazır olduğunda Karşılaştır sekmesine geç veya sepetini kaydet.',
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
@@ -164,6 +166,21 @@ class BasketScreen extends StatelessWidget {
                                             fontWeight: FontWeight.w600,
                                           ),
                                         ),
+                                        // Fiyatı hiçbir markette yayınlanmayan
+                                        // satır karşılaştırmada boş kalır;
+                                        // kullanıcı bunu sepette görsün.
+                                        if (PriceBookService.pricedMarketCount(
+                                              item.product.id,
+                                            ) ==
+                                            0)
+                                          Text(
+                                            'Hiçbir markette fiyatı bulunamadı',
+                                            style: TextStyle(
+                                              color: palette.danger,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
                                       ],
                                     ),
                                   ),
@@ -296,7 +313,8 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Alışveriş listeni oluştur.\nMigros, BİM, A101, Şok, Macrocenter ve\n${Market.all.length} markette fiyatları karşılaştır.',
+              'Alışveriş listeni oluştur.\nMarketlerin kendi ürün '
+              'sayfalarındaki fiyatları\nyan yana gör.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: palette.inkMuted,
