@@ -38,4 +38,14 @@ class AppConfig {
 
   /// Tek market başarısız olsa bile diğerlerini göster.
   static const allowPartialMarketFailures = true;
+
+  /// Canlı HTTP backend gerçekten yapılandırıldı mı?
+  ///
+  /// `USE_LIVE_PRICES=true` ama `API_BASE_URL` hâlâ example.com ise
+  /// uygulama stub istemcilere düşer.
+  static bool get isLiveBackendConfigured =>
+      useLivePrices && !apiBaseUrl.contains('example.com');
+
+  /// Yerel geliştirme için tipik backend adresi.
+  static const localBackendUrl = 'http://localhost:8787';
 }

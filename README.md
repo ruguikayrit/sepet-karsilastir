@@ -241,4 +241,20 @@ yeniden yayınlar.
 
 ```bash
 flutter test
+cd backend && dart test
 ```
+
+## Dart fiyat API (`backend/`)
+
+İsteğe bağlı Shelf sunucusu: `POST /v1/markets/{slug}/quotes`. Varsayılan
+`PRICE_MODE=synthetic` (demo). `PRICE_MODE=official` yalnızca
+`MIGROS_API_BASE` + `MIGROS_API_KEY` gibi resmi kimliklerle yapılandırılmış
+adaptörleri kullanır; market uygulaması reverse-engineering yapılmaz.
+
+```bash
+cd backend
+dart pub get
+dart run bin/server.dart
+```
+
+Detay: [backend/README.md](backend/README.md)
