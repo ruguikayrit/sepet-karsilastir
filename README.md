@@ -1,6 +1,14 @@
 # Sepet (geçici ad)
 
-Market alışveriş listesi fiyat karşılaştırma uygulaması (Flutter).
+Alışveriş listeni yaz; bugün hangi **tek markete** gidersen en az
+ödeyeceğini söyleyen Flutter uygulaması.
+
+Aynı ürün bir markette yüzde 50 indirimliyken diğerinde normal fiyatta
+olabiliyor. Her ürüne her markette tek tek bakmaya zaman yok — hangi
+marketten alırsan sepet toplamının en düşük olacağı da belirsiz kalıyor.
+Sepet bu soruyu kapatır: listeyi kaydedersin, güncel fiyatlar toplanır,
+en düşük tamamlanmış toplamı veren market öne çıkar. Sen de kısa sürede
+tek markete gidip kazanmış olursun.
 
 ## Staging önizleme
 
@@ -155,6 +163,7 @@ Tek market düşse bile diğerleri gösterilir. Aynı sepet teklifleri ~45 sn
 
 ## Özellikler
 
+- Alışveriş listesi → bugünün fiyatları → **hangi tek markete gideceğini** söyleme
 - Marka ve gramajı seçilmiş liste, marketlerin kendi sayfalarındaki fiyatlarla
   karşılaştırılır
 - 80+ ürün tipi (süt, temel gıda, meyve-sebze, et, temizlik, bebek vb.)

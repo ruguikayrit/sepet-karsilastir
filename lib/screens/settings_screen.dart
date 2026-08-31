@@ -92,7 +92,8 @@ class SettingsScreen extends StatelessWidget {
                 _InfoRow(label: 'Sürüm', value: '1.0.0'),
                 _InfoRow(
                   label: 'Amaç',
-                  value: 'Market sepeti fiyat karşılaştırması',
+                  value:
+                      'Alışveriş listesi için bugün en ucuz tek marketi bulmak',
                 ),
               ],
             ),

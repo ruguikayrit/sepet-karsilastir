@@ -339,7 +339,7 @@ class _HistoryView extends StatelessWidget {
         title: 'Geçmiş boş',
         body: 'Her karşılaştırma otomatik kaydedilir.\n'
             'Sonuçları burada tekrar görebilirsin.',
-        actionLabel: basket.isEmpty ? 'Sepete ürün ekle' : 'Karşılaştır',
+        actionLabel: basket.isEmpty ? 'Sepete ürün ekle' : 'En ucuz marketi bul',
         onAction: () => onOpenTab(basket.isEmpty ? 1 : 2),
       );
     }

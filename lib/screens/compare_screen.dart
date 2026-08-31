@@ -23,7 +23,7 @@ class CompareScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Karşılaştırma'),
+        title: const Text('Nereye gideyim?'),
         actions: [
           if (result != null)
             IconButton(
@@ -79,14 +79,16 @@ class _EmptyCompare extends StatelessWidget {
             ),
             const SizedBox(height: 18),
             Text(
-              'Henüz karşılaştırma yok',
+              'Henüz sonuç yok',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Sepete ürün ekleyip “Marketleri karşılaştır”\nbutonuna basarak sonucu burada gör.',
+              'Alışveriş listeni kaydet, sonra “En ucuz marketi bul”\n'
+              'de. Bugünün fiyatlarıyla hangi tek markete\n'
+              'gideceğini burada görürsün.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: palette.inkMuted,
@@ -119,7 +121,7 @@ class _LoadingView extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           Text(
-            'Marketlerden anlık fiyatlar alınıyor…',
+            'Bugünün fiyatları toplanıyor…',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
@@ -127,7 +129,7 @@ class _LoadingView extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            '${Market.all.length} market taranıyor',
+            '${Market.all.length} markette listenin toplamı hesaplanıyor',
             style: TextStyle(color: palette.inkMuted),
           ),
         ],
@@ -164,7 +166,7 @@ class _ResultBody extends StatelessWidget {
               _NoCompleteBasketCard(result: result),
             const SizedBox(height: 18),
             Text(
-              'Market sıralaması',
+              'Diğer marketler',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
@@ -370,7 +372,7 @@ class _WinnerCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  'EN KARLI',
+                  'BUGÜN BURAYA GİT',
                   style: TextStyle(
                     color: palette.onAccent,
                     fontWeight: FontWeight.w800,
@@ -393,6 +395,15 @@ class _WinnerCard extends StatelessWidget {
               height: 1.1,
             ),
           ),
+          const SizedBox(height: 4),
+          Text(
+            'Listenin en düşük tamamlanmış toplamı',
+            style: TextStyle(
+              color: palette.onAccent.withValues(alpha: 0.9),
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
+          ),
           const SizedBox(height: 6),
           Text(
             formatTry(winner.total),
@@ -405,8 +416,8 @@ class _WinnerCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '${winner.lines.length} satırın tamamı ${winner.market.name} '
-            'ürün sayfalarından okundu',
+            '${winner.lines.length} ürünün fiyatı ${winner.market.name} '
+            'sayfalarından okundu — tek market yeterli',
             style: TextStyle(
               color: palette.onAccent.withValues(alpha: 0.9),
               fontWeight: FontWeight.w600,
@@ -416,7 +427,8 @@ class _WinnerCard extends StatelessWidget {
           if (savings != null && savings! > 0) ...[
             const SizedBox(height: 10),
             Text(
-              'En pahalı markete göre ${formatTry(savings!)} tasarruf',
+              'Başka bir tamamlanmış markete göre ${formatTry(savings!)} '
+              'daha az ödersin',
               style: TextStyle(
                 color: palette.onAccent.withValues(alpha: 0.9),
                 fontWeight: FontWeight.w600,

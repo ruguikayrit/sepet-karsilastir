@@ -72,9 +72,9 @@ class MainShellState extends State<MainShell> {
               label: 'Sepet',
             ),
             const NavigationDestination(
-              icon: Icon(Icons.compare_arrows_outlined),
-              selectedIcon: Icon(Icons.compare_arrows_rounded),
-              label: 'Karşılaştır',
+              icon: Icon(Icons.place_outlined),
+              selectedIcon: Icon(Icons.place_rounded),
+              label: 'Sonuç',
             ),
             const NavigationDestination(
               icon: Icon(Icons.bookmark_border_rounded),

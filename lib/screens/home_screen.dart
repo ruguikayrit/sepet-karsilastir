@@ -52,7 +52,7 @@ class HomeScreen extends StatelessWidget {
                             ?.copyWith(fontWeight: FontWeight.w800),
                       ),
                       Text(
-                        'Bugün ne kadar kazanabilirsin?',
+                        'Hangi markete gideceğini bil',
                         style: TextStyle(
                           color: palette.inkMuted,
                           fontWeight: FontWeight.w600,
@@ -77,22 +77,23 @@ class HomeScreen extends StatelessWidget {
                   : !basket.isEmpty
                       ? _ActionHero(
                           key: const ValueKey('ready'),
-                          title: 'Sepetin hazır — karşılaştır',
+                          title: 'Listen hazır — tek marketi bul',
                           body:
-                              '${basket.totalQuantity} ürün · ${basket.uniqueBrandCount} marka. '
-                              'Marketlerin kendi ürün sayfalarından okunan '
-                              'fiyatlarla en düşük toplamı şimdi gör.',
-                          cta: 'Sonucu gör',
+                              '${basket.totalQuantity} ürün kaydı. '
+                              'Bugünün fiyatlarıyla hangi marketten '
+                              'alırsan en az ödeyeceğini şimdi gör.',
+                          cta: 'En ucuz marketi göster',
                           onTap: () => onOpenTab(2),
                         )
                       : _ActionHero(
                           key: const ValueKey('empty'),
-                          title: 'Markanı seç, sepetini kur',
+                          title: 'Listeni yaz, tek marketi seç',
                           body:
-                              'Her ürün için bir veya birden fazla marka seç. '
-                              'Sonra ${Market.all.length} marketi tek ekranda '
-                              'kıyasla.',
-                          cta: 'Sepete ürün ekle',
+                              'Aynı ürün bir markette yarısı fiyatına olabilir. '
+                              'Listeyi kaydet; ${Market.all.length} marketin '
+                              'bugünkü toplamını karşılaştırıp nereye '
+                              'gideceğini söyleyelim.',
+                          cta: 'Alışveriş listemi oluştur',
                           onTap: () => onOpenTab(1),
                         ),
             ),
@@ -206,47 +207,50 @@ class HomeScreen extends StatelessWidget {
             ],
             const SizedBox(height: 20),
             Text(
-              'Bu listede nelere dikkat et?',
+              'Neden tek marketi bulmak zor?',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
             ),
             const SizedBox(height: 10),
             const _InsightCard(
-              icon: Icons.verified_rounded,
-              title: 'Marka seçimi fark yaratır',
+              icon: Icons.percent_rounded,
+              title: 'Aynı ürün, çok farklı fiyat',
               body:
-                  'Aynı süt tipi farklı markalarda fiyat değiştirebilir. '
-                  'Sepete eklerken markayı net seç.',
+                  'Bir ürün bir markette yüzde 50 indirimliyken diğerinde '
+                  'normal fiyatta olabilir. Raf farkı alışverişten alışverişe '
+                  'değişir.',
             ),
             const SizedBox(height: 8),
             const _InsightCard(
-              icon: Icons.storefront_rounded,
-              title: 'Tek market yetmeyebilir',
+              icon: Icons.timer_outlined,
+              title: 'Tek tek bakmaya zaman yok',
               body:
-                  'Bazı ürünler bir markette daha ucuz, bazılarında yok. '
-                  'Karşılaştırma eksik ürünü de gösterir.',
+                  'Çoklu market alışverişinde her ürüne ayrı ayrı bakmak '
+                  'gerçekçi değil. Hangi marketten alırsan en az ödeyeceğini '
+                  'bilmek zorlaşıyor.',
             ),
             const SizedBox(height: 8),
             const _InsightCard(
-              icon: Icons.savings_rounded,
-              title: 'Hedef: en düşük tamamlanmış sepet',
+              icon: Icons.place_rounded,
+              title: 'Biz tek adresi söylüyoruz',
               body:
-                  'Sadece en ucuz satıra değil, listenin tamamını '
-                  'karşılayan markete bak.',
+                  'Listeni kaydet; güncel fiyatları toplayıp listenin tamamı '
+                  'için en düşük toplamı veren marketi gösterelim. Sen de '
+                  'doğrudan oraya git.',
             ),
             const SizedBox(height: 20),
             Text(
-              'Karşılaştırılan ${Market.all.length} market',
+              'Bugün baktığımız ${Market.all.length} market',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
             ),
             const SizedBox(height: 4),
             Text(
-              'Fiyat, yalnızca marketin kendi ürün sayfasından okunabildiğinde '
-              'yazar. Okunamayan markette satır “ürün bulunamadı” kalır; '
-              'tahmini tutar göstermiyoruz.',
+              'Her tutar marketin kendi ürün sayfasından okunur. Okunamayan '
+              'satırda tahmin yok; “ürün bulunamadı” yazar. Amaç: hangi tek '
+              'markete gideceğini güvenle seçmek.',
               style: TextStyle(
                 color: palette.inkMuted,
                 fontSize: 13,
@@ -321,7 +325,7 @@ class _SavingsHero extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Son karşılaştırma',
+                'Bugün buraya git',
                 style: TextStyle(
                   color: palette.onAccent.withValues(alpha: 0.72),
                   fontWeight: FontWeight.w700,
@@ -329,7 +333,7 @@ class _SavingsHero extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                '$marketName ile ${formatTry(savings)} tasarruf',
+                '$marketName · ${formatTry(savings)} kazanç',
                 style: TextStyle(
                   color: palette.onAccent,
                   fontSize: 22,
@@ -339,7 +343,7 @@ class _SavingsHero extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                'En karlı sepet toplamı ${formatTry(total)}',
+                'Listenin en düşük toplamı ${formatTry(total)} — tek market yeterli',
                 style: TextStyle(
                   color: palette.onAccent,
                   fontWeight: FontWeight.w600,
