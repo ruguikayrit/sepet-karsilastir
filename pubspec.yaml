@@ -1,5 +1,5 @@
 name: sepet_karsilastir
-description: "Market alisveris listesi fiyat karsilastirma uygulamasi"
+description: "Alisveris listesi icin bugun en ucuz tek marketi bulan uygulama"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev

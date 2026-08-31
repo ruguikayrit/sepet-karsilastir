@@ -104,11 +104,25 @@ Future<void> _pumpCompare(
 }
 
 /// Sonuç listesi uzun; aranan metni görünür alana getirir.
+///
+/// ListView çocukları tembel üretildiği için hedef henüz ağaçta olmayabilir;
+/// önce sürükleyerek build ettiririz.
 Future<void> _scrollTo(WidgetTester tester, Finder finder) async {
+  final scrollable = find.byType(Scrollable).first;
+  for (var i = 0; i < 24; i++) {
+    final matches = finder.evaluate();
+    if (matches.isNotEmpty) {
+      await tester.ensureVisible(find.byWidget(matches.first.widget));
+      await tester.pumpAndSettle();
+      return;
+    }
+    await tester.drag(scrollable, const Offset(0, -320));
+    await tester.pumpAndSettle();
+  }
   await tester.scrollUntilVisible(
     finder,
     240,
-    scrollable: find.byType(Scrollable).first,
+    scrollable: scrollable,
   );
   await tester.pumpAndSettle();
 }
@@ -153,7 +167,7 @@ void main() {
 
     await _pumpCompare(tester, controller);
 
-    expect(find.text('EN KARLI'), findsOneWidget);
+    expect(find.text('BUGÜN BURAYA GİT'), findsOneWidget);
     expect(find.text('Şok'), findsWidgets);
     expect(find.text('kısmi toplam'), findsOneWidget);
     expect(find.textContaining('1/2 market listeyi tamamlıyor'),
@@ -182,7 +196,7 @@ void main() {
 
     await _pumpCompare(tester, controller);
 
-    expect(find.text('EN KARLI'), findsNothing);
+    expect(find.text('BUGÜN BURAYA GİT'), findsNothing);
     expect(find.text('Listeyi tek başına tamamlayan market yok'),
         findsOneWidget);
     expect(
@@ -207,7 +221,7 @@ void main() {
 
     await _pumpCompare(tester, controller);
 
-    await _scrollTo(tester, find.byType(ExpansionTile).first);
+    await _scrollTo(tester, find.byType(ExpansionTile));
     await tester.tap(find.byType(ExpansionTile).first);
     await tester.pumpAndSettle();
 
@@ -235,7 +249,7 @@ void main() {
 
     await _pumpCompare(tester, controller);
 
-    await _scrollTo(tester, find.byType(ExpansionTile).first);
+    await _scrollTo(tester, find.byType(ExpansionTile));
     await tester.tap(find.byType(ExpansionTile).first);
     await tester.pumpAndSettle();
 

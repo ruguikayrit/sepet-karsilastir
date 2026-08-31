@@ -18,7 +18,7 @@ void main() {
 
     expect(find.text('Anasayfa'), findsWidgets);
     expect(find.text('Sepet'), findsWidgets);
-    expect(find.text('Karşılaştır'), findsWidgets);
+    expect(find.text('Sonuç'), findsWidgets);
     expect(find.text('Listeler'), findsWidgets);
     expect(find.text('Ayarlar'), findsWidgets);
   });

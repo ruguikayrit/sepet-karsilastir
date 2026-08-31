@@ -41,8 +41,8 @@ class BasketScreen extends StatelessWidget {
                         ),
                         Text(
                           basket.isEmpty
-                              ? 'Ürün ekleyerek listeyi oluştur'
-                              : '${basket.totalQuantity} ürün listede',
+                              ? 'Bugün hangi markete gideceğini bulmak için listeyi yaz'
+                              : '${basket.totalQuantity} ürün — en ucuz tek marketi bulmaya hazır',
                           style: TextStyle(
                             color: palette.inkMuted,
                             fontWeight: FontWeight.w600,
@@ -79,9 +79,11 @@ class BasketScreen extends StatelessWidget {
                     Expanded(
                       child: Text(
                         basket.isEmpty
-                            ? 'Ürün ekle, ${Market.all.length} marketin ürün '
-                                'sayfasındaki fiyatlarla en düşük toplamı gör.'
-                            : 'Hazır olduğunda Karşılaştır sekmesine geç veya sepetini kaydet.',
+                            ? 'Aynı ürün farklı marketlerde çok farklı fiyata '
+                                'satılabiliyor. Listeni yaz; ${Market.all.length} '
+                                'marketin bugünkü toplamından en düşüğü söyleyelim.'
+                            : 'Hazır olunca en ucuz marketi bul — ya da listeni '
+                                'kaydedip sonra tekrar kullan.',
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
                           color: palette.ink,
@@ -251,8 +253,8 @@ class BasketScreen extends StatelessWidget {
                     )
                   : Text(
                       basket.isEmpty
-                          ? 'Önce ürün ekleyin'
-                          : 'Marketleri karşılaştır',
+                          ? 'Önce listeye ürün ekleyin'
+                          : 'En ucuz marketi bul',
                     ),
             ),
           ),
@@ -313,8 +315,9 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Alışveriş listeni oluştur.\nMarketlerin kendi ürün '
-              'sayfalarındaki fiyatları\nyan yana gör.',
+              'Alışveriş listeni buraya yaz.\n'
+              'Biz bugünün fiyatlarını toplayıp\n'
+              'hangi tek markete gideceğini söyleyelim.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: palette.inkMuted,
