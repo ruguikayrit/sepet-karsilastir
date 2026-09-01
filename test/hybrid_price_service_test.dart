@@ -21,8 +21,9 @@ class _FakeApiClient extends ApiClient {
   @override
   Stream<Map<String, dynamic>> postNdjsonStream(
     String path,
-    Map<String, dynamic> body,
-  ) async* {
+    Map<String, dynamic> body, {
+    Duration? timeout,
+  }) async* {
     for (final chunk in chunks) {
       yield chunk;
     }

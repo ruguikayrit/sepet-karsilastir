@@ -33,6 +33,11 @@ class AppConfig {
 
   static const requestTimeout = Duration(seconds: 12);
 
+  /// Canlı sepet karşılaştırması (NDJSON akış) için üst süre.
+  ///
+  /// Her ürün × market sayfa okuması yapılabildiği için normal istekten uzun.
+  static const liveCompareTimeout = Duration(seconds: 120);
+
   /// Aynı sepet için market tekliflerinin yeniden kullanılma süresi.
   static const quoteCacheTtl = Duration(seconds: 45);
 

@@ -180,7 +180,8 @@ class _ResultBody extends StatelessWidget {
               'Fiyatlar ${_priceDate(result)} · marketlerin kendi ürün '
               'sayfalarından · ${result.completeCount}/${result.baskets.length}'
               ' market listeyi tamamlıyor'
-              '${result.refreshing ? ' · canlı yenileniyor' : ''}',
+              '${result.refreshing ? ' · canlı güncelleniyor' : ''}'
+              '${result.source == PriceSource.live && !result.refreshing ? ' · canlı' : ''}',
               style: TextStyle(color: palette.inkMuted, fontSize: 13),
             ),
             if (result.failedMarketCount > 0) ...[

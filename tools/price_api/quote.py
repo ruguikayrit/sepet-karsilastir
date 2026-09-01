@@ -1,7 +1,8 @@
-"""Canlı teklif: defterdeki URL'den sayfa okuma veya arama + eşleştirme."""
+"""Canlı teklif: defter + SKU dizini + sayfa okuma + arama + eşleştirme."""
 
 from __future__ import annotations
 
+import os
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import replace
@@ -17,6 +18,7 @@ from price_sync.rules import RULES
 from price_sync.sync import SearchCache, brand_candidates, brand_index, confirm, fetch, MarketHealth
 
 from .book import load_book
+from .cache import PageCache, SkuIndex
 
 # Market slug (URL) -> dahili kimlik
 SLUG_TO_MARKET = {
@@ -25,6 +27,7 @@ SLUG_TO_MARKET = {
     'sok': 'sok',
     'hakmar': 'hakmar',
     'happy-center': 'happyCenter',
+    'carrefour': 'carrefour',
 }
 
 MARKET_TO_SLUG = {v: k for k, v in SLUG_TO_MARKET.items()}
@@ -33,7 +36,6 @@ MARKET_TO_SLUG = {v: k for k, v in SLUG_TO_MARKET.items()}
 UNPRICED = {
     'a101': 'sitesi otomatik fiyat okumaya kapalı',
     'bim': 'online satış yapmıyor, raf fiyatı yayınlamıyor',
-    'carrefour': 'sitesi otomatik fiyat okumaya kapalı',
     'file': 'sitesinde ürün fiyatı yayınlanmıyor',
     'tarim-kredi': 'online mağazası yayında değil',
     'onur': 'sitesinde ürün fiyatı yayınlanmıyor',
@@ -41,7 +43,13 @@ UNPRICED = {
     'getir': 'sitesi otomatik fiyat okumaya kapalı',
 }
 
-ALL_MARKET_SLUGS = list(SLUG_TO_MARKET) + list(UNPRICED)
+PRICED_SLUGS = list(SLUG_TO_MARKET)
+ALL_MARKET_SLUGS = PRICED_SLUGS + list(UNPRICED)
+
+# Ortam değişkenleriyle ayarlanabilir eşzamanlılık.
+MAX_MARKET_WORKERS = int(os.environ.get('PRICE_API_MARKET_WORKERS', '12'))
+MAX_ITEM_WORKERS = int(os.environ.get('PRICE_API_ITEM_WORKERS', '6'))
+PAGE_CACHE_TTL = float(os.environ.get('PRICE_API_PAGE_CACHE_TTL', '45'))
 
 _PRICE_JSON = re.compile(
     r'"(?:shownPrice|regularPrice|discountedPrice|salePrice|price)"'
@@ -52,17 +60,24 @@ _VISIBLE_TRY = re.compile(
     r'(?!\d)\s*(?:TL|₺)?',
 )
 
+# Modül düzeyinde paylaşılan önbellekler (ThreadingHTTPServer ile güvenli).
+_PAGE_CACHE = PageCache(ttl_seconds=PAGE_CACHE_TTL)
+_SKU_INDEX: SkuIndex | None = None
+
 
 def _iso_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
-def extract_price_from_page(text: str, hint: float | None = None) -> float | None:
-    """Sayfadaki ana fiyatı bulur.
+def _sku_index(cache_dir: Path) -> SkuIndex:
+    global _SKU_INDEX  # noqa: PLW0603
+    if _SKU_INDEX is None:
+        _SKU_INDEX = SkuIndex(cache_dir / 'sku_index.json')
+    return _SKU_INDEX
 
-    Önce ipucu tutarı (defterdeki son fiyat) aranır; yoksa gömülü JSON ve
-    görünür TL kalıpları denenir.
-    """
+
+def extract_price_from_page(text: str, hint: float | None = None) -> float | None:
+    """Sayfadaki ana fiyatı bulur."""
     if hint is not None and price_on_page(text, hint):
         return round(hint, 2)
     candidates: list[float] = []
@@ -83,11 +98,10 @@ def extract_price_from_page(text: str, hint: float | None = None) -> float | Non
             candidates.append(value)
     if not candidates:
         return None
-    # Aynı tutar birkaç yerde geçiyorsa o ana fiyattır.
     from collections import Counter
     counts = Counter(round(c, 2) for c in candidates)
-    price, freq = counts.most_common(1)[0]
-    return price if freq >= 1 else None
+    price, _freq = counts.most_common(1)[0]
+    return price
 
 
 def _brand_for_product(product_id_str: str, brands: dict[str, str | None]) -> str | None:
@@ -95,6 +109,43 @@ def _brand_for_product(product_id_str: str, brands: dict[str, str | None]) -> st
     if brand == GENERIC_BRAND:
         return None
     return brand
+
+
+def _fetch_page(adapter, url: str) -> tuple[str, str]:
+    cached = _PAGE_CACHE.get(url)
+    if cached is not None:
+        return cached
+    title, text = adapter.page(url)
+    _PAGE_CACHE.put(url, title, text)
+    return title, text
+
+
+def _quote_from_url(
+    *,
+    product_id_str: str,
+    market: str,
+    adapter,
+    offer: Offer,
+    rule,
+    brand: str | None,
+    weight_based: bool,
+) -> dict | None:
+    try:
+        title, text = _fetch_page(adapter, offer.url)
+    except FetchError:
+        return None
+    if not title:
+        return None
+    price = extract_price_from_page(text, offer.price)
+    if price is None:
+        return None
+    confirmed_offer = replace(offer, name=title, price=price)
+    confirmed = confirm(
+        product_id_str, market, confirmed_offer, rule, brand, weight_based,
+    )
+    if not confirmed:
+        return None
+    return _quote_json(product_id_str, confirmed)
 
 
 def quote_product(
@@ -106,6 +157,7 @@ def quote_product(
     brands: dict[str, str | None],
     cache: SearchCache,
     health: MarketHealth,
+    sku_index: SkuIndex,
 ) -> dict | None:
     """Tek ürün için bir marketten doğrulanmış teklif döner."""
     type_id = product_id_str.split('__')[0]
@@ -119,24 +171,38 @@ def quote_product(
     if adapter is None:
         return None
 
-    # Hızlı yol: defterde URL var → doğrudan ürün sayfasını aç.
+    # 1) SKU dizini — önceki canlı çekimden kalıcı URL.
+    indexed = sku_index.get(product_id_str, market)
+    if indexed:
+        quote = _quote_from_url(
+            product_id_str=product_id_str,
+            market=market,
+            adapter=adapter,
+            offer=indexed.to_offer(market),
+            rule=rule,
+            brand=brand,
+            weight_based=weight_based,
+        )
+        if quote:
+            return quote
+
+    # 2) Fiyat defteri URL'si.
     cached = book.get(product_id_str, {}).get(market)
     if cached and cached.url:
-        try:
-            title, text = adapter.page(cached.url)
-        except FetchError:
-            title, text = '', ''
-        if title:
-            price = extract_price_from_page(text, cached.price)
-            if price is not None:
-                offer = replace(cached, name=title, price=price)
-                confirmed = confirm(
-                    product_id_str, market, offer, rule, brand, weight_based,
-                )
-                if confirmed:
-                    return _quote_json(product_id_str, confirmed)
+        quote = _quote_from_url(
+            product_id_str=product_id_str,
+            market=market,
+            adapter=adapter,
+            offer=cached,
+            rule=rule,
+            brand=brand,
+            weight_based=weight_based,
+        )
+        if quote:
+            sku_index.put(product_id_str, market, cached)
+            return quote
 
-    # Yavaş yol: market araması + eşleştirme + sayfa doğrulaması.
+    # 3) Yavaş yol: market araması + eşleştirme + sayfa doğrulaması.
     term = rule['term']
     if brand:
         term = f'{brand} {term}'
@@ -160,6 +226,7 @@ def quote_product(
     confirmed = confirm(product_id_str, market, chosen, rule, brand, weight_based)
     if not confirmed:
         return None
+    sku_index.put(product_id_str, market, confirmed)
     return _quote_json(product_id_str, confirmed)
 
 
@@ -182,7 +249,7 @@ def quote_market(
     book_path: Path,
     cache_dir: Path,
 ) -> dict:
-    """Bir marketin sepet teklifini üretir."""
+    """Bir marketin sepet teklifini üretir — ürünler paralel çekilir."""
     fetched_at = _iso_now()
     if slug in UNPRICED:
         return {
@@ -204,26 +271,43 @@ def quote_market(
             'quotes': [],
         }
 
-    fetched_at_book, book = load_book(book_path)
+    _, book = load_book(book_path)
     catalog = load_catalog()
     brands = brand_index(catalog)
     cache = SearchCache(cache_dir, offline=False)
     health = MarketHealth(market)
+    sku = _sku_index(cache_dir)
 
     quotes: list[dict] = []
-    for item in items:
-        pid = item['productId']
-        quote = quote_product(
-            product_id_str=pid,
+    workers = min(MAX_ITEM_WORKERS, max(1, len(items)))
+
+    def _one(item: dict) -> dict | None:
+        return quote_product(
+            product_id_str=item['productId'],
             market=market,
             book=book,
             catalog=catalog,
             brands=brands,
             cache=cache,
             health=health,
+            sku_index=sku,
         )
-        if quote:
-            quotes.append(quote)
+
+    if workers <= 1 or len(items) <= 1:
+        for item in items:
+            quote = _one(item)
+            if quote:
+                quotes.append(quote)
+    else:
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            futures = {pool.submit(_one, item): item for item in items}
+            for future in as_completed(futures):
+                try:
+                    quote = future.result()
+                except Exception:  # noqa: BLE001
+                    continue
+                if quote:
+                    quotes.append(quote)
 
     return {
         'marketId': _market_id_from_slug(slug),
@@ -249,11 +333,20 @@ def compare_stream(
     cache_dir: Path,
     markets: list[str] | None = None,
 ):
-    """Market market tamamlanan sepet sonuçlarını sırayla üretir."""
-    slugs = markets or ALL_MARKET_SLUGS
-    fetched_at_book, _ = load_book(book_path)
+    """Market market tamamlanan sepet sonuçlarını sırayla üretir.
 
-    with ThreadPoolExecutor(max_workers=min(8, len(slugs))) as pool:
+    Önce fiyat okunabilen marketler, sonra diğerleri — kullanıcı fiyatları
+    daha erken görür.
+    """
+    if markets is None:
+        slugs = PRICED_SLUGS + [s for s in UNPRICED if s not in PRICED_SLUGS]
+    else:
+        slugs = markets
+
+    fetched_at_book, _ = load_book(book_path)
+    workers = min(MAX_MARKET_WORKERS, max(1, len(slugs)))
+
+    with ThreadPoolExecutor(max_workers=workers) as pool:
         futures = {
             pool.submit(
                 quote_market,
@@ -280,7 +373,8 @@ def compare_stream(
             yield {
                 'event': 'market',
                 'market': batch,
-                'pricesFetchedAt': fetched_at_book,
+                'pricesFetchedAt': _iso_now(),
+                'bookFetchedAt': fetched_at_book,
             }
 
     yield {'event': 'done', 'comparedAt': _iso_now()}

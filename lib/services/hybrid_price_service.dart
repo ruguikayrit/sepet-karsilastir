@@ -80,8 +80,9 @@ class HybridPriceService implements PriceService {
           final batch = MarketQuoteBatch.fromJson(batchJson);
           merged = _mergeMarket(merged, batch, items);
           final fetchedAt = chunk['pricesFetchedAt'] as String?;
+          final bookFetchedAt = chunk['bookFetchedAt'] as String?;
           yield merged.copyWith(
-            pricesFetchedAt: fetchedAt ?? merged.pricesFetchedAt,
+            pricesFetchedAt: fetchedAt ?? bookFetchedAt ?? merged.pricesFetchedAt,
             refreshing: true,
           );
         } else if (chunk['event'] == 'done') {

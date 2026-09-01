@@ -109,7 +109,6 @@ class Market {
       color: Color(0xFF0055A5),
       segment: MarketSegment.ulusal,
       site: 'https://www.carrefoursa.com/',
-      noPriceReason: 'sitesi otomatik fiyat okumaya kapalı',
     ),
     Market(
       id: MarketId.file,

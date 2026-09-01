@@ -12,3 +12,9 @@ services:
     envVars:
       - key: PYTHONUNBUFFERED
         value: "1"
+      - key: PRICE_API_MARKET_WORKERS
+        value: "12"
+      - key: PRICE_API_ITEM_WORKERS
+        value: "8"
+      - key: PRICE_API_PAGE_CACHE_TTL
+        value: "60"
