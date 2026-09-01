@@ -59,6 +59,17 @@ class Market {
   /// Fiyatı kendi sitesinden okunabiliyor mu?
   bool get publishesPrices => noPriceReason == null;
 
+  /// Market Fiyatı resmi platformunun kapsadığı zincirler.
+  static const liveFeedIds = <MarketId>{
+    MarketId.a101,
+    MarketId.bim,
+    MarketId.sok,
+    MarketId.migros,
+    MarketId.carrefour,
+    MarketId.hakmar,
+    MarketId.tarimKredi,
+  };
+
   static const all = <Market>[
     Market(
       id: MarketId.migros,
@@ -83,7 +94,6 @@ class Market {
       color: Color(0xFF00ADEF),
       segment: MarketSegment.indirim,
       site: 'https://www.a101.com.tr/',
-      noPriceReason: 'sitesi otomatik fiyat okumaya kapalı',
     ),
     Market(
       id: MarketId.bim,
@@ -92,7 +102,6 @@ class Market {
       color: Color(0xFFE2001A),
       segment: MarketSegment.indirim,
       site: 'https://www.bim.com.tr/',
-      noPriceReason: 'online satış yapmıyor, raf fiyatı yayınlamıyor',
     ),
     Market(
       id: MarketId.sok,
@@ -109,7 +118,6 @@ class Market {
       color: Color(0xFF0055A5),
       segment: MarketSegment.ulusal,
       site: 'https://www.carrefoursa.com/',
-      noPriceReason: 'sitesi otomatik fiyat okumaya kapalı',
     ),
     Market(
       id: MarketId.file,
@@ -127,7 +135,6 @@ class Market {
       color: Color(0xFF1F7A4D),
       segment: MarketSegment.indirim,
       site: 'https://www.tkkoop.com.tr/',
-      noPriceReason: 'online mağazası yayında değil',
     ),
     Market(
       id: MarketId.hakmar,

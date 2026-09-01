@@ -75,13 +75,15 @@ class ApiClient {
   /// Her satır ayrı JSON olan akış yanıtı (canlı karşılaştırma).
   Stream<Map<String, dynamic>> postNdjsonStream(
     String path,
-    Map<String, dynamic> body,
-  ) async* {
+    Map<String, dynamic> body, {
+    Duration? timeout,
+  }) async* {
+    final effectiveTimeout = timeout ?? AppConfig.liveCompareTimeout;
     final request = http.Request('POST', _uri(path));
     request.headers.addAll(_headers);
     request.body = jsonEncode(body);
 
-    final streamed = await _http.send(request).timeout(_timeout);
+    final streamed = await _http.send(request).timeout(effectiveTimeout);
     if (streamed.statusCode < 200 || streamed.statusCode >= 300) {
       throw ApiException(
         'HTTP ${streamed.statusCode}',

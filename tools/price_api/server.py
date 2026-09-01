@@ -29,6 +29,7 @@ if str(TOOLS) not in sys.path:
 
 from price_sync.catalog import REPO, fold, load_catalog  # noqa: E402
 
+from price_api.market_fiyati import search as mf_search  # noqa: E402
 from price_api.quote import (  # noqa: E402
     ALL_MARKET_SLUGS,
     SLUG_TO_MARKET,
@@ -41,7 +42,7 @@ CACHE_DIR = REPO / '.price_sync_cache'
 BOOK_PATH = REPO / 'lib' / 'data' / 'price_book.dart'
 
 
-def search_catalog(query: str) -> list[dict]:
+def search_catalog(query: str, region: str | None = None) -> list[dict]:
     catalog = load_catalog()
     words = [w for w in re.split(r'\s+', fold(query.strip())) if w]
     hits = []
@@ -54,8 +55,25 @@ def search_catalog(query: str) -> list[dict]:
             'name': type_.name,
             'category': type_.category,
             'unit': type_.unit,
+            'source': 'local',
         })
-    return hits
+    live = []
+    if query.strip():
+        try:
+            for product in mf_search(query.strip(), region=region, size=24):
+                live.append({
+                    'id': f'mf:{product.id}',
+                    'name': product.title,
+                    'category': product.category,
+                    'unit': 'adet',
+                    'brand': product.brand,
+                    'volume': product.volume,
+                    'source': 'marketFiyati',
+                    'marketCount': len(product.cheapest_by_market()),
+                })
+        except Exception:  # noqa: BLE001
+            pass
+    return live + hits
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -97,7 +115,8 @@ class Handler(BaseHTTPRequestHandler):
             return
         if path == '/v1/catalog/search':
             query = parse_qs(parsed.query).get('q', [''])[0]
-            self._send_json({'results': search_catalog(query)})
+            region = parse_qs(parsed.query).get('region', [None])[0]
+            self._send_json({'results': search_catalog(query, region)})
             return
         self._send_json({'error': 'bulunamadı'}, 404)
 

@@ -10,8 +10,12 @@ name: Daily Price Sync
 
 on:
   schedule:
-    # 04:10 UTC = 07:10 TRT, marketlerin gün içi fiyatları yerine oturduktan sonra.
+    # 04:10 UTC = 07:10 TRT — sabah fiyatları
     - cron: "10 4 * * *"
+    # 12:10 UTC = 15:10 TRT — öğleden sonra güncelleme
+    - cron: "10 12 * * *"
+    # 18:10 UTC = 21:10 TRT — akşam fiyatları
+    - cron: "10 18 * * *"
   workflow_dispatch:
     inputs:
       markets:
@@ -49,10 +53,9 @@ jobs:
         env:
           MARKETS: ${{ inputs.markets }}
           ALLOW_SHRINK: ${{ inputs.allow_shrink }}
-        # Yavaş ve az paralel: marketler istek yağmurunda kapıyı kapatıyor,
-        # yarısı eksik bir defter de yazılmıyor. Gece işi için hız önemsiz.
+        # Paralel iş: canlı API ile birlikte defter ön ısıtma görevi görür.
         run: |
-          args=(--fresh --jobs 4 --delay 0.5)
+          args=(--fresh --jobs 8 --delay 0.35)
           if [ -n "$MARKETS" ]; then args+=(--markets "$MARKETS"); fi
           if [ "$ALLOW_SHRINK" = "true" ]; then args+=(--allow-shrink); fi
           python3 tools/price_sync/sync.py "${args[@]}"
@@ -92,7 +95,18 @@ jobs:
 
       - name: Build web (staging)
         if: steps.commit.outputs.changed == 'true'
-        run: flutter build web --release --base-href "/sepet-karsilastir/"
+        env:
+          PRICE_API_URL: ${{ secrets.PRICE_API_URL }}
+        run: |
+          ARGS=(--release --base-href "/sepet-karsilastir/")
+          ARGS+=( --dart-define=USE_MARKET_FIYATI=true )
+          if [ -n "$PRICE_API_URL" ]; then
+            ARGS+=(
+              --dart-define=USE_LIVE_PRICES=true
+              --dart-define=API_BASE_URL="$PRICE_API_URL"
+            )
+          fi
+          flutter build web "${ARGS[@]}"
 
       # Push'u GITHUB_TOKEN yaptığı için deploy workflow'u kendiliğinden
       # tetiklenmez; güncel fiyatları burada yayına alıyoruz.

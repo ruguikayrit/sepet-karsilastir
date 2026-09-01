@@ -171,7 +171,8 @@ class BasketScreen extends StatelessWidget {
                                         // Fiyatı hiçbir markette yayınlanmayan
                                         // satır karşılaştırmada boş kalır;
                                         // kullanıcı bunu sepette görsün.
-                                        if (PriceBookService.pricedMarketCount(
+                                        if (!item.product.id.startsWith('mf:') &&
+                                            PriceBookService.pricedMarketCount(
                                               item.product.id,
                                             ) ==
                                             0)
@@ -288,7 +289,7 @@ class _EmptyState extends StatelessWidget {
     final palette = context.palette;
 
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -323,6 +324,26 @@ class _EmptyState extends StatelessWidget {
                 color: palette.inkMuted,
                 height: 1.45,
                 fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 20),
+            OutlinedButton.icon(
+              onPressed: () {
+                context.read<BasketController>().loadSampleBasket();
+              },
+              icon: const Icon(Icons.playlist_add_check_rounded),
+              label: const Text('Fiyatlı örnek liste yükle'),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Süt, ayçiçek yağı, pirinç gibi defterde\n'
+              'fiyatı olan ürünlerle hemen dene.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: palette.inkMuted,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                height: 1.35,
               ),
             ),
           ],

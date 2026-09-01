@@ -44,6 +44,9 @@ class _ScriptedPriceService implements PriceService {
       productTypes;
 
   @override
+  Future<List<Product>> searchCatalogProducts(String query) async => const [];
+
+  @override
   Future<model.ComparisonResult> compareBasket(List<ListItem> items) async {
     final baskets = <model.MarketBasketResult>[];
     for (final entry in found.entries) {
@@ -271,7 +274,7 @@ void main() {
       _ScriptedPriceService({
         MarketId.sok: {sutas.id: sokCheese},
         // Fiyatını kendi sitesinde yayınlamayan zincir: listede kalır.
-        MarketId.bim: {sutas.id: null},
+        MarketId.file: {sutas.id: null},
       }),
     );
     controller.addProduct(sutas);
@@ -279,8 +282,8 @@ void main() {
 
     await _pumpCompare(tester, controller);
 
-    final bim = Market.byId(MarketId.bim);
-    final subtitle = find.text('Ürün bulunamadı — ${bim.noPriceReason}');
+    final file = Market.byId(MarketId.file);
+    final subtitle = find.text('Ürün bulunamadı — ${file.noPriceReason}');
     await _scrollTo(tester, subtitle);
     expect(subtitle, findsOneWidget);
     // Sıfır lira yazılmaz: "bedava" diye okunacak bir tutar göstermiyoruz.
@@ -326,8 +329,8 @@ void main() {
 
     await _pumpCompare(tester, controller);
 
-    final bim = Market.byId(MarketId.bim);
-    final card = find.text('BİM — ${bim.noPriceReason}');
+    final file = Market.byId(MarketId.file);
+    final card = find.text('File — ${file.noPriceReason}');
     await _scrollTo(tester, card);
     expect(card, findsOneWidget);
     // Kart iki grubu birlikte anlatır: hiç fiyat yayınlamayanlar ve son

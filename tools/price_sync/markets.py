@@ -68,7 +68,6 @@ class Unsupported:
 UNSUPPORTED = [
     Unsupported('bim', 'BİM', 'online satış yapmıyor, raf fiyatı yayınlamıyor'),
     Unsupported('a101', 'A101', 'site otomatik erişimi engelliyor'),
-    Unsupported('carrefour', 'CarrefourSA', 'site otomatik erişimi engelliyor'),
     Unsupported('file', 'File', 'sitesinde ürün fiyatı yayınlanmıyor'),
     Unsupported('tarimKredi', 'Tarım Kredi Market',
                 'online mağazası yayında değil'),
@@ -136,6 +135,7 @@ class SokAdapter(MarketAdapter):
     label = 'Şok'
     host = 'https://www.sokmarket.com.tr'
     title_suffixes = (' - Cepte Şok',)
+    page_limit = 5
 
     def search(self, term: str, page: int) -> list[Offer]:
         query = urllib.parse.quote(term)
@@ -173,19 +173,48 @@ class SokAdapter(MarketAdapter):
 
 
 class HappyCenterAdapter(MarketAdapter):
-    """happycenter.com.tr — mağaza arama servisi (tek sayfa)."""
+    """happycenter.com.tr — otomatik tamamlama + arama sayfası (çok sayfa)."""
 
     market = 'happyCenter'
     label = 'Happy Center'
     host = 'https://happycenter.com.tr'
-    page_limit = 1
+    page_limit = 5
 
     # Katalogda kalan iptal/çıkma kayıtları: fiyatı güncel değil.
     JUNK = re.compile(r'(^|_|-|\b)(iptal|cikma|test)(_|-|\b|$)')
 
+    _CARD = re.compile(
+        r'href="/([^"]+)" class="desktop-product-image"',
+        re.I,
+    )
+    _NAME = re.compile(
+        r'class="desktop-product-name"[^>]*>\s*<a[^>]*>([^<]+)',
+        re.S | re.I,
+    )
+    _PRICE = re.compile(
+        r'class="price"[^>]*>\s*<a[^>]*>([^<]+)',
+        re.S | re.I,
+    )
+    _MOBILE = re.compile(
+        r'seourl="([^"]+)".*?>([0-9]+(?:[.,][0-9]+)?)</a>',
+        re.S | re.I,
+    )
+
     def search(self, term: str, page: int) -> list[Offer]:
-        if page > 1:
-            return []
+        offers: list[Offer] = []
+        seen: set[str] = set()
+        if page == 1:
+            for offer in self._autocomplete(term):
+                if offer.url not in seen:
+                    seen.add(offer.url)
+                    offers.append(offer)
+        for offer in self._html_search(term, page):
+            if offer.url not in seen:
+                seen.add(offer.url)
+                offers.append(offer)
+        return offers
+
+    def _autocomplete(self, term: str) -> list[Offer]:
         query = urllib.parse.quote(term)
         raw = http_get(
             f'{self.host}/Product/SearchAutoComplete?term={query}',
@@ -203,6 +232,36 @@ class HappyCenterAdapter(MarketAdapter):
                 offers.append(offer)
         return offers
 
+    def _html_search(self, term: str, page: int) -> list[Offer]:
+        query = urllib.parse.quote(term)
+        url = f'{self.host}/arama?q={query}'
+        if page > 1:
+            url += f'&sayfa={page}'
+        html = http_get(url)
+        offers: list[Offer] = []
+        for match in self._CARD.finditer(html):
+            path = match.group(1).strip()
+            if self.JUNK.search(path.lower()):
+                continue
+            chunk = html[match.start(): match.start() + 1800]
+            name_match = self._NAME.search(chunk)
+            price_match = self._PRICE.search(chunk)
+            name = html_lib.unescape(name_match.group(1).strip()) if name_match else path
+            price = _parse_try(price_match.group(1)) if price_match else None
+            offer = self._offer(name, path, price, True)
+            if offer:
+                offers.append(offer)
+        if offers:
+            return offers
+        # Mobil düzen: seourl + fiyat bitişik.
+        for path, price_text in self._MOBILE.findall(html):
+            if self.JUNK.search(path.lower()):
+                continue
+            offer = self._offer(path.replace('_', ' '), path, _parse_try(price_text), True)
+            if offer:
+                offers.append(offer)
+        return offers
+
 
 class HakmarAdapter(MarketAdapter):
     """hakmarexpress.com.tr — mağaza API'si arama sonucunu ürün kartı verir."""
@@ -211,6 +270,7 @@ class HakmarAdapter(MarketAdapter):
     label = 'Hakmar Express'
     host = 'https://www.hakmarexpress.com.tr'
     api = 'https://api.hakmarexpress.com.tr/api'
+    page_limit = 5
 
     def page_title(self, html: str) -> str:
         # Sayfadaki tek h1 "Tüm Kategoriler"; ürün adı og:title'da.
@@ -280,6 +340,15 @@ class MacrocenterAdapter(MigrosPlatformAdapter):
     title_suffixes = (' | Macroonline', ' | Macrocenter')
 
 
+class CarrefourAdapter(MigrosPlatformAdapter):
+    """carrefoursa.com — Migros altyapısı; bazı IP'lerde erişilebilir."""
+
+    market = 'carrefour'
+    label = 'CarrefourSA'
+    host = 'https://www.carrefoursa.com'
+    title_suffixes = (' | CarrefourSA', ' - CarrefourSA')
+
+
 ADAPTERS: dict[str, MarketAdapter] = {
     adapter.market: adapter
     for adapter in (
@@ -288,6 +357,7 @@ ADAPTERS: dict[str, MarketAdapter] = {
         HakmarAdapter(),
         MigrosAdapter(),
         MacrocenterAdapter(),
+        CarrefourAdapter(),
     )
 }
 
