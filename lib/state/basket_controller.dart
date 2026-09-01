@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../data/mock_catalog.dart';
+import '../data/sample_basket.dart';
 import '../models/comparison_result.dart';
 import '../models/comparison_snapshot.dart';
 import '../models/list_item.dart';
@@ -93,6 +94,14 @@ class BasketController extends ChangeNotifier {
     _error = null;
     _persistBasket();
     notifyListeners();
+  }
+
+  /// Fiyat defterinde kaydı olan örnek ürünleri sepete ekler.
+  void loadSampleBasket({bool replace = true}) {
+    if (replace) _items.clear();
+    for (final product in sampleBasketProducts()) {
+      addProduct(product);
+    }
   }
 
   Future<ComparisonResult?> compare() async {

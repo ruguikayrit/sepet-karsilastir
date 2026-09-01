@@ -68,10 +68,26 @@ class _AddProductSheetState extends State<AddProductSheet> {
     setState(() => _loading = true);
     final results = await context.read<BasketController>().searchTypes(query);
     if (!mounted) return;
+    final sorted = [...results]
+      ..sort((a, b) => _bestPricedCount(b).compareTo(_bestPricedCount(a)));
     setState(() {
-      _results = results;
+      _results = sorted;
       _loading = false;
     });
+  }
+
+  /// Seçili markalar varsa en yüksek fiyatlı olanı, yoksa kategorideki en
+  /// iyi markayı döner.
+  int _bestPricedCount(ProductType type) {
+    final brands = _applicableBrands(type);
+    if (brands.isNotEmpty) {
+      return brands
+          .map((b) => _pricedMarkets(type, b))
+          .fold(0, (best, count) => count > best ? count : best);
+    }
+    return brandsForCategory(type.category)
+        .map((b) => _pricedMarkets(type, b.name))
+        .fold(0, (best, count) => count > best ? count : best);
   }
 
   List<FoodBrand> get _visibleBrands {
@@ -129,7 +145,11 @@ class _AddProductSheetState extends State<AddProductSheet> {
 
   Future<List<String>?> _pickBrands(ProductType type) {
     final palette = context.palette;
-    final brands = brandsForCategory(type.category);
+    final brands = [...brandsForCategory(type.category)]
+      ..sort(
+        (a, b) => _pricedMarkets(type, b.name)
+            .compareTo(_pricedMarkets(type, a.name)),
+      );
     final chosen = <String>{};
 
     return showModalBottomSheet<List<String>>(
@@ -505,6 +525,7 @@ class _AddProductSheetState extends State<AddProductSheet> {
                           return _ProductRow(
                             type: type,
                             applicableBrands: _applicableBrands(type),
+                            pricedMarketCount: _bestPricedCount(type),
                             inBasketCount: basket.items
                                 .where((i) => i.product.typeId == type.id)
                                 .length,
@@ -523,12 +544,14 @@ class _ProductRow extends StatelessWidget {
   const _ProductRow({
     required this.type,
     required this.applicableBrands,
+    required this.pricedMarketCount,
     required this.inBasketCount,
     required this.onAdd,
   });
 
   final ProductType type;
   final List<String> applicableBrands;
+  final int pricedMarketCount;
   final int inBasketCount;
   final VoidCallback onAdd;
 
@@ -614,6 +637,24 @@ class _ProductRow extends StatelessWidget {
                     fontSize: 13,
                   ),
                 ),
+                if (pricedMarketCount > 0)
+                  Text(
+                    '$pricedMarketCount markette fiyatı var',
+                    style: TextStyle(
+                      color: palette.green,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
+                  )
+                else
+                  Text(
+                    'Defterde fiyat yok — marka seçerken kontrol et',
+                    style: TextStyle(
+                      color: palette.danger,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                  ),
               ],
             ),
           ),

@@ -87,4 +87,28 @@ void main() {
     expect(sok.status, FetchStatus.ok);
     expect(sok.lines.single.unitPrice, 122.0);
   });
+
+  test('canlı yanıt boşsa defter fiyatları silinmez', () async {
+    final service = HybridPriceService(
+      book: const PriceBookService(),
+      apiClient: _FakeApiClient([
+        {
+          'event': 'market',
+          'market': {
+            'marketId': 'sok',
+            'status': 'ok',
+            'fetchedAt': '2026-07-27T08:00:00Z',
+            'quotes': [],
+          },
+        },
+        {'event': 'done'},
+      ]),
+    );
+
+    final snapshots = await service.watchBasketComparison(items).toList();
+    final last = snapshots.last;
+    final sok = last.baskets.firstWhere((b) => b.market.id == MarketId.sok);
+    expect(sok.lines.single.unitPrice, 122.0);
+    expect(sok.lines.single.available, isTrue);
+  });
 }

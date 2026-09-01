@@ -160,6 +160,10 @@ class _ResultBody extends StatelessWidget {
         ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
           children: [
+            if (result.productsMissingEverywhere.isNotEmpty)
+              _MissingProductsBanner(
+                products: result.productsMissingEverywhere,
+              ),
             if (winner != null)
               _WinnerCard(winner: winner, savings: savings)
             else
@@ -436,6 +440,56 @@ class _WinnerCard extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _MissingProductsBanner extends StatelessWidget {
+  const _MissingProductsBanner({required this.products});
+
+  final List<Product> products;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final labels = products.map((p) => p.displayName).take(3).join(', ');
+    final extra = products.length > 3 ? ' +${products.length - 3}' : '';
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: palette.orangeSoft,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: palette.danger.withValues(alpha: 0.3)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Bazı ürünlerde hiçbir markette fiyat yok',
+              style: TextStyle(
+                color: palette.ink,
+                fontWeight: FontWeight.w800,
+                fontSize: 15,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '$labels$extra — defterde kayıtlı olmayan marka veya birim. '
+              'Ürün eklerken “X markette fiyatı var” yazan markaları seç.',
+              style: TextStyle(
+                color: palette.ink,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                height: 1.35,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
