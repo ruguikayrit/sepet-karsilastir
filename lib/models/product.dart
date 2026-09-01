@@ -56,9 +56,23 @@ class Product {
   final String unit;
   final String? brand;
 
-  String get displayName => brand == null || brand!.isEmpty
-      ? name
-      : '$brand $name';
+  String get displayName =>
+      brand == null || brand!.isEmpty ? name : '$brand $name';
+
+  String get brandLabel {
+    final value = brand?.trim();
+    if (value == null || value.isEmpty) return 'Markasız';
+    return value;
+  }
+
+  /// Gramaj / hacim; `adet` gibi varsayılan birim gösterilmez.
+  String? get sizeLabel {
+    final value = unit.trim();
+    if (value.isEmpty) return null;
+    final folded = foldTurkish(value);
+    if (folded == 'adet' || folded == 'pk' || folded == 'paket') return null;
+    return value;
+  }
 
   Map<String, dynamic> toJson() => {
         'id': id,
