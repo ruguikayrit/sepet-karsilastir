@@ -160,11 +160,44 @@ class MfProduct {
     return Product(
       id: 'mf:$id',
       typeId: 'mf:$id',
-      name: volume == null || volume!.isEmpty ? title : title,
+      name: _nameWithoutBrandAndSize,
       category: category,
-      unit: 'adet',
-      brand: brand,
+      unit:
+          (volume == null || volume!.trim().isEmpty) ? 'adet' : volume!.trim(),
+      brand: brand?.trim().isEmpty == true ? null : brand?.trim(),
     );
+  }
+
+  /// Listede marka ve ebat ayrı satırda durur; isim tekrar etmesin.
+  String get _nameWithoutBrandAndSize {
+    var name = title.trim();
+    final brandText = brand?.trim();
+    if (brandText != null && brandText.isNotEmpty) {
+      final prefixLen = brandText.length;
+      if (name.length > prefixLen &&
+          foldTurkish(name.substring(0, prefixLen)) == foldTurkish(brandText)) {
+        name = name.substring(prefixLen).trim();
+        if (name.startsWith('-') || name.startsWith('–')) {
+          name = name.substring(1).trim();
+        }
+      }
+    }
+    name = _stripTrailingVolume(name, volume);
+    return name.isEmpty ? title.trim() : name;
+  }
+
+  static String _stripTrailingVolume(String name, String? volume) {
+    if (volume == null || volume.trim().isEmpty) return name.trim();
+    final nameTokens = name.trim().split(RegExp(r'\s+'));
+    final volTokens = volume.trim().split(RegExp(r'\s+'));
+    if (nameTokens.length <= volTokens.length) return name.trim();
+    final nameFold = [for (final t in nameTokens) foldTurkish(t)];
+    final volFold = [for (final t in volTokens) foldTurkish(t)];
+    final start = nameFold.length - volFold.length;
+    for (var i = 0; i < volFold.length; i++) {
+      if (nameFold[start + i] != volFold[i]) return name.trim();
+    }
+    return nameTokens.sublist(0, start).join(' ');
   }
 
   Map<String, MfDepot> cheapestByMarket() {

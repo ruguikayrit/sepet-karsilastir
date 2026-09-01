@@ -65,8 +65,8 @@ void main() {
       book: const PriceBookService(),
     );
     final product = icim.toProduct();
-    final snapshots =
-        await service.watchBasketComparison([ListItem(product: product)]).toList();
+    final snapshots = await service
+        .watchBasketComparison([ListItem(product: product)]).toList();
 
     final last = snapshots.last;
     expect(last.refreshing, isFalse);
@@ -85,5 +85,15 @@ void main() {
     final results = await service.searchCatalogProducts('icim sut');
     expect(results.single.id, 'mf:1T9S');
     expect(results.single.brand, 'İçim');
+    expect(results.single.name, 'Süt');
+    expect(results.single.unit, '1 LT');
+  });
+
+  test('canlı ürün marka, ad ve ebatı ayırır', () {
+    final product = icim.toProduct();
+    expect(product.brandLabel, 'İçim');
+    expect(product.name, 'Süt');
+    expect(product.sizeLabel, '1 LT');
+    expect(product.displayName, 'İçim Süt');
   });
 }

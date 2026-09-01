@@ -159,9 +159,12 @@ class BasketScreen extends StatelessWidget {
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
-                                          item.product.brand == null
-                                              ? item.product.category
-                                              : '${item.product.brand} · ${item.product.category}',
+                                          [
+                                            item.product.brandLabel,
+                                            if (item.product.sizeLabel != null)
+                                              item.product.sizeLabel!,
+                                            item.product.category,
+                                          ].join(' · '),
                                           style: TextStyle(
                                             color: palette.inkMuted,
                                             fontSize: 13,
@@ -171,11 +174,12 @@ class BasketScreen extends StatelessWidget {
                                         // Fiyatı hiçbir markette yayınlanmayan
                                         // satır karşılaştırmada boş kalır;
                                         // kullanıcı bunu sepette görsün.
-                                        if (!item.product.id.startsWith('mf:') &&
+                                        if (!item.product.id
+                                                .startsWith('mf:') &&
                                             PriceBookService.pricedMarketCount(
-                                              item.product.id,
-                                            ) ==
-                                            0)
+                                                  item.product.id,
+                                                ) ==
+                                                0)
                                           Text(
                                             'Hiçbir markette fiyatı bulunamadı',
                                             style: TextStyle(
@@ -195,8 +199,8 @@ class BasketScreen extends StatelessWidget {
                                     ),
                                   ),
                                   IconButton(
-                                    onPressed: () => basket
-                                        .removeProduct(item.product.id),
+                                    onPressed: () =>
+                                        basket.removeProduct(item.product.id),
                                     icon: Icon(
                                       Icons.close_rounded,
                                       color: palette.inkMuted,
