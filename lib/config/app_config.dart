@@ -31,6 +31,31 @@ class AppConfig {
     defaultValue: 'istanbul',
   );
 
+  /// TÜBİTAK Market Fiyatı canlı katalog + fiyat (varsayılan açık).
+  ///
+  /// Testlerde `--dart-define=USE_MARKET_FIYATI=false` ile kapatılır; üretim
+  /// derlemesinde açık bırakılır. Resmi API CORS'u açıktır, backend şart değil.
+  static const useMarketFiyati = bool.fromEnvironment(
+    'USE_MARKET_FIYATI',
+    defaultValue: false,
+  );
+
+  static const defaultLatitude = 41.0082;
+  static const defaultLongitude = 28.9784;
+
+  static const marketFiyatiDistanceKm = int.fromEnvironment(
+    'MARKET_FIYATI_DISTANCE_KM',
+    defaultValue: 10,
+  );
+
+  static (double, double) coordsFor(String region) {
+    return switch (region.toLowerCase()) {
+      'ankara' => (39.9334, 32.8597),
+      'izmir' => (38.4237, 27.1428),
+      _ => (defaultLatitude, defaultLongitude),
+    };
+  }
+
   static const requestTimeout = Duration(seconds: 12);
 
   /// Canlı sepet karşılaştırması (NDJSON akış) için üst süre.

@@ -28,6 +28,9 @@ class PriceBookService implements PriceService {
     return searchProductTypesLocal(query);
   }
 
+  @override
+  Future<List<Product>> searchCatalogProducts(String query) async => const [];
+
   /// Bu markette bir ürünün fiyatı neden bulunamıyor? Bulunabiliyorsa `null`.
   ///
   /// İki sebep var: market fiyatını kendi sitesinde hiç yayınlamıyor ya da son
@@ -36,6 +39,7 @@ class PriceBookService implements PriceService {
   static String? noPriceReasonFor(MarketId marketId) {
     final market = Market.byId(marketId);
     if (market.noPriceReason != null) return market.noPriceReason;
+    if (Market.liveFeedIds.contains(marketId)) return null;
     if (!priceBookMarkets.contains(marketId)) {
       return 'son çekimde sitesinden fiyat okunamadı';
     }

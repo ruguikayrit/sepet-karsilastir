@@ -5,6 +5,7 @@ import '../models/fetch_status.dart';
 import '../models/list_item.dart';
 import '../models/market.dart';
 import '../models/market_quote.dart';
+import '../models/product.dart';
 import '../models/product_link.dart';
 import 'catalog/catalog_client.dart';
 import 'http/api_client.dart';
@@ -60,6 +61,9 @@ class LivePriceService implements PriceService {
   @override
   Future<List<ProductType>> searchProductTypes(String query) =>
       _catalog.search(query);
+
+  @override
+  Future<List<Product>> searchCatalogProducts(String query) async => const [];
 
   @override
   Future<ComparisonResult> compareBasket(List<ListItem> items) async {

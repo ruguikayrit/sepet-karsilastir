@@ -171,7 +171,8 @@ class BasketScreen extends StatelessWidget {
                                         // Fiyatı hiçbir markette yayınlanmayan
                                         // satır karşılaştırmada boş kalır;
                                         // kullanıcı bunu sepette görsün.
-                                        if (PriceBookService.pricedMarketCount(
+                                        if (!item.product.id.startsWith('mf:') &&
+                                            PriceBookService.pricedMarketCount(
                                               item.product.id,
                                             ) ==
                                             0)

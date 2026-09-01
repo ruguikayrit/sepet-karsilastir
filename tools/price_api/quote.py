@@ -19,6 +19,7 @@ from price_sync.sync import SearchCache, brand_candidates, brand_index, confirm,
 
 from .book import load_book
 from .cache import PageCache, SkuIndex
+from .market_fiyati import MF_MARKETS, quote_for_item as mf_quote_for_item
 
 # Market slug (URL) -> dahili kimlik
 SLUG_TO_MARKET = {
@@ -28,16 +29,16 @@ SLUG_TO_MARKET = {
     'hakmar': 'hakmar',
     'happy-center': 'happyCenter',
     'carrefour': 'carrefour',
+    'a101': 'a101',
+    'bim': 'bim',
+    'tarim-kredi': 'tarimKredi',
 }
 
 MARKET_TO_SLUG = {v: k for k, v in SLUG_TO_MARKET.items()}
 
 # Fiyatı kendi sitesinden okunamayan marketler — uygulamadaki noPriceReason ile aynı.
 UNPRICED = {
-    'a101': 'sitesi otomatik fiyat okumaya kapalı',
-    'bim': 'online satış yapmıyor, raf fiyatı yayınlamıyor',
     'file': 'sitesinde ürün fiyatı yayınlanmıyor',
-    'tarim-kredi': 'online mağazası yayında değil',
     'onur': 'sitesinde ürün fiyatı yayınlanmıyor',
     'metro': 'sitesi otomatik fiyat okumaya kapalı',
     'getir': 'sitesi otomatik fiyat okumaya kapalı',
@@ -158,14 +159,64 @@ def quote_product(
     cache: SearchCache,
     health: MarketHealth,
     sku_index: SkuIndex,
+    region: str | None = None,
+    display_name: str | None = None,
+    item_brand: str | None = None,
+    mf_cache: dict[str, object] | None = None,
 ) -> dict | None:
     """Tek ürün için bir marketten doğrulanmış teklif döner."""
     type_id = product_id_str.split('__')[0]
+    brand = item_brand or _brand_for_product(product_id_str, brands)
+    name = display_name or ''
+    if not name and catalog is not None:
+        type_ = next((t for t in catalog.types if t.id == type_id), None)
+        if type_ is not None:
+            name = type_.name
+
+    # 0) Market Fiyatı resmi platformu — A101/BİM dahil anlık şube fiyatı.
+    if market in MF_MARKETS:
+        mf_cache = mf_cache if mf_cache is not None else {}
+        if product_id_str not in mf_cache:
+            try:
+                mf_cache[product_id_str] = mf_quote_for_item(
+                    product_id=product_id_str,
+                    brand=brand,
+                    name=name or brand or product_id_str,
+                    region=region,
+                )
+            except Exception:  # noqa: BLE001
+                mf_cache[product_id_str] = None
+        mf_product = mf_cache.get(product_id_str)
+        if mf_product is not None:
+            depot = mf_product.cheapest_by_market().get(market)
+            if depot is not None:
+                sku_index.put(
+                    product_id_str,
+                    market,
+                    Offer(
+                        market=market,
+                        name=depot.product_name,
+                        url=mf_product.source_url(),
+                        price=depot.price,
+                        in_stock=True,
+                    ),
+                )
+                return {
+                    'productId': product_id_str,
+                    'unitPrice': depot.price,
+                    'available': True,
+                    'currency': 'TRY',
+                    'sourceUrl': mf_product.source_url(),
+                    'marketProduct': depot.product_name,
+                    'storeId': depot.depot_id,
+                }
+
     if type_id not in RULES:
         return None
     rule = RULES[type_id]
-    type_ = next(t for t in catalog.types if t.id == type_id)
-    brand = _brand_for_product(product_id_str, brands)
+    type_ = next((t for t in catalog.types if t.id == type_id), None)
+    if type_ is None:
+        return None
     weight_based = type_.unit == 'kg'
     adapter = ADAPTERS.get(market)
     if adapter is None:
@@ -248,6 +299,7 @@ def quote_market(
     region: str | None,
     book_path: Path,
     cache_dir: Path,
+    mf_cache: dict[str, object] | None = None,
 ) -> dict:
     """Bir marketin sepet teklifini üretir — ürünler paralel çekilir."""
     fetched_at = _iso_now()
@@ -277,6 +329,7 @@ def quote_market(
     cache = SearchCache(cache_dir, offline=False)
     health = MarketHealth(market)
     sku = _sku_index(cache_dir)
+    shared_mf = mf_cache if mf_cache is not None else {}
 
     quotes: list[dict] = []
     workers = min(MAX_ITEM_WORKERS, max(1, len(items)))
@@ -291,6 +344,10 @@ def quote_market(
             cache=cache,
             health=health,
             sku_index=sku,
+            region=region,
+            display_name=item.get('name'),
+            item_brand=item.get('brand'),
+            mf_cache=shared_mf,
         )
 
     if workers <= 1 or len(items) <= 1:
@@ -345,6 +402,7 @@ def compare_stream(
 
     fetched_at_book, _ = load_book(book_path)
     workers = min(MAX_MARKET_WORKERS, max(1, len(slugs)))
+    mf_cache: dict[str, object] = {}
 
     with ThreadPoolExecutor(max_workers=workers) as pool:
         futures = {
@@ -355,6 +413,7 @@ def compare_stream(
                 region=region,
                 book_path=book_path,
                 cache_dir=cache_dir,
+                mf_cache=mf_cache,
             ): slug
             for slug in slugs
         }

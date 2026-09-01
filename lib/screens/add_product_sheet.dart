@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../data/brands.dart';
 import '../data/mock_catalog.dart';
+import '../models/product.dart';
 import '../services/price_book_service.dart';
 import '../state/basket_controller.dart';
 import '../theme/app_theme.dart';
@@ -50,6 +51,7 @@ class _AddProductSheetState extends State<AddProductSheet> {
   final _controller = TextEditingController();
   final Set<String> _selectedBrands = {};
   List<ProductType> _results = const [];
+  List<Product> _liveProducts = const [];
   bool _loading = true;
 
   @override
@@ -66,14 +68,29 @@ class _AddProductSheetState extends State<AddProductSheet> {
 
   Future<void> _search(String query) async {
     setState(() => _loading = true);
-    final results = await context.read<BasketController>().searchTypes(query);
+    final basket = context.read<BasketController>();
+    final results = await basket.searchTypes(query);
+    final live = query.trim().length < 2
+        ? const <Product>[]
+        : await basket.searchCatalogProducts(query);
     if (!mounted) return;
     final sorted = [...results]
       ..sort((a, b) => _bestPricedCount(b).compareTo(_bestPricedCount(a)));
     setState(() {
       _results = sorted;
+      _liveProducts = live;
       _loading = false;
     });
+  }
+
+  void _addLiveProduct(Product product) {
+    context.read<BasketController>().addProduct(product);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${product.displayName} eklendi'),
+        duration: const Duration(milliseconds: 1100),
+      ),
+    );
   }
 
   /// Seçili markalar varsa en yüksek fiyatlı olanı, yoksa kategorideki en
@@ -514,25 +531,151 @@ class _AddProductSheetState extends State<AddProductSheet> {
           Expanded(
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
-                : _results.isEmpty
+                : _results.isEmpty && _liveProducts.isEmpty
                     ? const _NoResults()
-                    : ListView.separated(
+                    : ListView(
                         padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
-                        itemCount: _results.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 8),
-                        itemBuilder: (context, index) {
-                          final type = _results[index];
-                          return _ProductRow(
-                            type: type,
-                            applicableBrands: _applicableBrands(type),
-                            pricedMarketCount: _bestPricedCount(type),
-                            inBasketCount: basket.items
-                                .where((i) => i.product.typeId == type.id)
-                                .length,
-                            onAdd: () => _addType(type),
-                          );
-                        },
+                        children: [
+                          if (_liveProducts.isNotEmpty) ...[
+                            Text(
+                              'Market Fiyatı · canlı ${_liveProducts.length} ürün',
+                              style: TextStyle(
+                                color: palette.inkMuted,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 13,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            for (final product in _liveProducts) ...[
+                              _LiveProductRow(
+                                product: product,
+                                inBasket: basket.items.any(
+                                  (i) => i.product.id == product.id,
+                                ),
+                                onAdd: () => _addLiveProduct(product),
+                              ),
+                              const SizedBox(height: 8),
+                            ],
+                            const SizedBox(height: 8),
+                          ],
+                          for (var index = 0; index < _results.length; index++) ...[
+                            if (index == 0 && _liveProducts.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: Text(
+                                  'Katalog',
+                                  style: TextStyle(
+                                    color: palette.inkMuted,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                            _ProductRow(
+                              type: _results[index],
+                              applicableBrands:
+                                  _applicableBrands(_results[index]),
+                              pricedMarketCount:
+                                  _bestPricedCount(_results[index]),
+                              inBasketCount: basket.items
+                                  .where(
+                                    (i) =>
+                                        i.product.typeId == _results[index].id,
+                                  )
+                                  .length,
+                              onAdd: () => _addType(_results[index]),
+                            ),
+                            if (index < _results.length - 1)
+                              const SizedBox(height: 8),
+                          ],
+                        ],
                       ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LiveProductRow extends StatelessWidget {
+  const _LiveProductRow({
+    required this.product,
+    required this.inBasket,
+    required this.onAdd,
+  });
+
+  final Product product;
+  final bool inBasket;
+  final VoidCallback onAdd;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+      decoration: BoxDecoration(
+        color: palette.greenSoft.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: palette.green.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: palette.greenSoft,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              categoryIcon(product.category),
+              color: palette.onGreenSoft,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  product.displayName,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  '${product.category} · anlık fiyat',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: palette.green,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          FilledButton.tonal(
+            onPressed: onAdd,
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(84, 40),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              visualDensity: VisualDensity.compact,
+              backgroundColor: palette.green,
+              foregroundColor: palette.onAccent,
+              textStyle: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            child: Text(inBasket ? 'Ekle +' : 'Ekle'),
           ),
         ],
       ),

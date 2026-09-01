@@ -4,6 +4,7 @@ import '../models/comparison_result.dart';
 import '../models/fetch_status.dart';
 import '../models/list_item.dart';
 import '../models/market_quote.dart';
+import '../models/product.dart';
 import '../services/http/api_client.dart';
 import 'live_price_service.dart';
 import 'price_book_service.dart';
@@ -41,6 +42,11 @@ class HybridPriceService implements PriceService {
   @override
   Future<List<ProductType>> searchProductTypes(String query) async {
     return _book.searchProductTypes(query);
+  }
+
+  @override
+  Future<List<Product>> searchCatalogProducts(String query) async {
+    return const [];
   }
 
   @override

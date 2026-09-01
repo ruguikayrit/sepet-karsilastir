@@ -8,6 +8,7 @@ import '../models/list_item.dart';
 import '../models/product.dart';
 import '../models/saved_list.dart';
 import '../services/hybrid_price_service.dart';
+import '../services/market_fiyati/market_fiyati_price_service.dart';
 import '../services/price_service.dart';
 import '../services/storage/basket_repository.dart';
 import '../services/storage/key_value_store.dart';
@@ -111,9 +112,13 @@ class BasketController extends ChangeNotifier {
     notifyListeners();
     try {
       final service = _priceService;
-      if (service is HybridPriceService && service.canStreamLive) {
+      if (service is MarketFiyatiPriceService ||
+          (service is HybridPriceService && service.canStreamLive)) {
         ComparisonResult? finalResult;
-        await for (final snapshot in service.watchBasketComparison(_items)) {
+        final stream = service is MarketFiyatiPriceService
+            ? service.watchBasketComparison(_items)
+            : (service as HybridPriceService).watchBasketComparison(_items);
+        await for (final snapshot in stream) {
           _lastResult = snapshot;
           _comparing = snapshot.refreshing;
           finalResult = snapshot;
@@ -140,6 +145,9 @@ class BasketController extends ChangeNotifier {
 
   Future<List<ProductType>> searchTypes(String query) =>
       _priceService.searchProductTypes(query);
+
+  Future<List<Product>> searchCatalogProducts(String query) =>
+      _priceService.searchCatalogProducts(query);
 
   // --- Kayıtlı listeler ---
 

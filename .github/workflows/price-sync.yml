@@ -99,6 +99,7 @@ jobs:
           PRICE_API_URL: ${{ secrets.PRICE_API_URL }}
         run: |
           ARGS=(--release --base-href "/sepet-karsilastir/")
+          ARGS+=( --dart-define=USE_MARKET_FIYATI=true )
           if [ -n "$PRICE_API_URL" ]; then
             ARGS+=(
               --dart-define=USE_LIVE_PRICES=true
