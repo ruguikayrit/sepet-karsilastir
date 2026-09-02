@@ -14,13 +14,9 @@ void main() {
     MarketId.bim: 'www.bim.com.tr',
     MarketId.sok: 'www.sokmarket.com.tr',
     MarketId.carrefour: 'www.carrefoursa.com',
-    MarketId.file: 'www.file.com.tr',
     MarketId.tarimKredi: 'www.tkkoop.com.tr',
     MarketId.hakmar: 'www.hakmarexpress.com.tr',
-    MarketId.onur: 'www.onurmarket.com',
     MarketId.happyCenter: 'happycenter.com.tr',
-    MarketId.metro: 'www.metro-tr.com',
-    MarketId.getir: 'getir.com',
   };
 
   final kasar = productTypes.firstWhere((t) => t.id == 'kasar-500');
@@ -81,11 +77,7 @@ void main() {
   test('arama sunmayan market kendi ana sayfasını açar', () {
     for (final marketId in [
       MarketId.bim,
-      MarketId.file,
       MarketId.tarimKredi,
-      MarketId.onur,
-      MarketId.metro,
-      MarketId.getir,
     ]) {
       final link = ProductSourceUrl.search(
         marketId: marketId,

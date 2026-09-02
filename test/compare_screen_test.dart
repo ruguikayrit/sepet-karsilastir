@@ -9,7 +9,6 @@ import 'package:sepet_karsilastir/models/market.dart';
 import 'package:sepet_karsilastir/models/product.dart';
 import 'package:sepet_karsilastir/models/product_link.dart';
 import 'package:sepet_karsilastir/screens/compare_screen.dart';
-import 'package:sepet_karsilastir/services/price_book_service.dart';
 import 'package:sepet_karsilastir/services/mapping/product_source_url.dart';
 import 'package:sepet_karsilastir/services/price_service.dart';
 import 'package:sepet_karsilastir/state/basket_controller.dart';
@@ -266,15 +265,15 @@ void main() {
     );
   });
 
-  testWidgets('hiçbir ürünü bulunamayan market tutar yerine sebebini yazar',
+  testWidgets('hiçbir ürünü bulunamayan market tutar yerine boş yazar',
       (tester) async {
     final sutas = cheeseOf('Sütaş');
 
     final controller = BasketController(
       _ScriptedPriceService({
         MarketId.sok: {sutas.id: sokCheese},
-        // Fiyatını kendi sitesinde yayınlamayan zincir: listede kalır.
-        MarketId.file: {sutas.id: null},
+        // Bu markette ürün yok: satır fiyatsız, tutar sıfır yazılmaz.
+        MarketId.a101: {sutas.id: null},
       }),
     );
     controller.addProduct(sutas);
@@ -282,10 +281,9 @@ void main() {
 
     await _pumpCompare(tester, controller);
 
-    final file = Market.byId(MarketId.file);
-    final subtitle = find.text('Ürün bulunamadı — ${file.noPriceReason}');
+    final subtitle = find.text('Ürün bulunamadı');
     await _scrollTo(tester, subtitle);
-    expect(subtitle, findsOneWidget);
+    expect(subtitle, findsWidgets);
     // Sıfır lira yazılmaz: "bedava" diye okunacak bir tutar göstermiyoruz.
     expect(find.textContaining('0,00'), findsNothing);
     expect(find.text('—'), findsWidgets);
@@ -315,8 +313,7 @@ void main() {
     );
   });
 
-  testWidgets('fiyat yayınlamayan marketler sebebiyle listelenir',
-      (tester) async {
+  testWidgets('kalıcı fiyatsız market listede yok', (tester) async {
     final sutas = cheeseOf('Sütaş');
 
     final controller = BasketController(
@@ -329,17 +326,10 @@ void main() {
 
     await _pumpCompare(tester, controller);
 
-    final file = Market.byId(MarketId.file);
-    final card = find.text('File — ${file.noPriceReason}');
-    await _scrollTo(tester, card);
-    expect(card, findsOneWidget);
-    // Kart iki grubu birlikte anlatır: hiç fiyat yayınlamayanlar ve son
-    // çekimde sitesinden fiyat okunamayanlar.
-    expect(
-      find.text(
-        'Fiyat gösterilemeyen ${PriceBookService.withoutPrices.length} market',
-      ),
-      findsOneWidget,
-    );
+    expect(Market.unpriced, isEmpty);
+    expect(find.text('File'), findsNothing);
+    expect(find.text('Onur Market'), findsNothing);
+    expect(find.text('Metro Market'), findsNothing);
+    expect(find.text('Getir Büyük'), findsNothing);
   });
 }

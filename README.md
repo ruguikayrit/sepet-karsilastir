@@ -155,8 +155,7 @@ satırı fiyatsız gösterir: kullanıcı tıklayıp doğrulayamayacağı bir tu
 görmemeli.
 
 Market slug'ları: `migros`, `macrocenter`, `a101`, `bim`, `sok`,
-`carrefour`, `file`, `tarim-kredi`, `hakmar`, `onur`, `happy-center`,
-`metro`, `getir`.
+`carrefour`, `tarim-kredi`, `hakmar`, `happy-center`.
 
 Tek market düşse bile diğerleri gösterilir. Aynı sepet teklifleri ~45 sn
 önbelleğe alınır; 5xx / 429 / zaman aşımında istek yeniden denenir.
@@ -201,9 +200,7 @@ ve gramajını taşıdığını denetler. Geçemeyen kayıt deftere girmez — b
 | [Macrocenter](https://www.macrocenter.com.tr) | ürün sayfası + fiyat okunuyor |
 | [Hakmar Express](https://www.hakmarexpress.com.tr) | ürün sayfası + fiyat okunuyor |
 | [Happy Center](https://happycenter.com.tr) | ürün sayfası + fiyat okunuyor |
-| BİM | online satış yapmıyor, raf fiyatı yayınlamıyor |
-| A101, CarrefourSA, Metro, Getir | site otomatik erişimi engelliyor |
-| File, Onur | sitesinde ürün fiyatı yayınlanmıyor |
+| A101, BİM, CarrefourSA, Tarım Kredi | Market Fiyatı canlı API |
 
 Karşılaştırma bütün marketleri kapsar. Fiyatı okunamayan market listeden
 düşmez: tutar yerine "Ürün bulunamadı" ve sebebi yazar (site fiyat

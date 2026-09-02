@@ -36,13 +36,8 @@ SLUG_TO_MARKET = {
 
 MARKET_TO_SLUG = {v: k for k, v in SLUG_TO_MARKET.items()}
 
-# Fiyatı kendi sitesinden okunamayan marketler — uygulamadaki noPriceReason ile aynı.
-UNPRICED = {
-    'file': 'sitesinde ürün fiyatı yayınlanmıyor',
-    'onur': 'sitesinde ürün fiyatı yayınlanmıyor',
-    'metro': 'sitesi otomatik fiyat okumaya kapalı',
-    'getir': 'sitesi otomatik fiyat okumaya kapalı',
-}
+# Fiyatı kendi sitesinden okunamayan marketler (uygulamadan çıkarıldı).
+UNPRICED: dict[str, str] = {}
 
 PRICED_SLUGS = list(SLUG_TO_MARKET)
 ALL_MARKET_SLUGS = PRICED_SLUGS + list(UNPRICED)

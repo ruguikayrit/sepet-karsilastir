@@ -29,31 +29,17 @@ void main() {
     expect(dairy, isNot(contains('Ariel')));
   });
 
-  test('karşılaştırma bütün marketleri listeler, fiyatı olmayan da', () async {
+  test('karşılaştırma bütün marketleri listeler', () async {
     final result = await const PriceBookService().compareBasket([
       ListItem(product: milkType.withBrand('İçim')),
       ListItem(product: milkType.withBrand('Sütaş')),
     ]);
 
     expect(result.baskets.map((b) => b.market.id), Market.all.map((m) => m.id));
+    expect(Market.unpriced, isEmpty);
+    expect(result.baskets, hasLength(9));
 
-    // Fiyatını kendi sitesinde yayınlamayan zincir listede kalır ama tutar
-    // göstermez: kullanıcı marketin bakıldığını görür, uydurma fiyat görmez.
-    for (final market in Market.unpriced) {
-      final basket =
-          result.baskets.firstWhere((b) => b.market.id == market.id);
-      expect(basket.foundNothing, isTrue, reason: market.name);
-      expect(basket.availableCount, 0, reason: market.name);
-      expect(basket.total, 0, reason: market.name);
-      expect(
-        PriceBookService.noPriceReasonFor(market.id),
-        market.noPriceReason,
-        reason: market.name,
-      );
-    }
-
-    // Sıfır toplamlı market sıralamada en ucuz gibi görünmez.
-    expect(result.ranked.last.foundNothing, isTrue);
+    // Sıfır toplamlı / hiç ürün bulamayan market en ucuz gibi görünmez.
     expect(result.ranked.first.foundNothing, isFalse);
   });
 }

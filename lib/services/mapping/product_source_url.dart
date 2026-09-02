@@ -34,12 +34,7 @@ class ProductSourceUrl {
       MarketId.carrefour =>
         _search('https://www.carrefoursa.com/search/', 'text', query),
       // Kalan marketlerin sitesinde URL ile tetiklenen ürün araması yok.
-      MarketId.bim ||
-      MarketId.file ||
-      MarketId.tarimKredi ||
-      MarketId.onur ||
-      MarketId.metro ||
-      MarketId.getir =>
+      MarketId.bim || MarketId.tarimKredi =>
         ProductLink(url: market.site, kind: ProductLinkKind.site),
     };
   }
