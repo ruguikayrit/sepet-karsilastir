@@ -106,11 +106,6 @@ List<OfficialMarketProvider> buildOfficialProviders() {
       envPrefix: 'CARREFOUR',
     ),
     UnconfiguredOfficialProvider(
-      slug: 'file',
-      displayName: 'File',
-      envPrefix: 'FILE',
-    ),
-    UnconfiguredOfficialProvider(
       slug: 'tarim-kredi',
       displayName: 'Tarım Kredi Market',
       envPrefix: 'TARIM_KREDI',
@@ -121,24 +116,9 @@ List<OfficialMarketProvider> buildOfficialProviders() {
       envPrefix: 'HAKMAR',
     ),
     UnconfiguredOfficialProvider(
-      slug: 'onur',
-      displayName: 'Onur Market',
-      envPrefix: 'ONUR',
-    ),
-    UnconfiguredOfficialProvider(
       slug: 'happy-center',
       displayName: 'Happy Center',
       envPrefix: 'HAPPY_CENTER',
-    ),
-    UnconfiguredOfficialProvider(
-      slug: 'metro',
-      displayName: 'Metro Market',
-      envPrefix: 'METRO',
-    ),
-    UnconfiguredOfficialProvider(
-      slug: 'getir',
-      displayName: 'Getir Büyük',
-      envPrefix: 'GETIR',
     ),
   ];
 }

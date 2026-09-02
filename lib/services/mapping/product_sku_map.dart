@@ -17,13 +17,9 @@ class ProductSkuMap {
     MarketId.bim: 'BIM',
     MarketId.sok: 'SOK',
     MarketId.carrefour: 'CRF',
-    MarketId.file: 'FILE',
     MarketId.tarimKredi: 'TKM',
     MarketId.hakmar: 'HAK',
-    MarketId.onur: 'ONUR',
     MarketId.happyCenter: 'HAPPY',
-    MarketId.metro: 'METRO',
-    MarketId.getir: 'GETIR',
   };
 
   /// Katalogdaki tüm ürün tipleri için placeholder SKU üretir.

@@ -170,12 +170,6 @@ List<OfficialMarketProvider> buildSyntheticProviders() {
       priceIndex: 1.06,
     ),
     SyntheticPriceProvider(
-      slug: 'file',
-      displayName: 'File',
-      priceIndex: 0.99,
-      unavailableTypes: {'kofte-400'},
-    ),
-    SyntheticPriceProvider(
       slug: 'tarim-kredi',
       displayName: 'Tarım Kredi Market',
       priceIndex: 0.89,
@@ -188,26 +182,9 @@ List<OfficialMarketProvider> buildSyntheticProviders() {
       unavailableTypes: {'tavuk-1kg', 'muz-1kg'},
     ),
     SyntheticPriceProvider(
-      slug: 'onur',
-      displayName: 'Onur Market',
-      priceIndex: 0.98,
-    ),
-    SyntheticPriceProvider(
       slug: 'happy-center',
       displayName: 'Happy Center',
       priceIndex: 1.00,
-    ),
-    SyntheticPriceProvider(
-      slug: 'metro',
-      displayName: 'Metro Market',
-      priceIndex: 0.95,
-      unavailableTypes: {'ekmek-250'},
-    ),
-    SyntheticPriceProvider(
-      slug: 'getir',
-      displayName: 'Getir Büyük',
-      priceIndex: 1.12,
-      unavailableTypes: {'kofte-400'},
     ),
   ];
 }

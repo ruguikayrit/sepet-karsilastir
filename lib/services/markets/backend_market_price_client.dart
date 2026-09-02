@@ -128,13 +128,9 @@ class MarketClients {
     MarketId.bim: 'bim',
     MarketId.sok: 'sok',
     MarketId.carrefour: 'carrefour',
-    MarketId.file: 'file',
     MarketId.tarimKredi: 'tarim-kredi',
     MarketId.hakmar: 'hakmar',
-    MarketId.onur: 'onur',
     MarketId.happyCenter: 'happy-center',
-    MarketId.metro: 'metro',
-    MarketId.getir: 'getir',
   };
 
   static List<MarketPriceClient> all(ApiClient api, {QuoteCache? cache}) {

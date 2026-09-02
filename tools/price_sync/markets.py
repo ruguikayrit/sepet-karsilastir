@@ -68,12 +68,8 @@ class Unsupported:
 UNSUPPORTED = [
     Unsupported('bim', 'BİM', 'online satış yapmıyor, raf fiyatı yayınlamıyor'),
     Unsupported('a101', 'A101', 'site otomatik erişimi engelliyor'),
-    Unsupported('file', 'File', 'sitesinde ürün fiyatı yayınlanmıyor'),
     Unsupported('tarimKredi', 'Tarım Kredi Market',
                 'online mağazası yayında değil'),
-    Unsupported('onur', 'Onur Market', 'sitesinde ürün fiyatı yayınlanmıyor'),
-    Unsupported('metro', 'Metro Market', 'site otomatik erişimi engelliyor'),
-    Unsupported('getir', 'Getir Büyük', 'site otomatik erişimi engelliyor'),
 ]
 
 

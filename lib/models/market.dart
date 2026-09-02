@@ -7,13 +7,9 @@ enum MarketId {
   bim,
   sok,
   carrefour,
-  file,
   tarimKredi,
   hakmar,
-  onur,
   happyCenter,
-  metro,
-  getir,
 }
 
 /// Market segmenti — kullanıcıya "neden pahalı/ucuz" bilgisini verir.
@@ -120,15 +116,6 @@ class Market {
       site: 'https://www.carrefoursa.com/',
     ),
     Market(
-      id: MarketId.file,
-      name: 'File',
-      shortName: 'FILE',
-      color: Color(0xFF6B2D8B),
-      segment: MarketSegment.ulusal,
-      site: 'https://www.file.com.tr/',
-      noPriceReason: 'sitesinde ürün fiyatı yayınlanmıyor',
-    ),
-    Market(
       id: MarketId.tarimKredi,
       name: 'Tarım Kredi Market',
       shortName: 'TKM',
@@ -145,39 +132,12 @@ class Market {
       site: 'https://www.hakmarexpress.com.tr/',
     ),
     Market(
-      id: MarketId.onur,
-      name: 'Onur Market',
-      shortName: 'ONUR',
-      color: Color(0xFFEF6C00),
-      segment: MarketSegment.yerel,
-      site: 'https://www.onurmarket.com/',
-      noPriceReason: 'sitesinde ürün fiyatı yayınlanmıyor',
-    ),
-    Market(
       id: MarketId.happyCenter,
       name: 'Happy Center',
       shortName: 'HAPPY',
       color: Color(0xFF2E7D32),
       segment: MarketSegment.yerel,
       site: 'https://happycenter.com.tr/',
-    ),
-    Market(
-      id: MarketId.metro,
-      name: 'Metro Market',
-      shortName: 'METRO',
-      color: Color(0xFF283593),
-      segment: MarketSegment.toptan,
-      site: 'https://www.metro-tr.com/',
-      noPriceReason: 'sitesi otomatik fiyat okumaya kapalı',
-    ),
-    Market(
-      id: MarketId.getir,
-      name: 'Getir Büyük',
-      shortName: 'GETIR',
-      color: Color(0xFF5D3EBC),
-      segment: MarketSegment.hizli,
-      site: 'https://getir.com/buyuk/',
-      noPriceReason: 'sitesi otomatik fiyat okumaya kapalı',
     ),
   ];
 
