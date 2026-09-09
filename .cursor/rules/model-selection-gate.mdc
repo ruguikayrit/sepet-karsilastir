@@ -1,0 +1,34 @@
+---
+description: Agent görevlerinde önce anla, model öner, onay bekle
+alwaysApply: true
+---
+
+# Model seçimi kapısı
+
+Kullanıcı bir agent görevi verdiğinde (yap, düzelt, ekle, refactor, test et, deploy et vb.) şu sırayı izle:
+
+1. **Önce anla** — İsteği özetle; kapsam, risk ve belirsizlikleri kısaca belirt.
+2. **Model öner** — Görev tipine göre en uygun modeli öner (Auto modu dahil: Cost / Balance / Intelligence). Nedenini 1–2 cümleyle açıkla.
+3. **Bekle** — Kullanıcı modeli seçip onay verene kadar **işe başlama**: dosya düzenleme, komut çalıştırma, araç kullanma, PR/commit yapma yok.
+4. **Onaydan sonra devam et** — Kullanıcı farklı bir model seçerse onu kabul et ve o seçimle devam et.
+
+## Model öneri rehberi
+
+| Görev tipi | Öneri |
+|---|---|
+| Hızlı günlük coding, küçük düzenlemeler | Composer 2.5 |
+| Uzun agent, büyük codebase, tool-heavy iş | Grok 4.6 |
+| Planlama, codebase anlama | GPT-5.6 Sol |
+| DevOps, DB, performans, execution-heavy | Claude Opus 5 |
+| Zor debug, görsel UI implementasyonu | Claude Fable 5.1 |
+| Frontier kalite, Opus'tan ucuz | Claude Sonnet 5 |
+| Mockup → frontend / görsel + kod | Gemini 3.1 Pro |
+| Yüksek hacim, ucuz, hızlı | GPT-5.6 Luna veya Gemini 3.8 Flash |
+| Teams/Enterprise, günlük varsayılan | Auto → Balance |
+| Bütçe öncelikli rutin iş | Auto → Cost |
+| Karmaşık / çok adımlı iş | Auto → Intelligence |
+
+## İstisnalar
+
+- Kullanıcı yalnızca soru soruyorsa (açıklama, karşılaştırma, tavsiye) doğrudan yanıtla; model kapısı gerekmez.
+- Kullanıcı açıkça "hemen başla" veya belirli bir model adı verdiyse kapıyı atla.
